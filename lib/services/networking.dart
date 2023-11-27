@@ -30,9 +30,13 @@ class NetworkHelper {
     final Duration duration = Duration(seconds: seconds);
     final urlParsed = Uri.parse(url);
 
-    final http.Response response = await http.post(urlParsed,
-        body: json,
-        headers: {'Content-Type': 'application/json'}).timeout(duration);
+    final http.Response response = await http.post(
+      urlParsed,
+      body: json,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    ).timeout(duration);
     return response;
   }
 
@@ -41,12 +45,14 @@ class NetworkHelper {
     final urlParsed = Uri.parse(url);
     final token = System.instance.activeUser!.tokenId;
 
-    final http.Response response = await http.post(urlParsed,
-        body: json,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token'
-        }).timeout(duration);
+    final http.Response response = await http.post(
+      urlParsed,
+      body: json,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    ).timeout(duration);
     return response;
   }
 }

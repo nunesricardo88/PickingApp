@@ -329,7 +329,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     prefixIcon: const Padding(
                                       padding: EdgeInsets.symmetric(
-                                          horizontal: 20.0),
+                                        horizontal: 20.0,
+                                      ),
                                       child: Icon(
                                         FontAwesomeIcons.key,
                                         color: kPrimaryColor,

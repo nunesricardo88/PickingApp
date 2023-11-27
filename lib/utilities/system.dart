@@ -115,20 +115,26 @@ class System {
   Future<ApiResponse> login(User user, String userPin) async {
     final String url = ApiEndPoint.userLoginURL();
     final String json = ApiEndPoint.userLoginJSON(user, userPin);
-    final ApiResponse response = await NetworkHelper(url).postDataNoAuth(
+    final http.Response response = await NetworkHelper(url).postDataNoAuth(
       json: json,
       seconds: 10,
-    ) as ApiResponse;
+    ) as http.Response;
+    final ApiResponse apiResponse = ApiResponse(
+      statusCode: response.statusCode,
+      success: response.statusCode == 200,
+      result: response.body,
+    );
 
-    if (response.statusCode == 200) {
-      final String responseBody = response.result as String;
+    if (apiResponse.statusCode == 200) {
       final Map<String, dynamic> jsonBody =
-          jsonDecode(responseBody) as Map<String, dynamic>;
-      activeUser = User.fromJson(jsonBody);
+          jsonDecode(apiResponse.result as String) as Map<String, dynamic>;
+      final Map<String, dynamic> userJson =
+          jsonBody['result'] as Map<String, dynamic>;
+      activeUser = User.fromJson(userJson);
     } else {
       activeUser = null;
     }
 
-    return response;
+    return apiResponse;
   }
 }

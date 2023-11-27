@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
   static String removeDecimalZeroFormat(double n) {
@@ -19,11 +20,15 @@ mixin Helper {
   }
 
   static Future<void> showMsg(
-      String title, String message, BuildContext context,) async {
+    String title,
+    String message,
+    BuildContext context,
+  ) async {
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: kAlertDialogColor,
           title: Text(title),
           content: Text(message),
           actions: <Widget>[
@@ -39,7 +44,11 @@ mixin Helper {
     );
   }
 
-  static Future<bool> askQuestion(String title, String question, BuildContext context,) async {
+  static Future<bool> askQuestion(
+    String title,
+    String question,
+    BuildContext context,
+  ) async {
     bool result = false;
     await showDialog(
       context: context,

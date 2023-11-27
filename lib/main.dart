@@ -30,7 +30,10 @@ class N6Picking extends StatelessWidget {
       theme: ThemeData(
         primaryColor: kPrimaryColor,
         fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSwatch().copyWith(secondary: kAccentColor),
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          primary: kPrimaryColor,
+          secondary: kAccentColor,
+        ),
       ),
       initialRoute: LoadingScreen.id,
       routes: {

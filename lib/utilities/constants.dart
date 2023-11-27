@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 
 //Colors
-const kPrimaryColor = Color(0xFF607D8B);
-const kPrimaryColorLight = Color(0xFFCFD8DC);
-const kIcons = Color(0xFFFAFAFA);
-const kPrimaryColorDark = Color(0xFF455A64);
-const kPrimaryTextColor = Color(0xFF212121);
-const kSecondaryTextColor = Color(0xFF757575);
-const kDividerColor = Color(0xFFA5A5A5);
-const kTileBackground = Color(0xBBCFD8DC);
-const kAccentColor = Color(0xFF455A64);
-const kErrorColor = Color(0xFFDE5246);
-const kGreenColor = Color(0xFF28F290);
-const kYellowColor = Color(0xFFFFE371);
-const kRedColor = Color(0xFFFFB5B5);
-const kDefaultAccentColor = Color(0xFF1D7FCD);
-const kAlternativeAccentColor = Color(0xFF1DBB76);
+const kPrimaryColor = Color.fromRGBO(96, 125, 139, 1);
+const kPrimaryColorDark = Color.fromRGBO(69, 90, 100, 1);
+const kPrimaryColorLight = Color.fromRGBO(207, 216, 220, 1);
+const kIconColor = Color.fromRGBO(250, 250, 250, 1);
+const kAccentColor = Color.fromRGBO(0, 150, 136, 1);
+const kPrimaryTextColor = Color.fromRGBO(33, 33, 33, 1);
+const kSecondaryTextColor = Color.fromRGBO(117, 117, 117, 1);
+const kDividerColor = Color.fromRGBO(189, 189, 189, 1);
+const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
+const kAlertDialogColor = Color.fromRGBO(250, 250, 250, 1);
 
 enum PickingTask {
   nenhuma,
@@ -130,7 +125,7 @@ const kSearchFieldInputDecoration = InputDecoration(
 
 BoxDecoration get pinPutDecoration {
   return BoxDecoration(
-    color: kIcons,
+    color: kIconColor,
     borderRadius: BorderRadius.circular(30.0),
     boxShadow: [
       BoxShadow(

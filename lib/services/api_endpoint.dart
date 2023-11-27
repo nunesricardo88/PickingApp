@@ -18,7 +18,7 @@ mixin ApiEndPoint {
     final StringBuffer stringBuffer = StringBuffer();
     stringBuffer.write('{"loginName":"');
     stringBuffer.write(user.loginName);
-    stringBuffer.write('","password":"');
+    stringBuffer.write('","loginPassword":"');
     stringBuffer.write(userPin);
     stringBuffer.write('"}');
     return stringBuffer.toString();

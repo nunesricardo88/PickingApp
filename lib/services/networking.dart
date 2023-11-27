@@ -50,7 +50,7 @@ class NetworkHelper {
       body: json,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
+        'Authorization': 'Bearer $token',
       },
     ).timeout(duration);
     return response;

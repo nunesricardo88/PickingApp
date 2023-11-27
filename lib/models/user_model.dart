@@ -20,7 +20,7 @@ mixin UserFields {
   static const String number = 'number';
   static const String name = 'name';
   static const String loginName = 'loginName';
-  static const String tokenId = 'tokenId';
+  static const String tokenId = 'token';
   static const String accessMask = 'accessMask';
 }
 
@@ -49,7 +49,7 @@ class User {
         number: json[UserFields.number] as int,
         name: json[UserFields.name] as String,
         loginName: json[UserFields.loginName] as String,
-        tokenId: json[UserFields.tokenId] as String,
+        tokenId: json[UserFields.tokenId] as String? ?? '',
         accessMask: json[UserFields.accessMask] as int,
       );
 

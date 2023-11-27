@@ -6,7 +6,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 2.0.0+1
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.12.0 <=3.2.0"
 
 dependencies:
   animated_splash_screen: ^1.1.0
@@ -20,24 +20,24 @@ dependencies:
     git:
       url: https://github.com/nunesricardo88/flutter_barcode_listener
   flutter_guid: ^0.3.1
-  flutter_launcher_icons: ^0.12.0
+  flutter_launcher_icons: ^0.13.1
   flutter_localizations:
     sdk: flutter
   flutter_simple_calculator: ^2.0.0-nullsafety.1
-  flutter_slidable: ^2.0.0
+  flutter_slidable: ^3.0.1
   font_awesome_flutter: ^10.3.0
   gs1_barcode_parser:
     git:
       url: https://github.com/nunesricardo88/gs1_barcode_parser
-  http: ^0.13.3
+  http: ^1.1.0
   intl: ^0.18.0
   lint: ^2.0.1
   loading_overlay: ^0.3.0
   omni_datetime_picker: ^1.0.7
-  package_info_plus: ^3.0.2
+  package_info_plus: ^5.0.1
   path: any
-  permission_handler: ^10.2.0
-  pinput: ^2.1.4
+  permission_handler: ^11.1.0
+  pinput: ^3.0.1
   provider: ^6.0.5
   sqflite: ^2.0.0+3
   uuid: ^3.0.4

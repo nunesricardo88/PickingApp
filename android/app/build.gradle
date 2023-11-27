@@ -41,7 +41,7 @@ android {
 
     defaultConfig {
         applicationId "norma6.pt.n6picking_flutterapp"
-        minSdkVersion 16
+        minSdkVersion 29
         targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -5,6 +7,7 @@ import 'package:n6picking_flutterapp/models/api_response.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/screens/configure_endpoint_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -104,13 +107,19 @@ class _LoginScreenState extends State<LoginScreen> {
       final ApiResponse response =
           await System.instance.login(_selectedUser, _pinController.text);
 
-      if (response.statusCode == 200) {
-        success = true;
+      success = response.success;
+
+      if (success) {
+        _usernameController.clear();
       } else {
-        success = false;
+        final Map<String, dynamic> errorMap =
+            jsonDecode(response.result as String) as Map<String, dynamic>;
+        final String errorMessage = errorMap['errorCode'] as String;
+
+        // ignore: use_build_context_synchronously
+        await Helper.showMsg("Login falhou!", errorMessage, context);
       }
 
-      _usernameController.clear();
       _pinController.clear();
 
       setState(() => showSpinner = false);
@@ -355,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: const Text(
                                     'Entrar',
                                     style: TextStyle(
-                                      color: kIcons,
+                                      color: kIconColor,
                                       fontSize: 20.0,
                                     ),
                                   ),
@@ -381,7 +390,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -406,7 +415,8 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Center(child: Text('Login Falhou')),
+            backgroundColor: kAlertDialogColor,
+            title: const Text('Login Falhou'),
             content:
                 const Text('Os campos de utilizador e pin são obrigatórios.'),
             actions: <Widget>[
@@ -423,7 +433,8 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            contentPadding: const EdgeInsets.only(left: 25, right: 25),
+            backgroundColor: kAlertDialogColor,
+            contentPadding: const EdgeInsets.only(left: 5, right: 5),
             title: Center(
               child: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
             ),
@@ -438,7 +449,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   : _usersList.isEmpty
                       ? 150
                       : null,
-              width: 300,
               child: !_isOnline
                   ? const Center(
                       child: Text(
@@ -457,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const SizedBox(height: 10.0),
-                              for (User user in _usersList)
+                              for (final User user in _usersList)
                                 Column(
                                   children: [
                                     const Divider(
@@ -467,7 +477,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: kPrimaryColorLight,
                                     ),
                                     ListTile(
-                                      title: Center(child: Text(user.name)),
+                                      title: Center(
+                                        child: Text(
+                                          user.name,
+                                        ),
+                                      ),
                                       onTap: () {
                                         Navigator.pop(context, user);
                                       },

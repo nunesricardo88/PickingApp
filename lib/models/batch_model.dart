@@ -5,7 +5,7 @@ mixin BatchFields {
     id,
     erpId,
     batchNumber,
-    expirationDate
+    expirationDate,
   ];
 
   static const String id = 'id';

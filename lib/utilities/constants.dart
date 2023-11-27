@@ -12,20 +12,24 @@ const kDividerColor = Color.fromRGBO(189, 189, 189, 1);
 const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
 const kAlertDialogColor = Color.fromRGBO(250, 250, 250, 1);
 
-enum PickingTask {
+//Enums
+enum License {
   nenhuma,
-  expedir,
-  preparar,
-  receber,
-  produzir,
-  anularProducao,
-  consumirMP,
-  devolverMP,
+  rialto,
+  rrmp,
+  greenkinetics,
+}
+
+enum PickingTaskType {
+  nenhuma,
+  expedicao,
+  rececao,
+  producao,
+  consumo,
+  transferencia,
+  devolucao,
   inventario,
-  palete,
-  devolverFornecedor,
-  devolverCliente,
-  transferenciaArmazem,
+  outros,
 }
 
 enum EntityType {

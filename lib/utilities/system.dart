@@ -6,12 +6,14 @@ import 'package:n6picking_flutterapp/models/api_response.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class System {
   static final System instance = System._init();
 
   User? activeUser;
+  License activeLicense = License.nenhuma;
   ApiConnection? apiConnection;
   List<int>? appVersion;
   List<int>? apiVersion;
@@ -82,7 +84,11 @@ class System {
 
       if (result.statusCode == 200) {
         final resultBody = result.body;
-        return resultBody.split('.').map(int.parse).toList();
+        final Map<String, dynamic> jsonBody =
+            jsonDecode(resultBody) as Map<String, dynamic>;
+        activeLicense = License.values[jsonBody['license'] as int];
+        final String version = jsonBody['version'] as String;
+        return version.split('.').map(int.parse).toList();
       } else {
         return null;
       }

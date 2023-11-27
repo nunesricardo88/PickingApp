@@ -1,14 +1,14 @@
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:n6picking_flutterapp/models/address_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
-import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 
 mixin DocumentFields {
   static final List<String> allValues = [
     id,
     erpId,
-    documentType,
+    task,
     number,
     name,
     entity,
@@ -18,7 +18,7 @@ mixin DocumentFields {
 
   static const String id = 'id';
   static const String erpId = 'erpId';
-  static const String documentType = 'documentType';
+  static const String task = 'task';
   static const String number = 'number';
   static const String name = 'name';
   static const String entity = 'entity';
@@ -29,7 +29,7 @@ mixin DocumentFields {
 class Document {
   Guid id;
   String erpId;
-  DocumentType documentType;
+  PickingTask task;
   String number;
   String name;
   Entity entity;
@@ -39,7 +39,7 @@ class Document {
   Document({
     required this.id,
     required this.erpId,
-    required this.documentType,
+    required this.task,
     required this.number,
     required this.name,
     required this.entity,

@@ -8,9 +8,9 @@ mixin StockFields {
     quantity,
   ];
 
-  static const String product = 'Product';
-  static const String batch = 'Batch';
-  static const String quantity = 'Quantity';
+  static const String product = 'product';
+  static const String batch = 'batch';
+  static const String quantity = 'quantity';
 }
 
 class Stock {

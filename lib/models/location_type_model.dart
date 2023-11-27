@@ -4,8 +4,8 @@ mixin LocationTypeFields {
     isStockLocation,
   ];
 
-  static const String name = 'Name';
-  static const String isStockLocation = 'IsStockLocation';
+  static const String name = 'name';
+  static const String isStockLocation = 'isStockLocation';
 }
 
 class LocationType {

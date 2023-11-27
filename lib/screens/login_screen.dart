@@ -53,6 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
     isUpToDate = checkIfIsUpToDate();
     canLogin = isOnline && isUpToDate;
 
+    if (canLogin) {
+      await getUsers();
+    } else {
+      _usersList.clear();
+    }
+
     setState(() {
       _isOnline = isOnline;
       _isUpToDate = isUpToDate;

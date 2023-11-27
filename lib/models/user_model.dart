@@ -15,13 +15,13 @@ mixin UserFields {
     accessMask,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String number = 'Number';
-  static const String name = 'Name';
-  static const String loginName = 'LoginName';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String number = 'number';
+  static const String name = 'name';
+  static const String loginName = 'loginName';
   static const String tokenId = 'tokenId';
-  static const String accessMask = 'AccessMask';
+  static const String accessMask = 'accessMask';
 }
 
 class User {
@@ -70,7 +70,7 @@ mixin UserApi {
     final String url = ApiEndPoint.getAllUsersURL();
     final NetworkHelper networkHelper = NetworkHelper(url);
     final http.Response response =
-        await networkHelper.getData(seconds: 5) as http.Response;
+        await networkHelper.getDataNoAuth(seconds: 5) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;

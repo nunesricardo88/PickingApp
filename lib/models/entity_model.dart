@@ -12,13 +12,13 @@ mixin EntityFields {
     addresses,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String entityType = 'EntityType';
-  static const String number = 'Number';
-  static const String name = 'Name';
-  static const String facility = 'Facility';
-  static const String addresses = 'Addresses';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String entityType = 'entityType';
+  static const String number = 'number';
+  static const String name = 'name';
+  static const String facility = 'facility';
+  static const String addresses = 'addresses';
 }
 
 class Entity {

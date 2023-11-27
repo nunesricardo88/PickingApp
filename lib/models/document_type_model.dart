@@ -10,11 +10,11 @@ mixin DocumentTypeFields {
     entityType,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String number = 'Number';
-  static const String name = 'Name';
-  static const String entityType = 'EntityType';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String number = 'number';
+  static const String name = 'name';
+  static const String entityType = 'entityType';
 }
 
 class DocumentType {

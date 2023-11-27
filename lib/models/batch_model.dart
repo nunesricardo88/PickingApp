@@ -8,10 +8,10 @@ mixin BatchFields {
     expirationDate
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String batchNumber = 'BatchNumber';
-  static const String expirationDate = 'ExpirationDate';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String batchNumber = 'batchNumber';
+  static const String expirationDate = 'expirationDate';
 }
 
 class Batch {

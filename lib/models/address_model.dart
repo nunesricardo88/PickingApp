@@ -10,12 +10,12 @@ mixin AddressFields {
     country,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String street = 'Street';
-  static const String postalCode = 'PostalCode';
-  static const String city = 'City';
-  static const String country = 'Country';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String street = 'street';
+  static const String postalCode = 'postalCode';
+  static const String city = 'city';
+  static const String country = 'country';
 }
 
 class Address {

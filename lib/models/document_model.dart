@@ -10,14 +10,14 @@ mixin DocumentFields {
     lines,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String type = 'Type';
-  static const String number = 'Number';
-  static const String name = 'Name';
-  static const String entity = 'Entity';
-  static const String address = 'Address';
-  static const String lines = 'Lines';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String type = 'type';
+  static const String number = 'number';
+  static const String name = 'name';
+  static const String entity = 'entity';
+  static const String address = 'address';
+  static const String lines = 'lines';
 }
 
 class Document {}

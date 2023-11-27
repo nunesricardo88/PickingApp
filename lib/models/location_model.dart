@@ -13,13 +13,13 @@ mixin LocationFields {
     stocks,
   ];
 
-  static const String id = 'Id';
-  static const String erpId = 'ErpId';
-  static const String locationType = 'LocationType';
-  static const String name = 'Name';
-  static const String barcode = 'Barcode';
-  static const String locations = 'Locations';
-  static const String stocks = 'Stocks';
+  static const String id = 'id';
+  static const String erpId = 'erpId';
+  static const String locationType = 'locationType';
+  static const String name = 'name';
+  static const String barcode = 'barcode';
+  static const String locations = 'locations';
+  static const String stocks = 'stocks';
 }
 
 class Location {

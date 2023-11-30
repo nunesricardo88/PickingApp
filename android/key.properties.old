@@ -1,0 +1,4 @@
+storePassword= VF.2019
+keyPassword=VF.2019
+keyAlias=upload
+storeFile=keystore.jks

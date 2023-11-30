@@ -1,4 +1,5 @@
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
@@ -14,11 +15,9 @@ mixin PickingTaskFields {
     name,
     description,
     taskType,
+    document,
     originDocumentType,
     destinationDocumentType,
-    defaultEntity,
-    defaultOriginLocation,
-    defaultDestinationLocation,
     customOptions,
   ];
 
@@ -30,11 +29,9 @@ mixin PickingTaskFields {
   static const String name = 'name';
   static const String description = 'description';
   static const String taskType = 'taskType';
+  static const String document = 'document';
   static const String originDocumentType = 'originDocumentType';
   static const String destinationDocumentType = 'destinationDocumentType';
-  static const String defaultEntity = 'defaultEntity';
-  static const String defaultOriginLocation = 'defaultOriginLocation';
-  static const String defaultDestinationLocation = 'defaultDestinationLocation';
   static const String customOptions = 'customOptions';
 }
 
@@ -47,11 +44,9 @@ class PickingTask {
   String name;
   String description;
   PickingTaskType taskType;
+  Document documentType;
   DocumentType originDocumentType;
   DocumentType destinationDocumentType;
-  Entity defaultEntity;
-  Location defaultOriginLocation;
-  Location defaultDestinationLocation;
   String customOptions;
 
   PickingTask({
@@ -63,11 +58,9 @@ class PickingTask {
     required this.name,
     required this.description,
     required this.taskType,
+    required this.documentType,
     required this.originDocumentType,
     required this.destinationDocumentType,
-    required this.defaultEntity,
-    required this.defaultOriginLocation,
-    required this.defaultDestinationLocation,
     required this.customOptions,
   });
 }

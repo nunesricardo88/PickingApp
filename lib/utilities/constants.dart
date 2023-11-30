@@ -10,7 +10,100 @@ const kPrimaryTextColor = Color.fromRGBO(33, 33, 33, 1);
 const kSecondaryTextColor = Color.fromRGBO(117, 117, 117, 1);
 const kDividerColor = Color.fromRGBO(189, 189, 189, 1);
 const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
-const kAlertDialogColor = Color.fromRGBO(250, 250, 250, 1);
+const kWhiteBackground = Color.fromRGBO(250, 250, 250, 1);
+
+//Themes
+final ThemeData defaultThemeData = ThemeData(
+  brightness: Brightness.light,
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(seedColor: kPrimaryColor),
+  textTheme: const TextTheme(
+    headlineLarge: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 32.0,
+      letterSpacing: 0.0,
+      color: kPrimaryColorDark,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 28.0,
+      letterSpacing: 0.0,
+      color: kPrimaryColorDark,
+    ),
+    headlineSmall: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 24.0,
+      letterSpacing: 0.0,
+      color: kPrimaryColorDark,
+    ),
+    titleLarge: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 28.0,
+      letterSpacing: 0.0,
+      color: kPrimaryColorDark,
+    ),
+    titleMedium: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 22.0,
+      letterSpacing: 0.15,
+      color: kPrimaryColorDark,
+    ),
+    titleSmall: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w500,
+      fontSize: 18.0,
+      letterSpacing: 0.1,
+      color: kPrimaryColorDark,
+    ),
+    labelLarge: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w400,
+      fontSize: 22.0,
+      letterSpacing: 0.1,
+      color: kPrimaryColorDark,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w400,
+      fontSize: 18.0,
+      letterSpacing: 0.5,
+      color: kPrimaryColorDark,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w400,
+      fontSize: 16.0,
+      letterSpacing: 0.5,
+      color: kPrimaryColorDark,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w300,
+      fontSize: 18.0,
+      letterSpacing: 0.15,
+      color: kPrimaryColorDark,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w400,
+      fontSize: 16.0,
+      letterSpacing: 0.25,
+      color: kPrimaryColorDark,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: "Roboto",
+      fontWeight: FontWeight.w300,
+      fontSize: 14.0,
+      letterSpacing: 0.4,
+      color: kPrimaryColorDark,
+    ),
+  ),
+);
 
 //Enums
 enum License {

@@ -90,7 +90,6 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: kPrimaryColorLight,
           content: ConfigureEndpointScreen(),
         );
       },
@@ -174,18 +173,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Image.asset('images/logo_n6logistics.png'),
                       ),
                       const SizedBox(height: 35.0),
-                      Visibility(
-                        visible: !_isOnline,
-                        child: Column(
+                      if (!_isOnline)
+                        Column(
                           children: [
-                            const Center(
+                            Center(
                               child: Text(
                                 'Sem ligação',
-                                style: TextStyle(
-                                  color: kErrorColor,
-                                  letterSpacing: 2.0,
-                                  fontSize: 20.0,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium!
+                                    .copyWith(
+                                      color: kErrorColor,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                               ),
                             ),
                             IconButton(
@@ -198,41 +198,39 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                           ],
-                        ),
-                      ),
-                      Visibility(
-                        visible: _isOnline && !_isUpToDate,
-                        child: Column(
+                        )
+                      else if (!_isUpToDate)
+                        Column(
                           children: [
                             Center(
                               child: Text(
                                 'Nova Versão Disponível: ${System.instance.apiVersion?.join(".")}',
-                                style: const TextStyle(
-                                  color: kPrimaryColorDark,
-                                  letterSpacing: 2.0,
-                                  fontSize: 20.0,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium!
+                                    .copyWith(
+                                      fontWeight: FontWeight.normal,
+                                    ),
                               ),
                             ),
                             const SizedBox(
                               height: 20.0,
                             ),
-                            const Center(
+                            Center(
                               child: Text(
                                 'Por favor, atualize a aplicação',
-                                style: TextStyle(
-                                  color: kPrimaryColorDark,
-                                  letterSpacing: 2.0,
-                                  fontSize: 20.0,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium!
+                                    .copyWith(
+                                      fontWeight: FontWeight.normal,
+                                    ),
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                      Visibility(
-                        visible: _isOnline && _isUpToDate,
-                        child: Container(
+                        )
+                      else
+                        Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 50,
                             vertical: 15.0,
@@ -271,14 +269,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                         child: TextField(
                                           enabled: false,
                                           controller: _usernameController,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge,
                                           decoration: InputDecoration(
                                             border: InputBorder.none,
                                             hintText: 'Insira o Utilizador',
-                                            hintStyle: TextStyle(
-                                              fontSize: 16.0,
-                                              color: kPrimaryColorDark
-                                                  .withOpacity(0.5),
-                                            ),
+                                            hintStyle: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                  color: kPrimaryColorDark
+                                                      .withOpacity(0.5),
+                                                ),
                                             contentPadding:
                                                 const EdgeInsets.symmetric(
                                               vertical: 15.0,
@@ -322,17 +325,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                   onSubmitted: (value) async {
                                     await _login();
                                   },
-                                  style: const TextStyle(
-                                    color: kPrimaryColorDark,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyLarge,
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
                                     counter: const Offstage(),
                                     hintText: 'Insira o Pin',
-                                    hintStyle: TextStyle(
-                                      fontSize: 16.0,
-                                      color: kPrimaryColorDark.withOpacity(0.5),
-                                    ),
+                                    hintStyle: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .copyWith(
+                                          color: kPrimaryColorDark
+                                              .withOpacity(0.5),
+                                        ),
                                     contentPadding: const EdgeInsets.symmetric(
                                       vertical: 15.0,
                                     ),
@@ -373,7 +377,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -415,7 +418,6 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: kAlertDialogColor,
             title: const Text('Login Falhou'),
             content:
                 const Text('Os campos de utilizador e pin são obrigatórios.'),
@@ -433,7 +435,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: kAlertDialogColor,
+            backgroundColor: kWhiteBackground,
             contentPadding: const EdgeInsets.only(left: 5, right: 5),
             title: Center(
               child: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),

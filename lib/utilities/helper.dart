@@ -28,7 +28,7 @@ mixin Helper {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: kAlertDialogColor,
+          backgroundColor: kWhiteBackground,
           title: Text(title),
           content: Text(message),
           actions: <Widget>[

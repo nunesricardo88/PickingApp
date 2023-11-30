@@ -27,14 +27,7 @@ class N6Picking extends StatelessWidget {
         Locale('pt', 'PT'),
       ],
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: kPrimaryColor,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: kPrimaryColor,
-          secondary: kAccentColor,
-        ),
-      ),
+      theme: defaultThemeData,
       initialRoute: LoadingScreen.id,
       routes: {
         LoadingScreen.id: (context) => LoadingScreen(),

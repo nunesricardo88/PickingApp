@@ -71,48 +71,43 @@ class _ConfigureEndpointScreenState extends State<ConfigureEndpointScreen> {
       onBarcodeScanned: (barcode) async {
         await getScannerQRConnection(barcode);
       },
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: kPrimaryColorLight,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Ligação ao servidor',
-              style: kContentLabelTextStyleSemiBold,
-            ),
-            const SizedBox(
-              height: 20.0,
-            ),
-            Row(
-              children: [
-                const Text(
-                  'Estado:',
-                  style: kContentLabel2TextStyle,
-                ),
-                const SizedBox(
-                  width: 5.0,
-                ),
-                Text(
-                  isCheckingServerConnection || firstSetup
-                      ? 'A verificar'
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Ligação ao servidor',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(
+            height: 20.0,
+          ),
+          Row(
+            children: [
+              Text(
+                'Estado:',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(
+                width: 5.0,
+              ),
+              Text(
+                isCheckingServerConnection || firstSetup
+                    ? 'A verificar'
+                    : isOnline
+                        ? 'Online'
+                        : 'Offline',
+                style: kContentTextStyle.copyWith(
+                  color: isCheckingServerConnection || firstSetup
+                      ? kPrimaryColorDark
                       : isOnline
-                          ? 'Online'
-                          : 'Offline',
-                  style: kContentTextStyle.copyWith(
-                    color: isCheckingServerConnection || firstSetup
-                        ? kPrimaryColorDark
-                        : isOnline
-                            ? kAccentColor
-                            : kErrorColor,
-                  ),
+                          ? kAccentColor
+                          : kErrorColor,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

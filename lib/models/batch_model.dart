@@ -26,4 +26,12 @@ class Batch {
     required this.batchNumber,
     required this.expirationDate,
   });
+
+  factory Batch.fromJson(Map<String, dynamic> json) => Batch(
+        id: Guid(json[BatchFields.id] as String),
+        erpId: json[BatchFields.erpId] as String,
+        batchNumber: json[BatchFields.batchNumber] as String,
+        expirationDate:
+            DateTime.parse(json[BatchFields.expirationDate] as String),
+      );
 }

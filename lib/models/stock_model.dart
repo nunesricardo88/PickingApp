@@ -28,4 +28,12 @@ class Stock {
     required this.locationId,
     required this.quantity,
   });
+
+  factory Stock.fromJson(Map<String, dynamic> json) => Stock(
+        product:
+            Product.fromJson(json[StockFields.product] as Map<String, dynamic>),
+        batch: Batch.fromJson(json[StockFields.batch] as Map<String, dynamic>),
+        locationId: Guid(json[StockFields.locationId] as String),
+        quantity: json[StockFields.quantity] as double,
+      );
 }

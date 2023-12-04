@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
-import 'package:n6picking_flutterapp/models/entity_model.dart';
-import 'package:n6picking_flutterapp/models/location_model.dart';
+import 'package:n6picking_flutterapp/services/api_endpoint.dart';
+import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin PickingTaskFields {
@@ -39,13 +42,13 @@ class PickingTask {
   Guid id;
   String erpId;
   int accessId;
-  String userErpId;
+  String? userErpId;
   String group;
   String name;
   String description;
   PickingTaskType taskType;
-  Document documentType;
-  DocumentType originDocumentType;
+  Document? document;
+  DocumentType? originDocumentType;
   DocumentType destinationDocumentType;
   String customOptions;
 
@@ -53,14 +56,63 @@ class PickingTask {
     required this.id,
     required this.erpId,
     required this.accessId,
-    required this.userErpId,
+    this.userErpId,
     required this.group,
     required this.name,
     required this.description,
     required this.taskType,
-    required this.documentType,
-    required this.originDocumentType,
+    this.document,
+    this.originDocumentType,
     required this.destinationDocumentType,
     required this.customOptions,
   });
+
+  factory PickingTask.fromJson(Map<String, dynamic> json) => PickingTask(
+        id: Guid(json[PickingTaskFields.id] as String),
+        erpId: json[PickingTaskFields.erpId] as String,
+        accessId: json[PickingTaskFields.accessId] as int,
+        userErpId: json[PickingTaskFields.userErpId] as String?,
+        group: json[PickingTaskFields.group] as String,
+        name: json[PickingTaskFields.name] as String,
+        description: json[PickingTaskFields.description] as String,
+        taskType:
+            PickingTaskType.values[json[PickingTaskFields.taskType] as int],
+        document: json[PickingTaskFields.document] == null
+            ? null
+            : Document.fromJson(
+                json[PickingTaskFields.document] as Map<String, dynamic>,
+              ),
+        originDocumentType: json[PickingTaskFields.originDocumentType] == null
+            ? null
+            : DocumentType.fromJson(
+                json[PickingTaskFields.originDocumentType]
+                    as Map<String, dynamic>,
+              ),
+        destinationDocumentType: DocumentType.fromJson(
+          json[PickingTaskFields.destinationDocumentType]
+              as Map<String, dynamic>,
+        ),
+        customOptions: json[PickingTaskFields.customOptions] as String,
+      );
+}
+
+mixin PickingTaskApi {
+  static Future<List<PickingTask>> getByAccessId(int accessId) async {
+    List<PickingTask> pickingTasksList = [];
+    final String url = ApiEndPoint.getTasksByAccessId(accessId);
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 5) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final Iterable l = jsonBody['result'] as Iterable;
+
+      pickingTasksList = List<PickingTask>.from(
+        l.map((model) => PickingTask.fromJson(model as Map<String, dynamic>)),
+      );
+    }
+
+    return pickingTasksList;
+  }
 }

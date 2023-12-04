@@ -46,4 +46,23 @@ class Document {
     required this.address,
     required this.lines,
   });
+
+  factory Document.fromJson(Map<String, dynamic> json) => Document(
+        id: Guid(json[DocumentFields.id] as String),
+        erpId: json[DocumentFields.erpId] as String,
+        documentType: DocumentType.fromJson(
+          json[DocumentFields.documentType] as Map<String, dynamic>,
+        ),
+        number: json[DocumentFields.number] as String,
+        name: json[DocumentFields.name] as String,
+        entity: Entity.fromJson(
+          json[DocumentFields.entity] as Map<String, dynamic>,
+        ),
+        address: Address.fromJson(
+          json[DocumentFields.address] as Map<String, dynamic>,
+        ),
+        lines: (json[DocumentFields.lines] as List<dynamic>)
+            .map((e) => DocumentLine.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }

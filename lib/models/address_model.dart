@@ -34,4 +34,13 @@ class Address {
     required this.city,
     required this.country,
   });
+
+  factory Address.fromJson(Map<String, dynamic> json) => Address(
+        id: Guid(json[AddressFields.id] as String),
+        erpId: json[AddressFields.erpId] as String,
+        street: json[AddressFields.street] as String,
+        postalCode: json[AddressFields.postalCode] as String,
+        city: json[AddressFields.city] as String,
+        country: json[AddressFields.country] as String,
+      );
 }

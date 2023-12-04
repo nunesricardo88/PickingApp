@@ -6,6 +6,7 @@ import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/models/api_response.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/screens/configure_endpoint_screen.dart';
+import 'package:n6picking_flutterapp/screens/main_menu_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
@@ -27,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _canLogin = false;
   bool _isOnline = false;
   bool _isUpToDate = false;
+  bool _firstSetup = true;
 
   bool isPinFull = false;
   bool isPinEmpty = true;
@@ -53,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isUpToDate = false;
 
     isOnline = await checkIfIsOnline();
-    isUpToDate = checkIfIsUpToDate();
+    isUpToDate = await checkIfIsUpToDate();
     canLogin = isOnline && isUpToDate;
 
     if (canLogin) {
@@ -66,16 +68,17 @@ class _LoginScreenState extends State<LoginScreen> {
       _isOnline = isOnline;
       _isUpToDate = isUpToDate;
       _canLogin = canLogin;
+      _firstSetup = false;
       showSpinner = false;
     });
   }
 
   Future<bool> checkIfIsOnline() async {
-    return System.instance.isConnectedToServer();
+    return System.instance.checkIfUpToDate();
   }
 
-  bool checkIfIsUpToDate() {
-    return System.instance.isUpToDate ?? false;
+  Future<bool> checkIfIsUpToDate() async {
+    return System.instance.checkIfUpToDate();
   }
 
   Future<void> getUsers() async {
@@ -110,7 +113,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (success) {
         _usernameController.clear();
+        _pinController.clear();
+        gotoMainMenu();
       } else {
+        _pinController.clear();
         final Map<String, dynamic> errorMap =
             jsonDecode(response.result as String) as Map<String, dynamic>;
         final String errorMessage = errorMap['errorCode'] as String;
@@ -119,11 +125,13 @@ class _LoginScreenState extends State<LoginScreen> {
         await Helper.showMsg("Login falhou!", errorMessage, context);
       }
 
-      _pinController.clear();
-
       setState(() => showSpinner = false);
     }
     return success;
+  }
+
+  void gotoMainMenu() {
+    Navigator.pushNamed(context, MainMenuScreen.id);
   }
 
   @override
@@ -173,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Image.asset('images/logo_n6logistics.png'),
                       ),
                       const SizedBox(height: 35.0),
-                      if (!_isOnline)
+                      if (!_isOnline && !_firstSetup)
                         Column(
                           children: [
                             Center(
@@ -199,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         )
-                      else if (!_isUpToDate)
+                      else if (!_isUpToDate && !_firstSetup)
                         Column(
                           children: [
                             Center(
@@ -435,65 +443,45 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: kWhiteBackground,
-            contentPadding: const EdgeInsets.only(left: 5, right: 5),
-            title: Center(
-              child: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(_isOnline ? 15.0 : 0.0),
-              ),
-            ),
-            content: SizedBox(
-              height: !_isOnline
-                  ? 150
-                  : _usersList.isEmpty
-                      ? 150
-                      : null,
-              child: !_isOnline
-                  ? const Center(
-                      child: Text(
-                        'Não foi possível encontrar utilizadores. Por favor, verifique a ligação à internet ou ao servidor.',
-                      ),
-                    )
-                  : _usersList.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Não foram encontrados utilizadores. Por favor, verifique se algum utilizador tem acesso à aplicação.',
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(height: 10.0),
-                              for (final User user in _usersList)
-                                Column(
-                                  children: [
-                                    const Divider(
-                                      height: 1.0,
-                                      indent: 30.0,
-                                      endIndent: 30.0,
-                                      color: kPrimaryColorLight,
-                                    ),
-                                    ListTile(
-                                      title: Center(
-                                        child: Text(
-                                          user.name,
-                                        ),
+            title: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
+            content: !_isOnline
+                ? const Text(
+                    'Não foi possível encontrar utilizadores. Por favor, verifique a ligação à internet ou ao servidor.',
+                  )
+                : _usersList.isEmpty
+                    ? const Text(
+                        'Não foram encontrados utilizadores. Por favor, verifique se algum utilizador tem acesso à aplicação.',
+                      )
+                    : SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 10.0),
+                            for (final User user in _usersList)
+                              Column(
+                                children: [
+                                  const Divider(
+                                    height: 1.0,
+                                    indent: 30.0,
+                                    endIndent: 30.0,
+                                    color: kPrimaryColorLight,
+                                  ),
+                                  ListTile(
+                                    title: Center(
+                                      child: Text(
+                                        user.name,
                                       ),
-                                      onTap: () {
-                                        Navigator.pop(context, user);
-                                      },
                                     ),
-                                  ],
-                                ),
-                            ],
-                          ),
+                                    onTap: () {
+                                      Navigator.pop(context, user);
+                                    },
+                                  ),
+                                ],
+                              ),
+                          ],
                         ),
-            ),
+                      ),
             actions: [
               if (!_isOnline || _usersList.isEmpty)
                 TextButton(

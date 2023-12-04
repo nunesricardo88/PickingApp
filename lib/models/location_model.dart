@@ -40,4 +40,20 @@ class Location {
     required this.locations,
     required this.stocks,
   });
+
+  factory Location.fromJson(Map<String, dynamic> json) => Location(
+        id: Guid(json[LocationFields.id] as String),
+        erpId: json[LocationFields.erpId] as String,
+        locationType: LocationType.fromJson(
+          json[LocationFields.locationType] as Map<String, dynamic>,
+        ),
+        name: json[LocationFields.name] as String,
+        barcode: json[LocationFields.barcode] as String,
+        locations: (json[LocationFields.locations] as List<dynamic>)
+            .map((e) => Location.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        stocks: (json[LocationFields.stocks] as List<dynamic>)
+            .map((e) => Stock.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }

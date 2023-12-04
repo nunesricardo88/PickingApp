@@ -29,4 +29,16 @@ mixin ApiEndPoint {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
     return '$baseUrlPath/User/getAll';
   }
+
+  //Tasks
+  static String getTasksByAccessId(int accessId) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/PickingTask/getByAccessId/accessId=$accessId';
+  }
+
+  //Products
+  static String getAllProducts() {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Product/getAll';
+  }
 }

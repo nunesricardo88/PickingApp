@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import 'package:n6picking_flutterapp/models/picking_task_model.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
+
+class MenuItemCard extends StatefulWidget {
+  final PickingTask pickingTask;
+  final VoidCallback rebuildCallback;
+
+  const MenuItemCard({
+    required this.pickingTask,
+    required this.rebuildCallback,
+  });
+
+  @override
+  _MenuItemCardState createState() => _MenuItemCardState();
+}
+
+class _MenuItemCardState extends State<MenuItemCard> {
+  bool isDocUpdate = false;
+
+  Future<bool> setupPickingData() async {
+    //TODO - Create new document
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(0.0),
+      ),
+      shadowColor: Colors.transparent,
+      child: MaterialButton(
+        elevation: 0.0,
+        color: kWhiteBackground,
+        height: 75.0,
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
+        onPressed: () async {
+          final bool success = await setupPickingData();
+          if (success) {
+            //TODO - Slide Right Transition and goto PickingScreen
+            //await push
+          }
+          widget.rebuildCallback();
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.pickingTask.name,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.w500,
+                    color: kPrimaryTextColor,
+                  ),
+                ),
+                const SizedBox(
+                  height: 5.0,
+                ),
+                Text(
+                  widget.pickingTask.description,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.normal,
+                    color: kPrimaryTextColor.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+            Icon(
+              Icons.chevron_right_outlined,
+              color: kPrimaryColor.withOpacity(0.8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

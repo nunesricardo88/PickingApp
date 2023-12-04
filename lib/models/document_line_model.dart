@@ -53,8 +53,8 @@ class DocumentLine {
   double alternativeQuantity;
   double alternativeQuantityPicked;
   String alternativeUnit;
-  Location originLocation;
-  Location destinationLocation;
+  Location? originLocation;
+  Location? destinationLocation;
 
   DocumentLine({
     required this.id,
@@ -73,6 +73,34 @@ class DocumentLine {
     required this.originLocation,
     required this.destinationLocation,
   });
+
+  factory DocumentLine.fromJson(Map<String, dynamic> json) => DocumentLine(
+        id: Guid(json[DocumentLineFields.id] as String),
+        erpId: json[DocumentLineFields.erpId] as String,
+        documentId: Guid(json[DocumentLineFields.documentId] as String),
+        linkedLineErpId: json[DocumentLineFields.linkedLineErpId] as String?,
+        order: json[DocumentLineFields.order] as int,
+        product: Product.fromJson(
+          json[DocumentLineFields.product] as Map<String, dynamic>,
+        ),
+        batch: Batch.fromJson(
+          json[DocumentLineFields.batch] as Map<String, dynamic>,
+        ),
+        quantity: json[DocumentLineFields.quantity] as double,
+        quantityPicked: json[DocumentLineFields.quantityPicked] as double,
+        unit: json[DocumentLineFields.unit] as String,
+        alternativeQuantity:
+            json[DocumentLineFields.alternativeQuantity] as double,
+        alternativeQuantityPicked:
+            json[DocumentLineFields.alternativeQuantityPicked] as double,
+        alternativeUnit: json[DocumentLineFields.alternativeUnit] as String,
+        originLocation: Location.fromJson(
+          json[DocumentLineFields.originLocation] as Map<String, dynamic>,
+        ),
+        destinationLocation: Location.fromJson(
+          json[DocumentLineFields.destinationLocation] as Map<String, dynamic>,
+        ),
+      );
 
   DocumentLine copyWith({
     Guid? id,

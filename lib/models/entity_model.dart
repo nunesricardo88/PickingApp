@@ -28,7 +28,7 @@ class Entity {
   String number;
   String name;
   String facility;
-  List<Address> addresses;
+  List<Address>? addresses;
 
   Entity({
     required this.id,
@@ -37,6 +37,18 @@ class Entity {
     required this.number,
     required this.name,
     required this.facility,
-    required this.addresses,
+    this.addresses,
   });
+
+  factory Entity.fromJson(Map<String, dynamic> json) => Entity(
+        id: Guid(json[EntityFields.id] as String),
+        erpId: json[EntityFields.erpId] as String,
+        entityType: json[EntityFields.entityType] as String,
+        number: json[EntityFields.number] as String,
+        name: json[EntityFields.name] as String,
+        facility: json[EntityFields.facility] as String,
+        addresses: (json[EntityFields.addresses] as List<dynamic>)
+            .map((e) => Address.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }

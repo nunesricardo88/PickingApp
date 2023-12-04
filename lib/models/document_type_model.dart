@@ -31,4 +31,13 @@ class DocumentType {
     required this.name,
     required this.entityType,
   });
+
+  factory DocumentType.fromJson(Map<String, dynamic> json) => DocumentType(
+        id: Guid(json[DocumentTypeFields.id] as String),
+        erpId: json[DocumentTypeFields.erpId] as String,
+        number: json[DocumentTypeFields.number] as int,
+        name: json[DocumentTypeFields.name] as String,
+        entityType:
+            EntityType.values[json[DocumentTypeFields.entityType] as int],
+      );
 }

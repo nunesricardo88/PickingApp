@@ -8,6 +8,11 @@ mixin Helper {
     return n.toString().replaceAll(regex, '');
   }
 
+  static String getWordFromPosition(int position, String expression) {
+    final List<String> words = expression.split(' ');
+    return words[position];
+  }
+
   static dynamic qrCodeToJson(String scannedString) {
     String result;
     result = scannedString.replaceAll('[', '{');

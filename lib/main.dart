@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:n6picking_flutterapp/screens/configure_endpoint_screen.dart';
 import 'package:n6picking_flutterapp/screens/loading_screen.dart';
 import 'package:n6picking_flutterapp/screens/login_screen.dart';
+import 'package:n6picking_flutterapp/screens/main_menu_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 void main() {
@@ -33,6 +34,7 @@ class N6Picking extends StatelessWidget {
         LoadingScreen.id: (context) => LoadingScreen(),
         LoginScreen.id: (context) => LoginScreen(),
         ConfigureEndpointScreen.id: (context) => ConfigureEndpointScreen(),
+        MainMenuScreen.id: (context) => MainMenuScreen(),
       },
     );
   }

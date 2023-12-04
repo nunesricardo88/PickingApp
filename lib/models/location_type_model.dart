@@ -16,4 +16,9 @@ class LocationType {
     required this.name,
     required this.isStockLocation,
   });
+
+  factory LocationType.fromJson(Map<String, dynamic> json) => LocationType(
+        name: json[LocationTypeFields.name] as String,
+        isStockLocation: json[LocationTypeFields.isStockLocation] as bool,
+      );
 }

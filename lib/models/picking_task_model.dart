@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/document_model.dart';
@@ -38,7 +38,7 @@ mixin PickingTaskFields {
   static const String customOptions = 'customOptions';
 }
 
-class PickingTask {
+class PickingTask extends ChangeNotifier {
   Guid id;
   String erpId;
   int accessId;
@@ -94,6 +94,53 @@ class PickingTask {
         ),
         customOptions: json[PickingTaskFields.customOptions] as String,
       );
+
+  PickingTask copy({
+    Guid? id,
+    String? erpId,
+    int? accessId,
+    String? userErpId,
+    String? group,
+    String? name,
+    String? description,
+    PickingTaskType? taskType,
+    Document? document,
+    DocumentType? originDocumentType,
+    DocumentType? destinationDocumentType,
+    String? customOptions,
+  }) =>
+      PickingTask(
+        id: id ?? this.id,
+        erpId: erpId ?? this.erpId,
+        accessId: accessId ?? this.accessId,
+        userErpId: userErpId ?? this.userErpId,
+        group: group ?? this.group,
+        name: name ?? this.name,
+        description: description ?? this.description,
+        taskType: taskType ?? this.taskType,
+        document: document ?? this.document,
+        originDocumentType: originDocumentType ?? this.originDocumentType,
+        destinationDocumentType:
+            destinationDocumentType ?? this.destinationDocumentType,
+        customOptions: customOptions ?? this.customOptions,
+      );
+
+  //Functions
+  void update(PickingTask pickingTask) {
+    id = pickingTask.id;
+    erpId = pickingTask.erpId;
+    accessId = pickingTask.accessId;
+    userErpId = pickingTask.userErpId;
+    group = pickingTask.group;
+    name = pickingTask.name;
+    description = pickingTask.description;
+    taskType = pickingTask.taskType;
+    document = pickingTask.document;
+    originDocumentType = pickingTask.originDocumentType;
+    destinationDocumentType = pickingTask.destinationDocumentType;
+    customOptions = pickingTask.customOptions;
+    notifyListeners();
+  }
 }
 
 mixin PickingTaskApi {

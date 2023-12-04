@@ -25,20 +25,36 @@ class ApiConnectionDatabase {
   Future _createDB(Database db, int version) async {
     const idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
     const textType = 'TEXT NOT NULL';
+    const datetimeType = 'DATETIME NULL';
 
-    await db.execute('''
+    await db.execute(
+      '''
     CREATE TABLE $tableApiConnection (
     ${ApiConnectionFields.id} $idType,
     ${ApiConnectionFields.url} $textType,
     ${ApiConnectionFields.port} $textType,
-    ${ApiConnectionFields.connectionString} $textType
+    ${ApiConnectionFields.connectionString} $textType,
+    ${ApiConnectionFields.lastConnection} $datetimeType
     )
-    ''',);
+    ''',
+    );
   }
 
   Future<ApiConnection> create(ApiConnection apiConnection) async {
     final db = await instance.database;
     final id = await db.insert(tableApiConnection, apiConnection.toJson());
+
+    return apiConnection.copy(id: id);
+  }
+
+  Future<ApiConnection?> update(ApiConnection apiConnection) async {
+    final db = await instance.database;
+    final id = await db.update(
+      tableApiConnection,
+      apiConnection.toJson(),
+      where: '${ApiConnectionFields.id} = ?',
+      whereArgs: [apiConnection.id],
+    );
 
     return apiConnection.copy(id: id);
   }
@@ -63,8 +79,10 @@ class ApiConnectionDatabase {
   Future<ApiConnection?> readFirst() async {
     final db = await instance.database;
 
-    final maps = await db.query(tableApiConnection,
-        columns: ApiConnectionFields.allValues,);
+    final maps = await db.query(
+      tableApiConnection,
+      columns: ApiConnectionFields.allValues,
+    );
 
     if (maps.isNotEmpty) {
       return ApiConnection.fromJson(maps.first);

@@ -37,8 +37,9 @@ mixin ApiEndPoint {
   }
 
   //Products
-  static String getAllProducts() {
+  static String getAllProducts(DateTime lastSyncDate) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Product/getAll';
+    final String lastSyncDateStr = lastSyncDate.toIso8601String();
+    return '$baseUrlPath/Product/getAll/lastSyncDate=$lastSyncDateStr';
   }
 }

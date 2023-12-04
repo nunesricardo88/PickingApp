@@ -37,12 +37,11 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
   Future<bool> buildMenu() async {
     setState(() {
-      showSpinner = true;
       _updatingProductList = true;
       _updatingPickingTasks = false;
     });
 
-    //await ProductApi.instance.initialize();
+    await ProductApi.instance.initialize();
     setState(() {
       _updatingProductList = false;
       _updatingPickingTasks = true;
@@ -53,7 +52,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
 
     setState(() {
       _updatingPickingTasks = false;
-      showSpinner = false;
     });
     return true;
   }
@@ -163,7 +161,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                 Text(
                   Helper.getWordFromPosition(
                     0,
-                    System.instance.activeUser!.name,
+                    System.instance.activeUser == null
+                        ? ''
+                        : System.instance.activeUser!.name,
                   ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
@@ -190,60 +190,99 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           onRefresh: _pullRefresh,
           child: LoadingOverlay(
             isLoading: showSpinner,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: FutureBuilder(
-                    future: menuBuild,
-                    builder: (context, snapshot) {
-                      List<Widget> noSnapshotWidgets;
-                      if (snapshot.hasData) {
-                        return SingleChildScrollView(
-                          child: menuItemCardsList,
-                        );
-                      } else if (snapshot.hasError &&
-                          snapshot.connectionState != ConnectionState.waiting) {
-                        noSnapshotWidgets = [
-                          Icon(
-                            Icons.error_outline,
-                            color: kPrimaryColor.withOpacity(0.6),
-                            size: 60,
-                          ),
-                          const SizedBox(
-                            height: 20.0,
-                          ),
-                          Text(
-                            snapshot.error.toString(),
-                            textAlign: TextAlign.center,
-                          ),
-                        ];
-                      } else {
-                        noSnapshotWidgets = [
-                          const Center(
+            child: _updatingProductList
+                ? const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(
+                        child: CircularProgressIndicator(
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 20.0,
+                      ),
+                      Text(
+                        'A sincronizar a lista de produtos...',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  )
+                : _updatingPickingTasks
+                    ? const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
                             child: CircularProgressIndicator(
                               color: kPrimaryColor,
                             ),
                           ),
-                        ];
-                      }
-
-                      return Column(
+                          SizedBox(
+                            height: 20.0,
+                          ),
+                          Text(
+                            'A carregar o menu...',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: noSnapshotWidgets,
+                            child: FutureBuilder(
+                              future: menuBuild,
+                              builder: (context, snapshot) {
+                                List<Widget> noSnapshotWidgets;
+                                if (snapshot.hasData) {
+                                  return SingleChildScrollView(
+                                    child: menuItemCardsList,
+                                  );
+                                } else if (snapshot.hasError &&
+                                    snapshot.connectionState !=
+                                        ConnectionState.waiting) {
+                                  noSnapshotWidgets = [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: kPrimaryColor.withOpacity(0.6),
+                                      size: 60,
+                                    ),
+                                    const SizedBox(
+                                      height: 20.0,
+                                    ),
+                                    Text(
+                                      snapshot.error.toString(),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ];
+                                } else {
+                                  noSnapshotWidgets = [
+                                    const Center(
+                                      child: CircularProgressIndicator(
+                                        color: kPrimaryColor,
+                                      ),
+                                    ),
+                                  ];
+                                }
+
+                                return Column(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: noSnapshotWidgets,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                      ),
           ),
         ),
       ),

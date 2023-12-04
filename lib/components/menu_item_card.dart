@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
+import 'package:n6picking_flutterapp/screens/picking_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/page_transitions.dart';
+import 'package:provider/provider.dart';
 
 class MenuItemCard extends StatefulWidget {
   final PickingTask pickingTask;
@@ -18,8 +21,10 @@ class MenuItemCard extends StatefulWidget {
 class _MenuItemCardState extends State<MenuItemCard> {
   bool isDocUpdate = false;
 
-  Future<bool> setupPickingData() async {
-    //TODO - Create new document
+  Future<bool> setupPickingTask() async {
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+    pickingTask.update(widget.pickingTask);
     return true;
   }
 
@@ -37,10 +42,10 @@ class _MenuItemCardState extends State<MenuItemCard> {
         height: 75.0,
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
         onPressed: () async {
-          final bool success = await setupPickingData();
+          final bool success = await setupPickingTask();
           if (success) {
-            //TODO - Slide Right Transition and goto PickingScreen
-            //await push
+            // ignore: use_build_context_synchronously
+            await Navigator.pushNamed(context, PickingScreen.id);
           }
           widget.rebuildCallback();
         },

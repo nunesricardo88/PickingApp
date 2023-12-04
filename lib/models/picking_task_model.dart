@@ -4,9 +4,11 @@ import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
+import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/helper.dart';
 
 mixin PickingTaskFields {
   static final List<String> allValues = [
@@ -51,6 +53,7 @@ class PickingTask extends ChangeNotifier {
   DocumentType? originDocumentType;
   DocumentType destinationDocumentType;
   String customOptions;
+  List<Document> sourceDocuments;
 
   PickingTask({
     required this.id,
@@ -65,6 +68,7 @@ class PickingTask extends ChangeNotifier {
     this.originDocumentType,
     required this.destinationDocumentType,
     required this.customOptions,
+    this.sourceDocuments = const [],
   });
 
   factory PickingTask.fromJson(Map<String, dynamic> json) => PickingTask(
@@ -93,6 +97,7 @@ class PickingTask extends ChangeNotifier {
               as Map<String, dynamic>,
         ),
         customOptions: json[PickingTaskFields.customOptions] as String,
+        sourceDocuments: [],
       );
 
   PickingTask copy({
@@ -125,7 +130,7 @@ class PickingTask extends ChangeNotifier {
         customOptions: customOptions ?? this.customOptions,
       );
 
-  //Functions
+  //PickingTask
   void update(PickingTask pickingTask) {
     id = pickingTask.id;
     erpId = pickingTask.erpId;
@@ -139,6 +144,54 @@ class PickingTask extends ChangeNotifier {
     originDocumentType = pickingTask.originDocumentType;
     destinationDocumentType = pickingTask.destinationDocumentType;
     customOptions = pickingTask.customOptions;
+
+    if (document == null) {
+      setNewDocument();
+    }
+
+    notifyListeners();
+  }
+
+  //Document
+  void setNewDocument() {
+    document = Document(
+      id: Guid.newGuid,
+      documentType: destinationDocumentType,
+      name: destinationDocumentType.name,
+      lines: [],
+    );
+    notifyListeners();
+  }
+
+  //DocumentLines
+  void clearDocumentLines() {
+    if (document!.lines.isNotEmpty) {
+      document!.lines.clear();
+    }
+    notifyListeners();
+  }
+
+  //Entity
+  void setEntity(Entity entity) {
+    final bool hasChanged = !Helper.isEntityEqual(entity, document!.entity);
+    if (!hasChanged) {
+      return;
+    }
+
+    clearDocumentLines();
+
+    document!.entity = entity;
+    document!.address = entity.addresses != null && entity.addresses!.isNotEmpty
+        ? entity.addresses![0]
+        : null;
+
+    notifyListeners();
+  }
+
+  //Source Documents
+  void setSourceDocuments(List<Document> sourceDocuments) {
+    this.sourceDocuments.clear();
+    this.sourceDocuments.addAll(sourceDocuments);
     notifyListeners();
   }
 }

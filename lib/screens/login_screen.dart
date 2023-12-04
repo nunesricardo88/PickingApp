@@ -390,7 +390,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding:
+                    const EdgeInsets.only(top: 2.0, bottom: 5.0, right: 5.0),
                 child: Align(
                   alignment: Alignment.bottomRight,
                   child: Text(
@@ -443,6 +444,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
+            contentPadding: const EdgeInsets.only(left: 5.0, right: 5.0),
             title: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
             content: !_isOnline
                 ? const Text(

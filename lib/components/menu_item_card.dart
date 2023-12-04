@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/screens/picking_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
-import 'package:n6picking_flutterapp/utilities/page_transitions.dart';
 import 'package:provider/provider.dart';
 
 class MenuItemCard extends StatefulWidget {

@@ -1,4 +1,5 @@
 import 'package:n6picking_flutterapp/models/user_model.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
 
 mixin ApiEndPoint {
@@ -41,5 +42,12 @@ mixin ApiEndPoint {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
     final String lastSyncDateStr = lastSyncDate.toIso8601String();
     return '$baseUrlPath/Product/getAll/lastSyncDate=$lastSyncDateStr';
+  }
+
+  //Entities
+  static String getEntitiesByType(EntityType entityType) {
+    final int entityTypeInt = entityType.index;
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Entity/getByType/entityType=$entityTypeInt';
   }
 }

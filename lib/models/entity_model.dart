@@ -1,5 +1,10 @@
+import 'dart:convert';
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/address_model.dart';
+import 'package:n6picking_flutterapp/services/api_endpoint.dart';
+import 'package:n6picking_flutterapp/services/networking.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin EntityFields {
   static final List<String> allValues = [
@@ -24,10 +29,10 @@ mixin EntityFields {
 class Entity {
   Guid id;
   String erpId;
-  String entityType;
-  String number;
+  EntityType entityType;
+  int number;
   String name;
-  String facility;
+  int facility;
   List<Address>? addresses;
 
   Entity({
@@ -43,12 +48,33 @@ class Entity {
   factory Entity.fromJson(Map<String, dynamic> json) => Entity(
         id: Guid(json[EntityFields.id] as String),
         erpId: json[EntityFields.erpId] as String,
-        entityType: json[EntityFields.entityType] as String,
-        number: json[EntityFields.number] as String,
+        entityType: EntityType.values[json[EntityFields.entityType] as int],
+        number: json[EntityFields.number] as int,
         name: json[EntityFields.name] as String,
-        facility: json[EntityFields.facility] as String,
+        facility: json[EntityFields.facility] as int,
         addresses: (json[EntityFields.addresses] as List<dynamic>)
             .map((e) => Address.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
+}
+
+mixin EntityApi {
+  static Future<List<Entity>> getByType(EntityType entityType) async {
+    List<Entity> entitiesList = [];
+    final String url = ApiEndPoint.getEntitiesByType(entityType);
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final Iterable l = jsonBody['result'] as Iterable;
+
+      entitiesList = List<Entity>.from(
+        l.map((model) => Entity.fromJson(model as Map<String, dynamic>)),
+      );
+    }
+
+    return entitiesList;
+  }
 }

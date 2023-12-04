@@ -43,7 +43,8 @@ class ApiConnection {
         lastConnection: json[ApiConnectionFields.lastConnection] == null
             ? null
             : DateTime.parse(
-                json[ApiConnectionFields.lastConnection] as String),
+                json[ApiConnectionFields.lastConnection] as String,
+              ),
       );
 
   Map<String, Object?> toJson() => {

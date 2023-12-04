@@ -28,22 +28,22 @@ mixin DocumentFields {
 
 class Document {
   Guid id;
-  String erpId;
+  String? erpId;
   DocumentType documentType;
-  String number;
+  int? number;
   String name;
-  Entity entity;
-  Address address;
-  List<DocumentLine> lines;
+  Entity? entity;
+  Address? address;
+  List<DocumentLine> lines = [];
 
   Document({
     required this.id,
-    required this.erpId,
+    this.erpId,
     required this.documentType,
-    required this.number,
+    this.number,
     required this.name,
-    required this.entity,
-    required this.address,
+    this.entity,
+    this.address,
     required this.lines,
   });
 
@@ -53,14 +53,16 @@ class Document {
         documentType: DocumentType.fromJson(
           json[DocumentFields.documentType] as Map<String, dynamic>,
         ),
-        number: json[DocumentFields.number] as String,
+        number: json[DocumentFields.number] as int?,
         name: json[DocumentFields.name] as String,
         entity: Entity.fromJson(
           json[DocumentFields.entity] as Map<String, dynamic>,
         ),
-        address: Address.fromJson(
-          json[DocumentFields.address] as Map<String, dynamic>,
-        ),
+        address: json[DocumentFields.address] == null
+            ? null
+            : Address.fromJson(
+                json[DocumentFields.address] as Map<String, dynamic>,
+              ),
         lines: (json[DocumentFields.lines] as List<dynamic>)
             .map((e) => DocumentLine.fromJson(e as Map<String, dynamic>))
             .toList(),

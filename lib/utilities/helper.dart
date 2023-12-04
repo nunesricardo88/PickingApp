@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
@@ -81,5 +82,40 @@ mixin Helper {
       },
     );
     return result;
+  }
+
+  static bool isEntityEqual(Entity? entity1, Entity? entity2) {
+    bool equals = false;
+    if (entity1 == null && entity2 == null) {
+      equals = true;
+    } else {
+      if (entity1 == null) {
+        equals = false;
+      } else if (entity2 == null) {
+        equals = false;
+      } else if (entity1.erpId == entity2.erpId &&
+          entity1.entityType == entity2.entityType) {
+        equals = true;
+      } else {
+        equals = false;
+      }
+    }
+    return equals;
+  }
+
+  static Future<List<Entity>> getEntitySuggestions(
+    List<Entity> entityList,
+    String query,
+  ) async {
+    if (query.isEmpty) {
+      return [];
+    }
+    final List<Entity> entities = entityList.where((entity) {
+      final String queryLower = query.toLowerCase();
+      final String entityNameLower = entity.name.toLowerCase();
+      return entityNameLower.contains(queryLower);
+    }).toList();
+
+    return entities;
   }
 }

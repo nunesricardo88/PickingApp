@@ -154,7 +154,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
               ),
             ],
           ),
-          elevation: 10,
+          elevation: 10.0,
           actions: [
             Row(
               children: [

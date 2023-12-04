@@ -97,13 +97,14 @@ class _ConfigureEndpointScreenState extends State<ConfigureEndpointScreen> {
                     : isOnline
                         ? 'Online'
                         : 'Offline',
-                style: kContentTextStyle.copyWith(
-                  color: isCheckingServerConnection || firstSetup
-                      ? kPrimaryColorDark
-                      : isOnline
-                          ? kAccentColor
-                          : kErrorColor,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      color: isCheckingServerConnection || firstSetup
+                          ? kPrimaryColorDark
+                          : isOnline
+                              ? kAccentColor
+                              : kErrorColor,
+                      fontWeight: FontWeight.w500,
+                    ),
               ),
             ],
           ),

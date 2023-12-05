@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:n6picking_flutterapp/components/document_line_tile.dart';
+import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
+import 'package:n6picking_flutterapp/screens/source_documents_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_entity_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:provider/provider.dart';
@@ -21,19 +24,57 @@ class _PickingScreenState extends State<PickingScreen> {
   late TextEditingController _entityController;
   late TextEditingController _sourceDocumentsController;
 
+  //ScrollControllers
+  late ScrollController _listScrollController;
+
+  //FutureBuilder
+  List<Widget> documentLineTiles = [];
+  Column documentTilesList = const Column();
+  late Future listBuild;
+  List<DocumentLine> documentLineList = [];
+
   @override
   void initState() {
     super.initState();
 
     _entityController = TextEditingController();
     _sourceDocumentsController = TextEditingController();
+    _listScrollController = ScrollController();
+    getDocumentLinesList();
   }
 
   @override
   void dispose() {
     _entityController.dispose();
     _sourceDocumentsController.dispose();
+    _listScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> getDocumentLinesList() async {
+    listBuild = getDocumentLines();
+  }
+
+  Future<bool> getDocumentLines() async {
+    documentLineTiles.clear();
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    documentLineList = pickingTask.document!.lines;
+
+    for (final DocumentLine documentLine in documentLineList) {
+      documentLineTiles.add(
+        DocumentLineTile(
+          documentLine: documentLine,
+        ),
+      );
+    }
+
+    documentTilesList = Column(
+      children: documentLineTiles,
+    );
+
+    return true;
   }
 
   Future<void> _onBarcodeScanned(String barcode) async {
@@ -66,8 +107,24 @@ class _PickingScreenState extends State<PickingScreen> {
   }
 
   Future<void> _onChangeSourceDocuments() async {
-    //TODO
-    await Future.delayed(const Duration(seconds: 1));
+    await Navigator.pushNamed(context, SourceDocumentsScreen.id);
+    setState(() {
+      _sourceDocumentsController.text = getSourceDocumentsName();
+    });
+    getDocumentLinesList();
+  }
+
+  String getSourceDocumentsName() {
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    if (pickingTask.sourceDocuments.isEmpty) {
+      return '';
+    } else {
+      return pickingTask.sourceDocuments
+          .map((document) => document.documentType.name)
+          .join(', ');
+    }
   }
 
   Future<void> exitPickingScreen() async {
@@ -175,11 +232,56 @@ class _PickingScreenState extends State<PickingScreen> {
                     ],
                   ),
                 ),
-                const Expanded(
+                Expanded(
                   child: ColoredBox(
                     color: kWhiteBackground,
-                    child: Center(
-                      child: Text('Linhas'),
+                    child: FutureBuilder(
+                      future: listBuild,
+                      builder: (BuildContext context, AsyncSnapshot snapshot) {
+                        List<Widget> noSnapshotWidgets;
+                        if (snapshot.hasData) {
+                          return SingleChildScrollView(
+                            child: documentTilesList,
+                          );
+                        } else if (snapshot.hasError &&
+                            snapshot.connectionState !=
+                                ConnectionState.waiting) {
+                          noSnapshotWidgets = [
+                            Icon(
+                              Icons.error_outline,
+                              color: kPrimaryColor.withOpacity(0.6),
+                              size: 50,
+                            ),
+                            const SizedBox(
+                              height: 20.0,
+                            ),
+                            Text(
+                              snapshot.error.toString(),
+                              textAlign: TextAlign.center,
+                            ),
+                          ];
+                        } else {
+                          noSnapshotWidgets = [
+                            const Center(
+                              child: CircularProgressIndicator(
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          ];
+                        }
+
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: noSnapshotWidgets,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

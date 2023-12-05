@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/address_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/services/api_endpoint.dart';
+import 'package:n6picking_flutterapp/services/networking.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin DocumentFields {
   static final List<String> allValues = [
@@ -10,7 +15,6 @@ mixin DocumentFields {
     erpId,
     documentType,
     number,
-    name,
     entity,
     address,
     lines,
@@ -20,7 +24,6 @@ mixin DocumentFields {
   static const String erpId = 'erpId';
   static const String documentType = 'documentType';
   static const String number = 'number';
-  static const String name = 'name';
   static const String entity = 'entity';
   static const String address = 'address';
   static const String lines = 'lines';
@@ -31,7 +34,6 @@ class Document {
   String? erpId;
   DocumentType documentType;
   int? number;
-  String name;
   Entity? entity;
   Address? address;
   List<DocumentLine> lines = [];
@@ -41,7 +43,6 @@ class Document {
     this.erpId,
     required this.documentType,
     this.number,
-    required this.name,
     this.entity,
     this.address,
     required this.lines,
@@ -54,7 +55,6 @@ class Document {
           json[DocumentFields.documentType] as Map<String, dynamic>,
         ),
         number: json[DocumentFields.number] as int?,
-        name: json[DocumentFields.name] as String,
         entity: Entity.fromJson(
           json[DocumentFields.entity] as Map<String, dynamic>,
         ),
@@ -67,4 +67,30 @@ class Document {
             .map((e) => DocumentLine.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
+}
+
+mixin DocumentApi {
+  static Future<List<Document>> getPendingDocuments(
+    PickingTaskType pickingTaskType,
+    EntityType? entityType,
+    Entity? entity,
+  ) async {
+    List<Document> documentsList = [];
+    final String url =
+        ApiEndPoint.getPendingDocuments(pickingTaskType, entityType, entity);
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final Iterable l = jsonBody['result'] as Iterable;
+
+      documentsList = List<Document>.from(
+        l.map((model) => Document.fromJson(model as Map<String, dynamic>)),
+      );
+    }
+
+    return documentsList;
+  }
 }

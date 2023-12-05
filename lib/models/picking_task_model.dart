@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
+import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
@@ -54,6 +55,7 @@ class PickingTask extends ChangeNotifier {
   DocumentType destinationDocumentType;
   String customOptions;
   List<Document> sourceDocuments;
+  List<Document> sourceDocumentsTemp;
 
   PickingTask({
     required this.id,
@@ -69,6 +71,7 @@ class PickingTask extends ChangeNotifier {
     required this.destinationDocumentType,
     required this.customOptions,
     this.sourceDocuments = const [],
+    this.sourceDocumentsTemp = const [],
   });
 
   factory PickingTask.fromJson(Map<String, dynamic> json) => PickingTask(
@@ -98,6 +101,7 @@ class PickingTask extends ChangeNotifier {
         ),
         customOptions: json[PickingTaskFields.customOptions] as String,
         sourceDocuments: [],
+        sourceDocumentsTemp: [],
       );
 
   PickingTask copy({
@@ -113,6 +117,8 @@ class PickingTask extends ChangeNotifier {
     DocumentType? originDocumentType,
     DocumentType? destinationDocumentType,
     String? customOptions,
+    List<Document>? sourceDocuments,
+    List<Document>? sourceDocumentsTemp,
   }) =>
       PickingTask(
         id: id ?? this.id,
@@ -128,6 +134,8 @@ class PickingTask extends ChangeNotifier {
         destinationDocumentType:
             destinationDocumentType ?? this.destinationDocumentType,
         customOptions: customOptions ?? this.customOptions,
+        sourceDocuments: sourceDocuments ?? this.sourceDocuments,
+        sourceDocumentsTemp: sourceDocumentsTemp ?? this.sourceDocumentsTemp,
       );
 
   //PickingTask
@@ -144,6 +152,8 @@ class PickingTask extends ChangeNotifier {
     originDocumentType = pickingTask.originDocumentType;
     destinationDocumentType = pickingTask.destinationDocumentType;
     customOptions = pickingTask.customOptions;
+    sourceDocuments = pickingTask.sourceDocuments;
+    sourceDocumentsTemp = pickingTask.sourceDocumentsTemp;
 
     if (document == null) {
       setNewDocument();
@@ -157,7 +167,6 @@ class PickingTask extends ChangeNotifier {
     document = Document(
       id: Guid.newGuid,
       documentType: destinationDocumentType,
-      name: destinationDocumentType.name,
       lines: [],
     );
     notifyListeners();
@@ -172,7 +181,7 @@ class PickingTask extends ChangeNotifier {
   }
 
   //Entity
-  void setEntity(Entity entity) {
+  void setEntity(Entity? entity) {
     final bool hasChanged = !Helper.isEntityEqual(entity, document!.entity);
     if (!hasChanged) {
       return;
@@ -181,9 +190,15 @@ class PickingTask extends ChangeNotifier {
     clearDocumentLines();
 
     document!.entity = entity;
-    document!.address = entity.addresses != null && entity.addresses!.isNotEmpty
-        ? entity.addresses![0]
-        : null;
+
+    if (entity != null) {
+      document!.address =
+          entity.addresses != null && entity.addresses!.isNotEmpty
+              ? entity.addresses![0]
+              : null;
+    } else {
+      document!.address = null;
+    }
 
     notifyListeners();
   }
@@ -192,6 +207,45 @@ class PickingTask extends ChangeNotifier {
   void setSourceDocuments(List<Document> sourceDocuments) {
     this.sourceDocuments.clear();
     this.sourceDocuments.addAll(sourceDocuments);
+    notifyListeners();
+  }
+
+  void addToSourceDocumentTempList(Document sourceDocument) {
+    sourceDocumentsTemp.add(sourceDocument);
+    notifyListeners();
+  }
+
+  void removeFromSourceDocumentTempList(Document sourceDocument) {
+    sourceDocumentsTemp
+        .removeWhere((document) => document.id == sourceDocument.id);
+    notifyListeners();
+  }
+
+  void clearTemporaryBoList() {
+    sourceDocumentsTemp = [];
+    notifyListeners();
+  }
+
+  void saveSourceDocumentsFromTemp() {
+    sourceDocuments.clear();
+    clearDocumentLines();
+    sourceDocuments = List.from(sourceDocumentsTemp);
+    sourceDocumentsTemp = [];
+
+    //copy all documentLines from sourceDocuments to Document
+    for (final Document sourceDocument in sourceDocuments) {
+      for (final DocumentLine sourceDocumentLine in sourceDocument.lines) {
+        final DocumentLine documentLine = sourceDocumentLine.copyWith(
+          id: Guid.newGuid,
+          erpId: '',
+          documentId: document!.id,
+          linkedLineErpId: sourceDocumentLine.erpId,
+          order: 0,
+        );
+        document!.lines.add(documentLine);
+      }
+    }
+
     notifyListeners();
   }
 }

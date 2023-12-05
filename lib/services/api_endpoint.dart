@@ -1,3 +1,4 @@
+import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
@@ -49,5 +50,20 @@ mixin ApiEndPoint {
     final int entityTypeInt = entityType.index;
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
     return '$baseUrlPath/Entity/getByType/entityType=$entityTypeInt';
+  }
+
+  //Document
+  static String getPendingDocuments(
+    PickingTaskType pickingTaskType,
+    EntityType? entityType,
+    Entity? entity,
+  ) {
+    final int pickingTaskTypeInt = pickingTaskType.index;
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    if (entity == null) {
+      return '$baseUrlPath/Document/getPendingDocuments/pickingTaskType=$pickingTaskTypeInt';
+    } else {
+      return '$baseUrlPath/Document/getPendingDocuments/pickingTaskType=$pickingTaskTypeInt&entityType=${entityType!.index}&entityId=${entity.erpId.trim()}';
+    }
   }
 }

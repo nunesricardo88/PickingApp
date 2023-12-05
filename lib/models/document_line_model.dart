@@ -14,6 +14,7 @@ mixin DocumentLineFields {
     batch,
     quantity,
     quantityPicked,
+    quantityToPick,
     unit,
     alternativeQuantity,
     alternativeQuantityPicked,
@@ -31,6 +32,7 @@ mixin DocumentLineFields {
   static const String batch = 'batch';
   static const String quantity = 'quantity';
   static const String quantityPicked = 'quantityPicked';
+  static const String quantityToPick = 'quantityToPick';
   static const String unit = 'unit';
   static const String alternativeQuantity = 'alternativeQuantity';
   static const String alternativeQuantityPicked = 'alternativeQuantityPicked';
@@ -46,9 +48,10 @@ class DocumentLine {
   String? linkedLineErpId;
   int order;
   Product product;
-  Batch batch;
+  Batch? batch;
   double quantity;
   double quantityPicked;
+  double quantityToPick;
   String unit;
   double alternativeQuantity;
   double alternativeQuantityPicked;
@@ -63,15 +66,16 @@ class DocumentLine {
     required this.linkedLineErpId,
     required this.order,
     required this.product,
-    required this.batch,
+    this.batch,
     required this.quantity,
     required this.quantityPicked,
+    required this.quantityToPick,
     required this.unit,
     required this.alternativeQuantity,
     required this.alternativeQuantityPicked,
     required this.alternativeUnit,
-    required this.originLocation,
-    required this.destinationLocation,
+    this.originLocation,
+    this.destinationLocation,
   });
 
   factory DocumentLine.fromJson(Map<String, dynamic> json) => DocumentLine(
@@ -83,23 +87,32 @@ class DocumentLine {
         product: Product.fromJson(
           json[DocumentLineFields.product] as Map<String, dynamic>,
         ),
-        batch: Batch.fromJson(
-          json[DocumentLineFields.batch] as Map<String, dynamic>,
-        ),
+        batch: json[DocumentLineFields.batch] == null
+            ? null
+            : Batch.fromJson(
+                json[DocumentLineFields.batch] as Map<String, dynamic>,
+              ),
         quantity: json[DocumentLineFields.quantity] as double,
         quantityPicked: json[DocumentLineFields.quantityPicked] as double,
+        quantityToPick: json[DocumentLineFields.quantityToPick] as double,
         unit: json[DocumentLineFields.unit] as String,
         alternativeQuantity:
             json[DocumentLineFields.alternativeQuantity] as double,
         alternativeQuantityPicked:
             json[DocumentLineFields.alternativeQuantityPicked] as double,
         alternativeUnit: json[DocumentLineFields.alternativeUnit] as String,
-        originLocation: Location.fromJson(
-          json[DocumentLineFields.originLocation] as Map<String, dynamic>,
-        ),
-        destinationLocation: Location.fromJson(
-          json[DocumentLineFields.destinationLocation] as Map<String, dynamic>,
-        ),
+        originLocation: json[DocumentLineFields.originLocation] == null
+            ? null
+            : Location.fromJson(
+                json[DocumentLineFields.originLocation] as Map<String, dynamic>,
+              ),
+        destinationLocation:
+            json[DocumentLineFields.destinationLocation] == null
+                ? null
+                : Location.fromJson(
+                    json[DocumentLineFields.destinationLocation]
+                        as Map<String, dynamic>,
+                  ),
       );
 
   DocumentLine copyWith({
@@ -112,6 +125,7 @@ class DocumentLine {
     Batch? batch,
     double? quantity,
     double? quantityPicked,
+    double? quantityToPick,
     String? unit,
     double? alternativeQuantity,
     double? alternativeQuantityPicked,
@@ -129,6 +143,7 @@ class DocumentLine {
       batch: batch ?? this.batch,
       quantity: quantity ?? this.quantity,
       quantityPicked: quantityPicked ?? this.quantityPicked,
+      quantityToPick: quantityToPick ?? this.quantityToPick,
       unit: unit ?? this.unit,
       alternativeQuantity: alternativeQuantity ?? this.alternativeQuantity,
       alternativeQuantityPicked:

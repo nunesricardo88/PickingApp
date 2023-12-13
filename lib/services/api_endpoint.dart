@@ -1,4 +1,6 @@
+import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
@@ -52,18 +54,43 @@ mixin ApiEndPoint {
     return '$baseUrlPath/Entity/getByType/entityType=$entityTypeInt';
   }
 
-  //Document
-  static String getPendingDocuments(
-    PickingTaskType pickingTaskType,
-    EntityType? entityType,
-    Entity? entity,
-  ) {
-    final int pickingTaskTypeInt = pickingTaskType.index;
+  static String getSelfEntity() {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Entity/getSelf';
+  }
+
+  //Document
+  static String getPendingDocuments(PickingTask task) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    final String pickingTaskErpId = task.erpId.trim();
+    final EntityType entityType = task.document!.documentType.entityType;
+    final Entity? entity = task.document!.entity;
+
     if (entity == null) {
-      return '$baseUrlPath/Document/getPendingDocuments/pickingTaskType=$pickingTaskTypeInt';
+      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId';
     } else {
-      return '$baseUrlPath/Document/getPendingDocuments/pickingTaskType=$pickingTaskTypeInt&entityType=${entityType!.index}&entityId=${entity.erpId.trim()}';
+      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityId=${entity.erpId.trim()}';
     }
+  }
+
+  //DocumentLines
+  static String getLinesFromDocuments(
+    PickingTask task,
+    List<Document> documents,
+  ) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    final String pickingTaskErpId = task.erpId.trim();
+    final StringBuffer sb = StringBuffer();
+    sb.write(
+      '$baseUrlPath/DocumentLine/getFromDocuments/taskErpId=$pickingTaskErpId&documentErpIds=',
+    );
+    for (int i = 0; i < documents.length; i++) {
+      final Document document = documents[i];
+      sb.write(Uri.encodeComponent(document.erpId!.trim()));
+      if (i < documents.length - 1) {
+        sb.write(',');
+      }
+    }
+    return sb.toString();
   }
 }

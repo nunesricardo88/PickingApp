@@ -19,6 +19,7 @@ class SourceDocumentsScreen extends StatefulWidget {
 
 class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   List<Document> documentList = [];
+  List<Document> selectedDocuments = [];
   bool haveDocumentsSelected = false;
   List<Widget> documentTiles = [];
   Column documentTilesList = const Column();
@@ -38,16 +39,21 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     documentTiles.clear();
     final pickingTask = Provider.of<PickingTask>(context, listen: false);
 
-    documentList = await DocumentApi.getPendingDocuments(
-      pickingTask.taskType,
-      pickingTask.document!.entity!.entityType,
-      pickingTask.document!.entity,
-    );
+    selectedDocuments = getSelectedSourceDocumentsFromTask();
+    documentList = await DocumentApi.getPendingDocuments(pickingTask);
 
     for (final Document document in documentList) {
+      bool isSelected = false;
+      for (final Document selectedDocument in selectedDocuments) {
+        if (selectedDocument.erpId == document.erpId) {
+          isSelected = true;
+        }
+      }
       documentTiles.add(
         SourceDocumentTile(
           sourceDocument: document,
+          isSelected: isSelected,
+          onChange: toggleDocumentSelection,
         ),
       );
     }
@@ -57,6 +63,38 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     );
 
     return true;
+  }
+
+  bool toggleDocumentSelection(bool select, Document document) {
+    if (select) {
+      addToSelectedDocuments(document);
+    } else {
+      removeFromSelectedDocuments(document);
+    }
+    setState(() {});
+    return true;
+  }
+
+  List<Document> getSelectedSourceDocumentsFromTask() {
+    final pickingTask = Provider.of<PickingTask>(context, listen: false);
+    return List.from(pickingTask.sourceDocuments);
+  }
+
+  void clearSelectedDocuments() {
+    selectedDocuments = [];
+  }
+
+  void addToSelectedDocuments(Document document) {
+    selectedDocuments.add(document);
+  }
+
+  void removeFromSelectedDocuments(Document document) {
+    for (final Document selectedDocument in selectedDocuments) {
+      if (selectedDocument.erpId == document.erpId) {
+        selectedDocuments.remove(selectedDocument);
+        break;
+      }
+    }
   }
 
   Future<void> setEntityFromSourceDocument(
@@ -105,7 +143,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
           actions: [
             IconButton(
               onPressed: () async {
-                pickingTask.saveSourceDocumentsFromTemp();
+                await pickingTask.setSourceDocumentsFromList(selectedDocuments);
                 Navigator.pop(context, true);
               },
               icon: const FaIcon(
@@ -176,7 +214,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                     : '(sem atribuição)',
                 mainButton: MaterialButton(
                   onPressed: () async {
-                    pickingTask.clearTemporaryBoList();
+                    clearSelectedDocuments();
                     pickingTask.setEntity(null);
                     await getDocumentsList();
                   },

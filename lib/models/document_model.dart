@@ -5,9 +5,9 @@ import 'package:n6picking_flutterapp/models/address_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
-import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin DocumentFields {
   static final List<String> allValues = [
@@ -16,7 +16,8 @@ mixin DocumentFields {
     documentType,
     number,
     entity,
-    address,
+    loadingAddress,
+    unloadingAddress,
     lines,
   ];
 
@@ -25,7 +26,8 @@ mixin DocumentFields {
   static const String documentType = 'documentType';
   static const String number = 'number';
   static const String entity = 'entity';
-  static const String address = 'address';
+  static const String loadingAddress = 'loadingAddress';
+  static const String unloadingAddress = 'unloadingAddress';
   static const String lines = 'lines';
 }
 
@@ -35,7 +37,8 @@ class Document {
   DocumentType documentType;
   int? number;
   Entity? entity;
-  Address? address;
+  Address? loadingAddress;
+  Address? unloadingAddress;
   List<DocumentLine> lines = [];
 
   Document({
@@ -44,7 +47,8 @@ class Document {
     required this.documentType,
     this.number,
     this.entity,
-    this.address,
+    this.loadingAddress,
+    this.unloadingAddress,
     required this.lines,
   });
 
@@ -58,26 +62,43 @@ class Document {
         entity: Entity.fromJson(
           json[DocumentFields.entity] as Map<String, dynamic>,
         ),
-        address: json[DocumentFields.address] == null
+        loadingAddress: json[DocumentFields.loadingAddress] == null
             ? null
             : Address.fromJson(
-                json[DocumentFields.address] as Map<String, dynamic>,
+                json[DocumentFields.loadingAddress] as Map<String, dynamic>,
               ),
-        lines: (json[DocumentFields.lines] as List<dynamic>)
-            .map((e) => DocumentLine.fromJson(e as Map<String, dynamic>))
-            .toList(),
+        unloadingAddress: json[DocumentFields.unloadingAddress] == null
+            ? null
+            : Address.fromJson(
+                json[DocumentFields.unloadingAddress] as Map<String, dynamic>,
+              ),
+        lines: json[DocumentFields.lines] == null
+            ? []
+            : List<DocumentLine>.from(
+                (json[DocumentFields.lines] as List<dynamic>).map(
+                  (model) => DocumentLine.fromJson(
+                    model as Map<String, dynamic>,
+                  ),
+                ),
+              ),
       );
+
+  Map<String, dynamic> toJson() => {
+        DocumentFields.id: id.toString(),
+        DocumentFields.erpId: erpId,
+        DocumentFields.documentType: documentType.toJson(),
+        DocumentFields.number: number,
+        DocumentFields.entity: entity?.toJson(),
+        DocumentFields.loadingAddress: loadingAddress?.toJson(),
+        DocumentFields.unloadingAddress: unloadingAddress?.toJson(),
+        DocumentFields.lines: List<dynamic>.from(lines.map((model) => model)),
+      };
 }
 
 mixin DocumentApi {
-  static Future<List<Document>> getPendingDocuments(
-    PickingTaskType pickingTaskType,
-    EntityType? entityType,
-    Entity? entity,
-  ) async {
+  static Future<List<Document>> getPendingDocuments(PickingTask task) async {
     List<Document> documentsList = [];
-    final String url =
-        ApiEndPoint.getPendingDocuments(pickingTaskType, entityType, entity);
+    final String url = ApiEndPoint.getPendingDocuments(task);
     final NetworkHelper networkHelper = NetworkHelper(url);
     final http.Response response =
         await networkHelper.getData(seconds: 10) as http.Response;

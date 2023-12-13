@@ -40,4 +40,12 @@ class DocumentType {
         entityType:
             EntityType.values[json[DocumentTypeFields.entityType] as int],
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        DocumentTypeFields.id: id.toString(),
+        DocumentTypeFields.erpId: erpId,
+        DocumentTypeFields.number: number,
+        DocumentTypeFields.name: name,
+        DocumentTypeFields.entityType: entityType.index,
+      };
 }

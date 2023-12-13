@@ -56,6 +56,16 @@ class Entity {
             .map((e) => Address.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        EntityFields.id: id.toString(),
+        EntityFields.erpId: erpId,
+        EntityFields.entityType: entityType.index,
+        EntityFields.number: number,
+        EntityFields.name: name,
+        EntityFields.facility: facility,
+        EntityFields.addresses: addresses!.map((e) => e.toJson()).toList(),
+      };
 }
 
 mixin EntityApi {
@@ -76,5 +86,21 @@ mixin EntityApi {
     }
 
     return entitiesList;
+  }
+
+  static Future<Entity?> getSelfEntity() async {
+    final String url = ApiEndPoint.getSelfEntity();
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> result =
+          jsonBody['result'] as Map<String, dynamic>;
+
+      return Entity.fromJson(result);
+    }
+    return null;
   }
 }

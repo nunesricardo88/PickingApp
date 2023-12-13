@@ -19,6 +19,17 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
     super.initState();
   }
 
+  Color getTileBackgroundColor() {
+    return kWhiteBackground;
+  }
+
+  BorderSide getTileBorder() {
+    return BorderSide(
+      color: kPrimaryColor.withOpacity(0.1),
+      width: 1.5,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -29,9 +40,16 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
           //Get the picking task screen
         },
         child: Card(
-          color: kWhiteBackground,
+          color: getTileBackgroundColor(),
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            side: getTileBorder(),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -42,27 +60,32 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                       Text(
                         widget.documentLine.product.designation,
                         overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(
                         height: 5.0,
                       ),
-                      Opacity(
-                        opacity: 0.6,
-                        child: Text(
-                          widget.documentLine.product.reference,
-                        ),
+                      Text(
+                        widget.documentLine.product.reference,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      Visibility(
-                        visible: widget.documentLine.batch != null,
-                        child: const SizedBox(
+                      if (widget.documentLine.batch != null)
+                        const SizedBox(
                           height: 5.0,
                         ),
-                      ),
                       if (widget.documentLine.batch != null)
                         Opacity(
                           opacity: 0.5,
                           child: Text(
-                            'Lote: ${widget.documentLine.batch!.batchNumber}',
+                            'Lote: ${widget.documentLine.batch?.batchNumber}',
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.bodySmall!.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
                           ),
                         ),
                       const SizedBox(
@@ -80,22 +103,26 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                           Helper.removeDecimalZeroFormat(
                             widget.documentLine.quantity,
                           ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
-                        Visibility(
-                          visible: widget.documentLine.linkedLineErpId != null,
-                          child: Row(
+                        if (widget.documentLine.linkedLineErpId != null)
+                          Row(
                             children: [
                               Text(
                                 Helper.removeDecimalZeroFormat(
                                   widget.documentLine.quantityPicked,
                                 ),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                               Text(
                                 ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.quantityToPick)}',
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
-                        ),
                       ],
                     ),
                   ],

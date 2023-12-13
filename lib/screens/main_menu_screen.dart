@@ -131,7 +131,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: kWhiteBackground,
+        backgroundColor: kPrimaryColorLight,
         appBar: AppBar(
           backgroundColor: kPrimaryColorDark,
           automaticallyImplyLeading: false,
@@ -186,104 +186,101 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: _pullRefresh,
-          child: LoadingOverlay(
-            isLoading: showSpinner,
-            child: _updatingProductList
-                ? const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(
-                        child: CircularProgressIndicator(
-                          color: kPrimaryColor,
+        body: LoadingOverlay(
+          isLoading: showSpinner,
+          child: _updatingProductList
+              ? const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(
+                      child: CircularProgressIndicator(
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20.0,
+                    ),
+                    Text(
+                      'A sincronizar a lista de produtos...',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                )
+              : _updatingPickingTasks
+                  ? const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: CircularProgressIndicator(
+                            color: kPrimaryColor,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 20.0,
-                      ),
-                      Text(
-                        'A sincronizar a lista de produtos...',
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  )
-                : _updatingPickingTasks
-                    ? const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Center(
-                            child: CircularProgressIndicator(
-                              color: kPrimaryColor,
-                            ),
-                          ),
-                          SizedBox(
-                            height: 20.0,
-                          ),
-                          Text(
-                            'A carregar o menu...',
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: FutureBuilder(
-                              future: menuBuild,
-                              builder: (context, snapshot) {
-                                List<Widget> noSnapshotWidgets;
-                                if (snapshot.hasData) {
-                                  return SingleChildScrollView(
-                                    child: menuItemCardsList,
-                                  );
-                                } else if (snapshot.hasError &&
-                                    snapshot.connectionState !=
-                                        ConnectionState.waiting) {
-                                  noSnapshotWidgets = [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: kPrimaryColor.withOpacity(0.6),
-                                      size: 60,
-                                    ),
-                                    const SizedBox(
-                                      height: 20.0,
-                                    ),
-                                    Text(
-                                      snapshot.error.toString(),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ];
-                                } else {
-                                  noSnapshotWidgets = [
-                                    const Center(
-                                      child: CircularProgressIndicator(
-                                        color: kPrimaryColor,
-                                      ),
-                                    ),
-                                  ];
-                                }
-
-                                return Column(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: noSnapshotWidgets,
-                                      ),
-                                    ),
-                                  ],
+                        SizedBox(
+                          height: 20.0,
+                        ),
+                        Text(
+                          'A carregar o menu...',
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: FutureBuilder(
+                            future: menuBuild,
+                            builder: (context, snapshot) {
+                              List<Widget> noSnapshotWidgets;
+                              if (snapshot.hasData) {
+                                return SingleChildScrollView(
+                                  child: menuItemCardsList,
                                 );
-                              },
-                            ),
+                              } else if (snapshot.hasError &&
+                                  snapshot.connectionState !=
+                                      ConnectionState.waiting) {
+                                noSnapshotWidgets = [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: kPrimaryColor.withOpacity(0.6),
+                                    size: 60,
+                                  ),
+                                  const SizedBox(
+                                    height: 20.0,
+                                  ),
+                                  Text(
+                                    snapshot.error.toString(),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ];
+                              } else {
+                                noSnapshotWidgets = [
+                                  const Center(
+                                    child: CircularProgressIndicator(
+                                      color: kPrimaryColor,
+                                    ),
+                                  ),
+                                ];
+                              }
+
+                              return Column(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: noSnapshotWidgets,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-                        ],
-                      ),
-          ),
+                        ),
+                      ],
+                    ),
         ),
       ),
     );

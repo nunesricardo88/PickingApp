@@ -27,6 +27,20 @@ class _MenuItemCardState extends State<MenuItemCard> {
     return true;
   }
 
+  String getPendingItemsText() {
+    final String description = widget.pickingTask.description;
+    if (int.tryParse(description) != null) {
+      final int pendingItems = int.parse(description);
+      if (pendingItems == 1) {
+        return '$pendingItems item pendente';
+      } else {
+        return '$pendingItems itens pendentes';
+      }
+    } else {
+      return description;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -37,7 +51,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
       shadowColor: Colors.transparent,
       child: MaterialButton(
         elevation: 0.0,
-        color: kWhiteBackground,
+        color: kPrimaryColorLight,
         height: 75.0,
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
         onPressed: () async {
@@ -67,7 +81,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   height: 5.0,
                 ),
                 Text(
-                  widget.pickingTask.description,
+                  getPendingItemsText(),
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 16.0,

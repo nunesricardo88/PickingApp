@@ -9,6 +9,7 @@ mixin AddressFields {
     postalCode,
     city,
     country,
+    isDefault,
   ];
 
   static const String id = 'id';
@@ -18,6 +19,7 @@ mixin AddressFields {
   static const String postalCode = 'postalCode';
   static const String city = 'city';
   static const String country = 'country';
+  static const String isDefault = 'isDefault';
 }
 
 class Address {
@@ -28,6 +30,7 @@ class Address {
   String postalCode;
   String city;
   String country;
+  bool isDefault;
 
   Address({
     required this.id,
@@ -37,6 +40,7 @@ class Address {
     required this.postalCode,
     required this.city,
     required this.country,
+    this.isDefault = false,
   });
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
@@ -47,5 +51,17 @@ class Address {
         postalCode: json[AddressFields.postalCode] as String,
         city: json[AddressFields.city] as String,
         country: json[AddressFields.country] as String,
+        isDefault: json[AddressFields.isDefault] == 1,
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        AddressFields.id: id.toString(),
+        AddressFields.erpId: erpId,
+        AddressFields.name: name,
+        AddressFields.street: street,
+        AddressFields.postalCode: postalCode,
+        AddressFields.city: city,
+        AddressFields.country: country,
+        AddressFields.isDefault: isDefault ? 1 : 0,
+      };
 }

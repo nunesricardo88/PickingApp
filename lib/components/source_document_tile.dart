@@ -2,21 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
-import 'package:n6picking_flutterapp/utilities/helper.dart';
-import 'package:provider/provider.dart';
 
 class SourceDocumentTile extends StatefulWidget {
   final Document sourceDocument;
-  const SourceDocumentTile({required this.sourceDocument});
+  final bool isSelected;
+  final Function onChange;
+  const SourceDocumentTile({
+    required this.sourceDocument,
+    required this.isSelected,
+    required this.onChange,
+  });
 
   @override
   _SourceDocumentTileState createState() => _SourceDocumentTileState();
 }
 
 class _SourceDocumentTileState extends State<SourceDocumentTile> {
+  bool _isSelected = false;
+
   @override
   void initState() {
     super.initState();
+    setup();
+  }
+
+  void setup() {
+    _isSelected = widget.isSelected;
   }
 
   Future<void> setEntityFromSourceDocument(PickingTask pickingTask) async {
@@ -26,28 +37,19 @@ class _SourceDocumentTileState extends State<SourceDocumentTile> {
 
   @override
   Widget build(BuildContext context) {
-    final PickingTask pickingTask = context.watch<PickingTask>();
     return Column(
       children: [
         CheckboxListTile(
           dense: true,
           controlAffinity: ListTileControlAffinity.leading,
-          value: Helper.isContainedInSourceDocumentTempList(
-            pickingTask,
-            widget.sourceDocument,
-          ),
+          value: _isSelected,
           onChanged: (value) async {
             final bool selected = value!;
-            if (selected && pickingTask.document!.entity == null) {
-              await setEntityFromSourceDocument(pickingTask);
-            }
-            if (selected) {
-              pickingTask.addToSourceDocumentTempList(widget.sourceDocument);
-            } else {
-              pickingTask
-                  .removeFromSourceDocumentTempList(widget.sourceDocument);
-            }
-            setState(() {});
+            // ignore: avoid_dynamic_calls
+            widget.onChange(selected, widget.sourceDocument);
+            setState(() {
+              _isSelected = selected;
+            });
           },
           contentPadding: const EdgeInsets.only(
             left: 10.0,

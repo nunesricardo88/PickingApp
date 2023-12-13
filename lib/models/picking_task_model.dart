@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
+import 'package:n6picking_flutterapp/models/address_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
@@ -10,6 +12,7 @@ import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
+import 'package:n6picking_flutterapp/utilities/system.dart';
 
 mixin PickingTaskFields {
   static final List<String> allValues = [
@@ -20,7 +23,7 @@ mixin PickingTaskFields {
     group,
     name,
     description,
-    taskType,
+    stockMovement,
     document,
     originDocumentType,
     destinationDocumentType,
@@ -34,7 +37,7 @@ mixin PickingTaskFields {
   static const String group = 'group';
   static const String name = 'name';
   static const String description = 'description';
-  static const String taskType = 'taskType';
+  static const String stockMovement = 'stockMovement';
   static const String document = 'document';
   static const String originDocumentType = 'originDocumentType';
   static const String destinationDocumentType = 'destinationDocumentType';
@@ -49,13 +52,12 @@ class PickingTask extends ChangeNotifier {
   String group;
   String name;
   String description;
-  PickingTaskType taskType;
+  StockMovement stockMovement;
   Document? document;
   DocumentType? originDocumentType;
   DocumentType destinationDocumentType;
   String customOptions;
   List<Document> sourceDocuments;
-  List<Document> sourceDocumentsTemp;
 
   PickingTask({
     required this.id,
@@ -65,13 +67,12 @@ class PickingTask extends ChangeNotifier {
     required this.group,
     required this.name,
     required this.description,
-    required this.taskType,
+    required this.stockMovement,
     this.document,
     this.originDocumentType,
     required this.destinationDocumentType,
     required this.customOptions,
     this.sourceDocuments = const [],
-    this.sourceDocumentsTemp = const [],
   });
 
   factory PickingTask.fromJson(Map<String, dynamic> json) => PickingTask(
@@ -82,8 +83,8 @@ class PickingTask extends ChangeNotifier {
         group: json[PickingTaskFields.group] as String,
         name: json[PickingTaskFields.name] as String,
         description: json[PickingTaskFields.description] as String,
-        taskType:
-            PickingTaskType.values[json[PickingTaskFields.taskType] as int],
+        stockMovement:
+            StockMovement.values[json[PickingTaskFields.stockMovement] as int],
         document: json[PickingTaskFields.document] == null
             ? null
             : Document.fromJson(
@@ -101,7 +102,6 @@ class PickingTask extends ChangeNotifier {
         ),
         customOptions: json[PickingTaskFields.customOptions] as String,
         sourceDocuments: [],
-        sourceDocumentsTemp: [],
       );
 
   PickingTask copy({
@@ -112,13 +112,12 @@ class PickingTask extends ChangeNotifier {
     String? group,
     String? name,
     String? description,
-    PickingTaskType? taskType,
+    StockMovement? stockMovement,
     Document? document,
     DocumentType? originDocumentType,
     DocumentType? destinationDocumentType,
     String? customOptions,
     List<Document>? sourceDocuments,
-    List<Document>? sourceDocumentsTemp,
   }) =>
       PickingTask(
         id: id ?? this.id,
@@ -128,14 +127,13 @@ class PickingTask extends ChangeNotifier {
         group: group ?? this.group,
         name: name ?? this.name,
         description: description ?? this.description,
-        taskType: taskType ?? this.taskType,
+        stockMovement: stockMovement ?? this.stockMovement,
         document: document ?? this.document,
         originDocumentType: originDocumentType ?? this.originDocumentType,
         destinationDocumentType:
             destinationDocumentType ?? this.destinationDocumentType,
         customOptions: customOptions ?? this.customOptions,
         sourceDocuments: sourceDocuments ?? this.sourceDocuments,
-        sourceDocumentsTemp: sourceDocumentsTemp ?? this.sourceDocumentsTemp,
       );
 
   //PickingTask
@@ -147,13 +145,12 @@ class PickingTask extends ChangeNotifier {
     group = pickingTask.group;
     name = pickingTask.name;
     description = pickingTask.description;
-    taskType = pickingTask.taskType;
+    stockMovement = pickingTask.stockMovement;
     document = pickingTask.document;
     originDocumentType = pickingTask.originDocumentType;
     destinationDocumentType = pickingTask.destinationDocumentType;
     customOptions = pickingTask.customOptions;
     sourceDocuments = pickingTask.sourceDocuments;
-    sourceDocumentsTemp = pickingTask.sourceDocumentsTemp;
 
     if (document == null) {
       setNewDocument();
@@ -186,67 +183,89 @@ class PickingTask extends ChangeNotifier {
     if (!hasChanged) {
       return;
     }
-
     clearDocumentLines();
 
     document!.entity = entity;
 
-    if (entity != null) {
-      document!.address =
-          entity.addresses != null && entity.addresses!.isNotEmpty
-              ? entity.addresses![0]
-              : null;
-    } else {
-      document!.address = null;
+    setDefaultAddresses();
+
+    notifyListeners();
+  }
+
+  //Addresses
+  void setDefaultAddresses() {
+    if (document == null || document!.entity == null) {
+      return;
     }
 
-    notifyListeners();
+    final List<Address> ownAddresses = System.instance.selfEntity!.addresses!;
+    final List<Address> entityAddresses = document!.entity!.addresses!;
+
+    switch (stockMovement) {
+      case StockMovement.none:
+        document!.loadingAddress = null;
+        document!.unloadingAddress = null;
+        break;
+      case StockMovement.outbound:
+        document!.loadingAddress =
+            ownAddresses.firstWhereOrNull((element) => element.isDefault);
+        document!.unloadingAddress =
+            entityAddresses.firstWhereOrNull((element) => element.isDefault);
+        break;
+      case StockMovement.inbound:
+        document!.loadingAddress =
+            entityAddresses.firstWhereOrNull((element) => element.isDefault);
+        document!.unloadingAddress =
+            ownAddresses.firstWhereOrNull((element) => element.isDefault);
+        break;
+      case StockMovement.transfer:
+      case StockMovement.inventory:
+        document!.loadingAddress =
+            ownAddresses.firstWhereOrNull((element) => element.isDefault);
+        document!.unloadingAddress =
+            ownAddresses.firstWhereOrNull((element) => element.isDefault);
+    }
   }
 
-  //Source Documents
-  void setSourceDocuments(List<Document> sourceDocuments) {
-    this.sourceDocuments.clear();
-    this.sourceDocuments.addAll(sourceDocuments);
-    notifyListeners();
-  }
+  //SourceDocuments
+  Future<void> setSourceDocumentsFromList(
+    List<Document> sourceDocumentsList,
+  ) async {
+    //Get the DocumentLines for picking
+    final List<DocumentLine> documentLines =
+        await DocumentLineApi.getFromDocuments(
+      this,
+      sourceDocumentsList,
+    );
 
-  void addToSourceDocumentTempList(Document sourceDocument) {
-    sourceDocumentsTemp.add(sourceDocument);
-    notifyListeners();
-  }
-
-  void removeFromSourceDocumentTempList(Document sourceDocument) {
-    sourceDocumentsTemp
-        .removeWhere((document) => document.id == sourceDocument.id);
-    notifyListeners();
-  }
-
-  void clearTemporaryBoList() {
-    sourceDocumentsTemp = [];
-    notifyListeners();
-  }
-
-  void saveSourceDocumentsFromTemp() {
+    //Set the DocumentLines to the SourceDocuments
+    for (final Document sourceDocument in sourceDocumentsList) {
+      final List<DocumentLine> sourceDocumentLines = [];
+      for (final DocumentLine documentLine in documentLines) {
+        if (documentLine.documentErpId == sourceDocument.erpId) {
+          sourceDocumentLines.add(documentLine);
+        }
+      }
+      sourceDocument.lines = sourceDocumentLines;
+    }
     sourceDocuments.clear();
-    clearDocumentLines();
-    sourceDocuments = List.from(sourceDocumentsTemp);
-    sourceDocumentsTemp = [];
+    sourceDocuments = List.from(sourceDocumentsList);
 
-    //copy all documentLines from sourceDocuments to Document
+    //Set the DocumentLines to the Document for picking
+    setDocumentLinesFromSourceDocuments();
+
+    notifyListeners();
+  }
+
+  void setDocumentLinesFromSourceDocuments() {
+    document!.lines = [];
+    final List<DocumentLine> documentLines = [];
     for (final Document sourceDocument in sourceDocuments) {
       for (final DocumentLine sourceDocumentLine in sourceDocument.lines) {
-        final DocumentLine documentLine = sourceDocumentLine.copyWith(
-          id: Guid.newGuid,
-          erpId: '',
-          documentId: document!.id,
-          linkedLineErpId: sourceDocumentLine.erpId,
-          order: 0,
-        );
-        document!.lines.add(documentLine);
+        documentLines.add(sourceDocumentLine);
       }
     }
-
-    notifyListeners();
+    document!.lines = documentLines;
   }
 }
 

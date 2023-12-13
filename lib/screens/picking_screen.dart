@@ -121,9 +121,25 @@ class _PickingScreenState extends State<PickingScreen> {
     if (pickingTask.sourceDocuments.isEmpty) {
       return '';
     } else {
-      return pickingTask.sourceDocuments
-          .map((document) => document.documentType.name)
-          .join(', ');
+      if (pickingTask.sourceDocuments.length == 1) {
+        final StringBuffer sb = StringBuffer();
+        sb.write(pickingTask.sourceDocuments.first.documentType.name);
+        sb.write(' nº ');
+        sb.write(pickingTask.sourceDocuments.first.number.toString());
+        return sb.toString();
+      } else {
+        final StringBuffer sb = StringBuffer();
+        sb.write(pickingTask.sourceDocuments.first.documentType.name);
+        sb.write(' (');
+        for (int i = 0; i < pickingTask.sourceDocuments.length; i++) {
+          sb.write(pickingTask.sourceDocuments[i].number.toString());
+          if (i < pickingTask.sourceDocuments.length - 1) {
+            sb.write(', ');
+          }
+        }
+        sb.write(')');
+        return sb.toString();
+      }
     }
   }
 

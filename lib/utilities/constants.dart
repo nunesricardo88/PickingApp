@@ -113,16 +113,12 @@ enum License {
   greenkinetics,
 }
 
-enum PickingTaskType {
-  nenhuma,
-  expedicao,
-  rececao,
-  producao,
-  consumo,
-  transferencia,
-  devolucao,
-  inventario,
-  outros,
+enum StockMovement {
+  none,
+  outbound,
+  inbound,
+  transfer,
+  inventory,
 }
 
 enum EntityType {
@@ -160,7 +156,7 @@ const kSearchFieldInputDecoration = InputDecoration(
 );
 
 const kPickTextFieldsInputDecoration = InputDecoration(
-  contentPadding: EdgeInsets.zero,
+  contentPadding: EdgeInsets.only(right: 10.0),
   border: OutlineInputBorder(
     borderSide: BorderSide(
       color: kPrimaryColorDark,

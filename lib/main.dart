@@ -35,7 +35,7 @@ class N6Picking extends StatelessWidget {
             group: '',
             name: '',
             description: '',
-            taskType: PickingTaskType.nenhuma,
+            stockMovement: StockMovement.none,
             destinationDocumentType: DocumentType(
               id: Guid.newGuid,
               erpId: '',

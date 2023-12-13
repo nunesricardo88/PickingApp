@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/database/api_connection_table.dart';
 import 'package:n6picking_flutterapp/models/api_connection_model.dart';
 import 'package:n6picking_flutterapp/models/api_response.dart';
+import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
@@ -14,6 +15,7 @@ class System {
 
   User? activeUser;
   License activeLicense = License.nenhuma;
+  Entity? selfEntity;
   ApiConnection? apiConnection;
   List<int>? appVersion;
   List<int>? apiVersion;
@@ -137,6 +139,8 @@ class System {
       final Map<String, dynamic> userJson =
           jsonBody['result'] as Map<String, dynamic>;
       activeUser = User.fromJson(userJson);
+
+      selfEntity = await EntityApi.getSelfEntity();
     } else {
       activeUser = null;
     }

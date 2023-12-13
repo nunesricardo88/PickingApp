@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
-import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
@@ -119,15 +117,5 @@ mixin Helper {
     }).toList();
 
     return entities;
-  }
-
-  static bool isContainedInSourceDocumentTempList(
-    PickingTask pickingTask,
-    Document sourceDocument,
-  ) {
-    final List<Document> sourceDocumentsTemp =
-        pickingTask.sourceDocumentsTemp.toList();
-
-    return sourceDocumentsTemp.contains(sourceDocument);
   }
 }

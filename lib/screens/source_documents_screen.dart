@@ -112,7 +112,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
       canPop: false,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: kPrimaryColorLight,
+        backgroundColor: kGreyBackground,
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: Row(

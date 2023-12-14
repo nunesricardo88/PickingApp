@@ -78,9 +78,10 @@ class _SourceEntityScreenState extends State<SourceEntityScreen> {
       canPop: false,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: kPrimaryColorLight,
+        backgroundColor: kGreyBackground,
         appBar: AppBar(
           automaticallyImplyLeading: false,
+          backgroundColor: kPrimaryColor,
           title: Row(
             children: [
               GestureDetector(
@@ -105,7 +106,6 @@ class _SourceEntityScreenState extends State<SourceEntityScreen> {
             ],
           ),
           elevation: 10,
-          backgroundColor: kPrimaryColor,
         ),
         body: Column(
           children: [

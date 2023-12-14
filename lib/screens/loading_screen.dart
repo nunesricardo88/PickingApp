@@ -18,7 +18,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSplashScreen.withScreenFunction(
-      backgroundColor: kPrimaryColorLight,
+      backgroundColor: kGreyBackground,
       splash: 'images/logo_n6logistics.png',
       screenFunction: () async {
         await System.instance.initialize();

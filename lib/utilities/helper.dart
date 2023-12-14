@@ -34,7 +34,7 @@ mixin Helper {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: kWhiteBackground,
+          surfaceTintColor: kWhiteBackground,
           title: Text(title),
           content: Text(message),
           actions: <Widget>[
@@ -60,6 +60,7 @@ mixin Helper {
       context: context,
       builder: (context) {
         return AlertDialog(
+          surfaceTintColor: kWhiteBackground,
           title: Text(title),
           content: Text(question),
           actions: <Widget>[

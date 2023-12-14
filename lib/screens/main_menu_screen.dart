@@ -131,9 +131,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: kPrimaryColorLight,
+        backgroundColor: kGreyBackground,
         appBar: AppBar(
-          backgroundColor: kPrimaryColorDark,
+          backgroundColor: kPrimaryColor,
           automaticallyImplyLeading: false,
           title: Row(
             children: [

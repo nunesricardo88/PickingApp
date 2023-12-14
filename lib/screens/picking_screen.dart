@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
+import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_tile.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/screens/source_documents_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_entity_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 import 'package:provider/provider.dart';
 
 class PickingScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class PickingScreen extends StatefulWidget {
 
 class _PickingScreenState extends State<PickingScreen> {
   bool showSpinner = false;
+  bool isSavingToServer = false;
 
   //TextControllers
   late TextEditingController _entityController;
@@ -30,13 +33,16 @@ class _PickingScreenState extends State<PickingScreen> {
   //FutureBuilder
   List<Widget> documentLineTiles = [];
   Column documentTilesList = const Column();
-  late Future listBuild;
+  late Future<bool> listBuild;
   List<DocumentLine> documentLineList = [];
 
   @override
   void initState() {
     super.initState();
+    setup();
+  }
 
+  void setup() {
     _entityController = TextEditingController();
     _sourceDocumentsController = TextEditingController();
     _listScrollController = ScrollController();
@@ -77,15 +83,22 @@ class _PickingScreenState extends State<PickingScreen> {
     return true;
   }
 
-  Future<void> _onBarcodeScanned(String barcode) async {
+  Future<TaskOperation> _onBarcodeScanned(String barcode) async {
     setState(() {
       showSpinner = true;
     });
+    debugPrint(barcode);
     //TODO
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
       showSpinner = false;
     });
+
+    return TaskOperation(
+      success: true,
+      errorCode: ErrorCode.none,
+      message: '',
+    );
   }
 
   Future<void> _onChangeEntity() async {
@@ -154,9 +167,9 @@ class _PickingScreenState extends State<PickingScreen> {
       canPop: false,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: kWhiteBackground,
+        backgroundColor: kGreyBackground,
         appBar: AppBar(
-          backgroundColor: kPrimaryColorDark,
+          backgroundColor: kPrimaryColor,
           automaticallyImplyLeading: false,
           title: Row(
             children: [
@@ -192,14 +205,6 @@ class _PickingScreenState extends State<PickingScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(15.0),
-                  decoration: const BoxDecoration(
-                    color: kPrimaryColorLight,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: kPrimaryColorDark,
-                      ),
-                    ),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -248,62 +253,122 @@ class _PickingScreenState extends State<PickingScreen> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                  ),
+                  child: Divider(
+                    height: 2.0,
+                    color: kPrimaryColor.withOpacity(0.2),
+                  ),
+                ),
+                const SizedBox(
+                  height: 10.0,
+                ),
                 Expanded(
-                  child: ColoredBox(
-                    color: kWhiteBackground,
-                    child: FutureBuilder(
-                      future: listBuild,
-                      builder: (BuildContext context, AsyncSnapshot snapshot) {
-                        List<Widget> noSnapshotWidgets;
-                        if (snapshot.hasData) {
-                          return SingleChildScrollView(
-                            child: documentTilesList,
-                          );
-                        } else if (snapshot.hasError &&
-                            snapshot.connectionState !=
-                                ConnectionState.waiting) {
-                          noSnapshotWidgets = [
-                            Icon(
-                              Icons.error_outline,
-                              color: kPrimaryColor.withOpacity(0.6),
-                              size: 50,
+                  child: FutureBuilder(
+                    future: listBuild,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      List<Widget> noSnapshotWidgets;
+                      if (snapshot.hasData) {
+                        return documentTilesList.children.isEmpty
+                            ? Column(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 75.0,
+                                          ),
+                                          child: Center(
+                                            child: Icon(
+                                              FontAwesomeIcons.barsStaggered,
+                                              color: kPrimaryColor
+                                                  .withOpacity(0.15),
+                                              size: 150,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : SingleChildScrollView(
+                                child: documentTilesList,
+                              );
+                      } else if (snapshot.hasError &&
+                          snapshot.connectionState != ConnectionState.waiting) {
+                        noSnapshotWidgets = [
+                          Icon(
+                            Icons.error_outline,
+                            color: kPrimaryColor.withOpacity(0.6),
+                            size: 50,
+                          ),
+                          const SizedBox(
+                            height: 20.0,
+                          ),
+                          Text(
+                            snapshot.error.toString(),
+                            textAlign: TextAlign.center,
+                          ),
+                        ];
+                      } else {
+                        noSnapshotWidgets = [
+                          const Center(
+                            child: CircularProgressIndicator(
+                              color: kPrimaryColor,
                             ),
-                            const SizedBox(
-                              height: 20.0,
-                            ),
-                            Text(
-                              snapshot.error.toString(),
-                              textAlign: TextAlign.center,
-                            ),
-                          ];
-                        } else {
-                          noSnapshotWidgets = [
-                            const Center(
-                              child: CircularProgressIndicator(
-                                color: kPrimaryColor,
-                              ),
-                            ),
-                          ];
-                        }
+                          ),
+                        ];
+                      }
 
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: noSnapshotWidgets,
-                              ),
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: noSnapshotWidgets,
                             ),
-                          ],
-                        );
-                      },
-                    ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          shape: const CircleBorder(),
+          onPressed: () async {
+            //Wait 1 second to simulate a request
+            setState(() {
+              isSavingToServer = true;
+            });
+            await Future.delayed(const Duration(seconds: 1));
+            setState(() {
+              isSavingToServer = false;
+            });
+          },
+          backgroundColor: kPrimaryColor,
+          child: FaIcon(
+            isSavingToServer
+                ? FontAwesomeIcons.hourglass
+                : FontAwesomeIcons.solidFloppyDisk,
+            color: kPrimaryColorLight,
+          ),
+        ),
+        bottomNavigationBar: AppBottomBar(
+          onBarcodeScan: _onBarcodeScanned,
         ),
       ),
     );

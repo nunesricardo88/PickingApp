@@ -45,13 +45,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
   Widget build(BuildContext context) {
     return Card(
       color: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(0.0),
       ),
       shadowColor: Colors.transparent,
       child: MaterialButton(
         elevation: 0.0,
-        color: kPrimaryColorLight,
         height: 75.0,
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
         onPressed: () async {

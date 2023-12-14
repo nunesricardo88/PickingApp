@@ -13,6 +13,7 @@ import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
+import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 
 mixin PickingTaskFields {
   static final List<String> allValues = [
@@ -175,6 +176,26 @@ class PickingTask extends ChangeNotifier {
       document!.lines.clear();
     }
     notifyListeners();
+  }
+
+  TaskOperation changeDocumentLineQuantity(
+    DocumentLine documentLine,
+    double quantity,
+  ) {
+    final TaskOperation taskOperation = TaskOperation(
+      success: true,
+      errorCode: ErrorCode.none,
+      message: '',
+    );
+
+    //Check if the quantity is valid
+
+    //Check if the quantity is valid for the stock movement
+
+    //Check if the quantity is valid for the document line
+
+    notifyListeners();
+    return taskOperation;
   }
 
   //Entity

@@ -1,16 +1,58 @@
 import 'package:flutter/material.dart';
 
+//Enums
+enum License {
+  nenhuma,
+  rialto,
+  rrmp,
+  greenkinetics,
+}
+
+enum StockMovement {
+  none,
+  outbound,
+  inbound,
+  transfer,
+  inventory,
+}
+
+enum EntityType {
+  cliente,
+  fornecedor,
+  interno,
+}
+
+enum BarCodeType {
+  ean8,
+  upcA,
+  ean13,
+  itf14,
+  dossier,
+  gs1,
+  sscc,
+  ref,
+  location,
+}
+
+enum ErrorCode {
+  none,
+  quantityBelowZero,
+  quantityAboveMax,
+  insuficientStock,
+}
+
 //Colors
 const kPrimaryColor = Color.fromRGBO(96, 125, 139, 1);
 const kPrimaryColorDark = Color.fromRGBO(69, 90, 100, 1);
-const kPrimaryColorLight = Color.fromRGBO(207, 216, 220, 1);
+const kPrimaryColorLight = Color.fromRGBO(237, 246, 250, 1);
 const kIconColor = Color.fromRGBO(250, 250, 250, 1);
 const kAccentColor = Color.fromRGBO(0, 150, 136, 1);
 const kPrimaryTextColor = Color.fromRGBO(33, 33, 33, 1);
 const kSecondaryTextColor = Color.fromRGBO(117, 117, 117, 1);
 const kDividerColor = Color.fromRGBO(189, 189, 189, 1);
 const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
-const kWhiteBackground = Color.fromRGBO(250, 250, 250, 1);
+const kWhiteBackground = Color.fromRGBO(255, 255, 255, 1);
+const kGreyBackground = Color.fromRGBO(230, 230, 230, 1);
 
 //Themes
 final ThemeData defaultThemeData = ThemeData(
@@ -105,40 +147,6 @@ final ThemeData defaultThemeData = ThemeData(
   ),
 );
 
-//Enums
-enum License {
-  nenhuma,
-  rialto,
-  rrmp,
-  greenkinetics,
-}
-
-enum StockMovement {
-  none,
-  outbound,
-  inbound,
-  transfer,
-  inventory,
-}
-
-enum EntityType {
-  cliente,
-  fornecedor,
-  interno,
-}
-
-enum BarCodeType {
-  ean8,
-  upcA,
-  ean13,
-  itf14,
-  dossier,
-  gs1,
-  sscc,
-  ref,
-  location,
-}
-
 class AlwaysDisabledFocusNode extends FocusNode {
   @override
   bool get hasFocus => false;
@@ -158,6 +166,11 @@ const kSearchFieldInputDecoration = InputDecoration(
 const kPickTextFieldsInputDecoration = InputDecoration(
   contentPadding: EdgeInsets.only(right: 10.0),
   border: OutlineInputBorder(
+    borderSide: BorderSide(
+      color: kPrimaryColorDark,
+    ),
+  ),
+  focusedBorder: OutlineInputBorder(
     borderSide: BorderSide(
       color: kPrimaryColorDark,
     ),

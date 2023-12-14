@@ -93,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          surfaceTintColor: kWhiteBackground,
           content: ConfigureEndpointScreen(),
         );
       },
@@ -137,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrimaryColorLight,
+      backgroundColor: kGreyBackground,
       body: LoadingOverlay(
         color: Colors.black.withOpacity(0.7),
         isLoading: showSpinner,
@@ -255,6 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 decoration: pinPutDecoration.copyWith(
                                   borderRadius: BorderRadius.circular(16.0),
+                                  color: kWhiteBackground,
                                 ),
                                 child: GestureDetector(
                                   onTap: () async {
@@ -272,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     setState(() => showSpinner = false);
                                   },
                                   child: Row(
-                                    children: <Widget>[
+                                    children: [
                                       Flexible(
                                         child: TextField(
                                           enabled: false,
@@ -320,6 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const EdgeInsets.symmetric(vertical: 15.0),
                                 decoration: pinPutDecoration.copyWith(
                                   borderRadius: BorderRadius.circular(16.0),
+                                  color: kWhiteBackground,
                                 ),
                                 child: TextField(
                                   focusNode: _pinPutFocusNode,
@@ -427,6 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
+            surfaceTintColor: kWhiteBackground,
             title: const Text('Login Falhou'),
             content:
                 const Text('Os campos de utilizador e pin são obrigatórios.'),
@@ -444,6 +448,7 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (context) {
           return AlertDialog(
+            surfaceTintColor: kWhiteBackground,
             contentPadding: const EdgeInsets.only(left: 5.0, right: 5.0),
             title: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
             content: !_isOnline

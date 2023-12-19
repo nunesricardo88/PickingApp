@@ -27,7 +27,6 @@ class ProductDatabase {
     const textType = 'TEXT NOT NULL';
     const doubleType = 'REAL NOT NULL';
     const boolType = 'INTEGER NOT NULL';
-    //const intType = 'INTEGER NOT NULL';
 
     await db.execute(
       '''
@@ -37,11 +36,13 @@ class ProductDatabase {
     ${ProductFields.erpId} $textType,
     ${ProductFields.reference} $textType,
     ${ProductFields.designation} $textType,
+    ${ProductFields.barcode} $textType,
     ${ProductFields.unit} $textType,
     ${ProductFields.alternativeUnit} $textType,
     ${ProductFields.conversionFactor} $doubleType,
     ${ProductFields.isBatchTracked} $boolType,
-    ${ProductFields.isSerialNumberTracked} $boolType
+    ${ProductFields.isSerialNumberTracked} $boolType,
+    ${ProductFields.usaMolho} $boolType
     )
     ''',
     );
@@ -75,7 +76,7 @@ class ProductDatabase {
     );
 
     if (result.isNotEmpty) {
-      return Product.fromJson(result.first);
+      return Product.fromJsonDatabase(result.first);
     } else {
       return null;
     }
@@ -89,7 +90,7 @@ class ProductDatabase {
     );
 
     if (result.isNotEmpty) {
-      return result.map((json) => Product.fromJson(json)).toList();
+      return result.map((json) => Product.fromJsonDatabase(json)).toList();
     } else {
       return [];
     }
@@ -104,7 +105,7 @@ class ProductDatabase {
     );
 
     if (maps.isNotEmpty) {
-      return Product.fromJson(maps.first);
+      return Product.fromJsonDatabase(maps.first);
     } else {
       return null;
     }

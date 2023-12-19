@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
-import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 
 class CameraScreen extends StatefulWidget {
   static const String id = 'camera_screen';
@@ -11,7 +10,7 @@ class CameraScreen extends StatefulWidget {
     required this.onBarcodeScan,
   });
 
-  final Future<TaskOperation> Function(String) onBarcodeScan;
+  final Future<void> Function(String) onBarcodeScan;
 
   @override
   _CameraScreenState createState() => _CameraScreenState();

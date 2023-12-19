@@ -4,9 +4,10 @@ import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
-  static String removeDecimalZeroFormat(double n) {
+  static String removeDecimalZeroFormat(double n, {int decimalPlaces = 1}) {
     final RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
-    return n.toString().replaceAll(regex, '');
+    final String nString = n.toStringAsFixed(decimalPlaces);
+    return nString.replaceAll(regex, '');
   }
 
   static String getWordFromPosition(int position, String expression) {
@@ -23,6 +24,25 @@ mixin Helper {
 
     final resultJson = jsonDecode(result);
     return resultJson;
+  }
+
+  static BarCodeType getBarCodeType(String barcode) {
+    BarCodeType barCodeType;
+    if (barcode.isEmpty) {
+      barCodeType = BarCodeType.unknown;
+    } else if (barcode.startsWith('{')) {
+      barCodeType = BarCodeType.batch;
+    } else if (barcode.startsWith('C_')) {
+      barCodeType = BarCodeType.container;
+    } else if (barcode.startsWith('ALV')) {
+      barCodeType = BarCodeType.location;
+    } else if (barcode.startsWith('D_')) {
+      barCodeType = BarCodeType.document;
+    } else {
+      barCodeType = BarCodeType.product;
+    }
+
+    return barCodeType;
   }
 
   static Future<void> showMsg(

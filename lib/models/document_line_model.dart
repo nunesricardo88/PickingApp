@@ -58,11 +58,11 @@ mixin DocumentLineFields {
 
 class DocumentLine {
   Guid id;
-  String erpId;
+  String? erpId;
   Guid documentId;
   String? documentErpId;
   String? linkedLineErpId;
-  int order;
+  int? order;
   Product product;
   Batch? batch;
   double quantity;
@@ -80,11 +80,11 @@ class DocumentLine {
 
   DocumentLine({
     required this.id,
-    required this.erpId,
+    this.erpId,
     required this.documentId,
     this.documentErpId,
-    required this.linkedLineErpId,
-    required this.order,
+    this.linkedLineErpId,
+    this.order,
     required this.product,
     this.batch,
     required this.quantity,
@@ -103,12 +103,12 @@ class DocumentLine {
 
   factory DocumentLine.fromJson(Map<String, dynamic> json) => DocumentLine(
         id: Guid(json[DocumentLineFields.id] as String),
-        erpId: json[DocumentLineFields.erpId] as String,
+        erpId: json[DocumentLineFields.erpId] as String?,
         documentId: Guid(json[DocumentLineFields.documentId] as String),
         documentErpId: json[DocumentLineFields.documentErpId] as String?,
         linkedLineErpId: json[DocumentLineFields.linkedLineErpId] as String?,
-        order: json[DocumentLineFields.order] as int,
-        product: Product.fromJson(
+        order: json[DocumentLineFields.order] as int?,
+        product: Product.fromJsonAPI(
           json[DocumentLineFields.product] as Map<String, dynamic>,
         ),
         batch: json[DocumentLineFields.batch] == null
@@ -143,6 +143,29 @@ class DocumentLine {
                         as Map<String, dynamic>,
                   ),
       );
+
+  Map<String, dynamic> toJson() => {
+        DocumentLineFields.id: id.toString(),
+        DocumentLineFields.erpId: erpId,
+        DocumentLineFields.documentId: documentId.toString(),
+        DocumentLineFields.documentErpId: documentErpId,
+        DocumentLineFields.linkedLineErpId: linkedLineErpId,
+        DocumentLineFields.order: order,
+        DocumentLineFields.product: product.toJsonAPI(),
+        DocumentLineFields.batch: batch?.toJson(),
+        DocumentLineFields.quantity: quantity,
+        DocumentLineFields.quantityPicked: quantityPicked,
+        DocumentLineFields.quantityToPick: quantityToPick,
+        DocumentLineFields.totalQuantity: totalQuantity,
+        DocumentLineFields.unit: unit,
+        DocumentLineFields.alternativeQuantity: alternativeQuantity,
+        DocumentLineFields.alternativeQuantityPicked: alternativeQuantityPicked,
+        DocumentLineFields.alternativeQuantityToPick: alternativeQuantityToPick,
+        DocumentLineFields.alternativeTotalQuantity: alternativeTotalQuantity,
+        DocumentLineFields.alternativeUnit: alternativeUnit,
+        DocumentLineFields.originLocation: originLocation?.toJson(),
+        DocumentLineFields.destinationLocation: destinationLocation?.toJson(),
+      };
 
   DocumentLine copyWith({
     Guid? id,

@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/manual_barcode_box.dart';
 import 'package:n6picking_flutterapp/screens/camera_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
-import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 
 class AppBottomBar extends StatefulWidget {
   const AppBottomBar({
@@ -14,7 +13,7 @@ class AppBottomBar extends StatefulWidget {
 
   final FloatingActionButtonLocation fabLocation;
   final NotchedShape? shape;
-  final Future<TaskOperation> Function(String) onBarcodeScan;
+  final Future<void> Function(String) onBarcodeScan;
   @override
   _AppBottomBarState createState() => _AppBottomBarState();
 }
@@ -33,15 +32,46 @@ class _AppBottomBarState extends State<AppBottomBar> {
   Widget getLeftButton() {
     return Material(
       color: Colors.transparent,
-      child: IconButton(
-        icon: FaIcon(
-          FontAwesomeIcons.bars,
-          color: Theme.of(context).colorScheme.onPrimary,
-          size: 30.0,
+      surfaceTintColor: Colors.transparent,
+      child: MenuAnchor(
+        style: MenuStyle(
+          backgroundColor: MaterialStateColor.resolveWith(
+            (states) => kPrimaryColor,
+          ),
         ),
-        onPressed: () {
-          Scaffold.of(context).openDrawer();
+        builder:
+            (BuildContext context, MenuController controller, Widget? child) {
+          return IconButton(
+            icon: FaIcon(
+              FontAwesomeIcons.bars,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 30.0,
+            ),
+            onPressed: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+          );
         },
+        menuChildren: [
+          MenuItemButton(
+            leadingIcon: FaIcon(
+              FontAwesomeIcons.layerGroup,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 20.0,
+            ),
+            child: Text(
+              'Inserir molho',
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+            ),
+            onPressed: () async {},
+          ),
+        ],
       ),
     );
   }

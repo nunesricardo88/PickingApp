@@ -47,6 +47,26 @@ mixin ApiEndPoint {
     return '$baseUrlPath/Product/getAll/lastSyncDate=$lastSyncDateStr';
   }
 
+  //Batches
+  static String getBatchByReferenceAndBatchNumber(
+    String reference,
+    String batchNumber,
+  ) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Batch/getByReferenceAndBatchNumber/reference=$reference&batchNumber=$batchNumber';
+  }
+
+  static String getSplitBatches(
+    int noFl,
+    String reference,
+    double numMolhos,
+    double numBarras,
+    double compBarra,
+  ) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Batch/getSplitBatches/noFl=$noFl&reference=$reference&numMolhos=$numMolhos&numBarras=$numBarras&compBarra=$compBarra';
+  }
+
   //Entities
   static String getEntitiesByType(EntityType entityType) {
     final int entityTypeInt = entityType.index;
@@ -67,10 +87,22 @@ mixin ApiEndPoint {
     final Entity? entity = task.document!.entity;
 
     if (entity == null) {
-      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId';
+      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityErpId=null';
     } else {
-      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityId=${entity.erpId.trim()}';
+      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityErpId=${entity.erpId.trim()}';
     }
+  }
+
+  static String getPendingDocumentByBarcode(PickingTask task, String barcode) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    final String pickingTaskErpId = task.erpId.trim();
+    final EntityType entityType = task.document!.documentType.entityType;
+    return '$baseUrlPath/Document/getPendingDocumentByBarcode/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&barcode=$barcode';
+  }
+
+  static String postPickingTask() {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/PickingTask/post';
   }
 
   //DocumentLines
@@ -92,5 +124,21 @@ mixin ApiEndPoint {
       }
     }
     return sb.toString();
+  }
+
+  //Locations
+  static String getAllLocations() {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Location/getAll';
+  }
+
+  static String getLocationByErpId(String erpId) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Location/getByErpId/erpId=$erpId';
+  }
+
+  static String getLocationByParentErpId(String parentErpId) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Location/getByParentErpId/parentErpId=$parentErpId';
   }
 }

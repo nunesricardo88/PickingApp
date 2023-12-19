@@ -102,7 +102,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     Document sourceDocument,
   ) async {
     final Entity entity = sourceDocument.entity!;
-    pickingTask.setEntity(entity);
+    await pickingTask.setEntity(entity);
   }
 
   @override
@@ -215,7 +215,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                 mainButton: MaterialButton(
                   onPressed: () async {
                     clearSelectedDocuments();
-                    pickingTask.setEntity(null);
+                    await pickingTask.setEntity(null);
                     await getDocumentsList();
                   },
                   child: Text(

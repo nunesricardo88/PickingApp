@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/address_model.dart';
+import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
+import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
@@ -105,6 +108,19 @@ class PickingTask extends ChangeNotifier {
         sourceDocuments: [],
       );
 
+  Map<String, dynamic> toJson() => {
+        PickingTaskFields.id: id.toString(),
+        PickingTaskFields.erpId: erpId,
+        PickingTaskFields.accessId: accessId,
+        PickingTaskFields.userErpId: userErpId,
+        PickingTaskFields.group: group,
+        PickingTaskFields.name: name,
+        PickingTaskFields.description: description,
+        PickingTaskFields.stockMovement: stockMovement.index,
+        PickingTaskFields.document: document!.toJson(),
+        PickingTaskFields.customOptions: customOptions,
+      };
+
   PickingTask copy({
     Guid? id,
     String? erpId,
@@ -178,6 +194,29 @@ class PickingTask extends ChangeNotifier {
     notifyListeners();
   }
 
+  DocumentLine createDocumentLineByProduct({
+    required Product product,
+    Batch? batch,
+  }) {
+    return DocumentLine(
+      id: Guid.newGuid,
+      documentId: document!.id,
+      documentErpId: document!.erpId,
+      product: product,
+      quantity: 0,
+      quantityPicked: 0,
+      quantityToPick: 0,
+      totalQuantity: 0,
+      unit: product.unit,
+      alternativeQuantity: 0,
+      alternativeQuantityPicked: 0,
+      alternativeQuantityToPick: 0,
+      alternativeTotalQuantity: 0,
+      alternativeUnit: product.alternativeUnit,
+      batch: batch,
+    );
+  }
+
   TaskOperation changeDocumentLineQuantity(
     DocumentLine documentLine,
     double quantity,
@@ -188,18 +227,34 @@ class PickingTask extends ChangeNotifier {
       message: '',
     );
 
-    //Check if the quantity is valid
+    //TODO - Check if the quantity is valid
 
-    //Check if the quantity is valid for the stock movement
+    //TODO - Check if the quantity is valid for the stock movement
 
-    //Check if the quantity is valid for the document line
+    //TODO - Check if the quantity is valid for the document line
+
+    documentLine.quantity += quantity;
+
+    //Change all quantityFields of the documentLine
+    final DocumentLine? sourceDocumentLine =
+        getSourceDocumentLine(documentLine);
+    if (sourceDocumentLine != null) {
+      documentLine.quantityPicked =
+          sourceDocumentLine.quantityPicked + documentLine.quantity;
+    }
+    if (documentLine.product.conversionFactor != 0) {
+      documentLine.alternativeQuantity =
+          documentLine.quantity * documentLine.product.conversionFactor;
+      documentLine.alternativeQuantityPicked =
+          documentLine.quantityPicked * documentLine.product.conversionFactor;
+    }
 
     notifyListeners();
     return taskOperation;
   }
 
   //Entity
-  void setEntity(Entity? entity) {
+  Future<void> setEntity(Entity? entity) async {
     final bool hasChanged = !Helper.isEntityEqual(entity, document!.entity);
     if (!hasChanged) {
       return;
@@ -283,10 +338,115 @@ class PickingTask extends ChangeNotifier {
     final List<DocumentLine> documentLines = [];
     for (final Document sourceDocument in sourceDocuments) {
       for (final DocumentLine sourceDocumentLine in sourceDocument.lines) {
-        documentLines.add(sourceDocumentLine);
+        documentLines.add(
+          sourceDocumentLine.copyWith(
+            linkedLineErpId: sourceDocumentLine.erpId,
+          ),
+        );
       }
     }
     document!.lines = documentLines;
+  }
+
+  DocumentLine? getSourceDocumentLine(DocumentLine documentLine) {
+    DocumentLine? sourceDocumentLine;
+    for (final Document sourceDocument in sourceDocuments) {
+      sourceDocumentLine = sourceDocument.lines.firstWhereOrNull(
+        (element) => element.erpId == documentLine.erpId,
+      );
+      if (sourceDocumentLine != null) {
+        break;
+      }
+    }
+    return sourceDocumentLine;
+  }
+
+  //Send full path name separated by dots
+  dynamic getCustomOptionValue(String optionFullPath) {
+    dynamic optionValue;
+
+    return optionValue;
+  }
+
+  Future<TaskOperation> saveToServer() async {
+    try {
+      final TaskOperation taskOperation = TaskOperation(
+        success: true,
+        errorCode: ErrorCode.none,
+        message: '',
+      );
+
+      //Check if lines that need a batch have a batch
+      for (final DocumentLine documentLine in document!.lines) {
+        if (documentLine.product.isBatchTracked &&
+            documentLine.batch == null &&
+            documentLine.quantity > 0) {
+          taskOperation.success = false;
+          taskOperation.errorCode = ErrorCode.errorSavingDocument;
+          taskOperation.message = 'Há produtos sem o lote preenchido';
+          return taskOperation;
+        }
+      }
+
+      int lineOrder = 0;
+      for (final DocumentLine documentLine in document!.lines) {
+        if (documentLine.quantity > 0) {
+          lineOrder += 1000;
+          documentLine.order = lineOrder;
+        }
+      }
+
+      //Delete all documentLines with quantity = 0
+      document!.lines.removeWhere((element) => element.quantity <= 0);
+
+      //Clean not needed fields
+      userErpId = System.instance.activeUser!.erpId;
+      customOptions = '';
+      document!.number = 0;
+      document!.entity!.addresses = [];
+
+      final Map<String, dynamic> documentJsonBody = toJson();
+      String postPutUrl = '';
+      http.Response response;
+      final String jsonBody = json.encode(documentJsonBody);
+
+      final pattern = RegExp('.{1,800}');
+      pattern.allMatches(jsonBody).forEach((match) => print(match.group(0)));
+
+      postPutUrl = ApiEndPoint.postPickingTask();
+      final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
+      response = await networkHelper.postData(
+        json: jsonBody,
+        seconds: 30,
+      ) as http.Response;
+
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final result = responseBody['result'] as Map<String, dynamic>;
+      final int statusCode = result['statusCode'] as int;
+      final String message = result['message'] as String;
+
+      if (statusCode == 201 || statusCode == 200) {
+        return taskOperation;
+      } else {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.errorSavingDocument,
+          message: message,
+        );
+      }
+    } catch (e) {
+      return TaskOperation(
+        success: false,
+        errorCode: ErrorCode.errorSavingDocument,
+        message: 'Erro ao salvar o documento',
+      );
+    }
+  }
+
+  void clear() {
+    document = null;
+    sourceDocuments.clear();
+    notifyListeners();
   }
 }
 

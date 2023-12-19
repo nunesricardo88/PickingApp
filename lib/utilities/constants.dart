@@ -23,15 +23,12 @@ enum EntityType {
 }
 
 enum BarCodeType {
-  ean8,
-  upcA,
-  ean13,
-  itf14,
-  dossier,
-  gs1,
-  sscc,
-  ref,
+  unknown,
+  product,
+  batch,
+  container,
   location,
+  document,
 }
 
 enum ErrorCode {
@@ -39,6 +36,14 @@ enum ErrorCode {
   quantityBelowZero,
   quantityAboveMax,
   insuficientStock,
+  invalidBarcode,
+  barcodeNotFound,
+  documentNotFound,
+  documentNotSuitable,
+  locationNotFound,
+  errorSavingDocument,
+  productNotFound,
+  batchNotFound,
 }
 
 //Colors
@@ -180,6 +185,14 @@ const kPickTextFieldsInputDecoration = InputDecoration(
   ),
   filled: true,
   fillColor: kWhiteBackground,
+);
+
+const kLocationTextFieldInputDecoration = InputDecoration(
+  contentPadding: EdgeInsets.zero,
+  border: InputBorder.none,
+  labelStyle: TextStyle(
+    color: kPrimaryColor,
+  ),
 );
 
 BoxDecoration get pinPutDecoration {

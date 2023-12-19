@@ -25,10 +25,14 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: kWhiteBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5.0),
       ),
-      backgroundColor: kGreyBackground,
+      actionsPadding: const EdgeInsets.only(
+        right: 10.0,
+        bottom: 5.0,
+      ),
       content: BarcodeKeyboardListener(
         onBarcodeScanned: (barcode) async {
           setState(() {
@@ -61,7 +65,9 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
           },
           child: Text(
             'Cancelar',
-            style: Theme.of(context).textTheme.labelSmall,
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                  color: kPrimaryColor.withOpacity(0.8),
+                ),
           ),
         ),
         MaterialButton(
@@ -70,7 +76,10 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
           },
           child: Text(
             'Submeter',
-            style: Theme.of(context).textTheme.labelSmall,
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                  color: kPrimaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ),
       ],

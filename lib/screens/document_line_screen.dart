@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/calculator.dart';
 import 'package:n6picking_flutterapp/components/document_line_property_tile.dart';
+import 'package:n6picking_flutterapp/components/split_batches_dialog.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
@@ -13,7 +14,11 @@ import 'package:provider/provider.dart';
 
 class DocumentLineScreen extends StatefulWidget {
   final DocumentLine documentLine;
-  const DocumentLineScreen({required this.documentLine});
+  final Location? location;
+  const DocumentLineScreen({
+    required this.documentLine,
+    this.location,
+  });
 
   @override
   _DocumentLineScreenState createState() => _DocumentLineScreenState();
@@ -39,18 +44,29 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
+    if (widget.location != null &&
+        widget.documentLine.destinationLocation == null) {
+      widget.documentLine.destinationLocation = widget.location;
+    }
+
     final TaskOperation taskOperation = pickingTask.changeDocumentLineQuantity(
       widget.documentLine,
-      calculatedValue,
+      calculatedValue - widget.documentLine.quantity,
     );
 
     setState(() {});
     return taskOperation;
   }
 
-  void exit() {
-    Navigator.pop(context);
+  void exit(List<double>? value) {
+    if (value != null) {
+      Navigator.pop(context, value);
+    } else {
+      Navigator.pop(context);
+    }
   }
+
+  //TODO - Save a new barcode
 
   @override
   Widget build(BuildContext context) {
@@ -89,21 +105,42 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
             elevation: 10,
             backgroundColor: kPrimaryColor,
             actions: [
-              IconButton(
-                onPressed: () async {
-                  setState(() => showSpinner = true);
-                  final TaskOperation taskOperation = await changeQuantity();
-                  setState(() => showSpinner = false);
-                  if (taskOperation.success) {
-                    exit();
-                  }
-                },
-                icon: const FaIcon(
-                  FontAwesomeIcons.check,
-                  color: kPrimaryColorLight,
-                  size: 30.0,
+              if (widget.documentLine.product.usaMolho &&
+                  widget.documentLine.product.isBatchTracked)
+                MaterialButton(
+                  onPressed: () async {
+                    await showDialog(
+                      barrierDismissible: false,
+                      context: context,
+                      builder: (BuildContext context) {
+                        return SplitBatchesDialog(
+                          documentLine: widget.documentLine,
+                        );
+                      },
+                    ).then(
+                      (value) {
+                        exit(value as List<double>?);
+                      },
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'Dividir lotes',
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: kWhiteBackground,
+                            ),
+                      ),
+                      const SizedBox(
+                        width: 5.0,
+                      ),
+                      const FaIcon(
+                        FontAwesomeIcons.layerGroup,
+                        color: kPrimaryColorLight,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           body: Padding(
@@ -142,9 +179,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                 ? Helper.removeDecimalZeroFormat(
                                     widget.documentLine.quantity,
                                   )
-                                : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity + widget.documentLine.quantityPicked)} / ${Helper.removeDecimalZeroFormat(
-                                    widget.documentLine.quantityToPick,
-                                  )}',
+                                : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity)} ${widget.documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.quantityToPick)}' : ''}',
                           ),
                           if (widget.documentLine.product.isBatchTracked)
                             DocumentLinePropertyTile(
@@ -152,15 +187,6 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                               value: widget.documentLine.batch != null
                                   ? widget.documentLine.batch!.batchNumber
                                   : '(sem lote)',
-                            ),
-                          if (widget.documentLine.product.isBatchTracked)
-                            DocumentLinePropertyTile(
-                              title: 'Validade',
-                              value: widget.documentLine.batch != null
-                                  ? DateFormat('dd/MM/yyyy').format(
-                                      widget.documentLine.batch!.expirationDate,
-                                    )
-                                  : '(sem validade)',
                             ),
                         ],
                       ),
@@ -189,6 +215,39 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                   calculatedValue = value;
                                 });
                               },
+                            ),
+                            const SizedBox(
+                              height: 10.0,
+                            ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrimaryColor,
+                                  surfaceTintColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final TaskOperation taskOperation =
+                                      await changeQuantity();
+
+                                  if (taskOperation.success) {
+                                    exit(null);
+                                  }
+                                },
+                                child: Text(
+                                  'Submeter',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge!
+                                      .copyWith(
+                                        color: kWhiteBackground,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

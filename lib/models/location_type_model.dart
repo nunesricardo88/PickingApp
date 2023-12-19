@@ -21,4 +21,9 @@ class LocationType {
         name: json[LocationTypeFields.name] as String,
         isStockLocation: json[LocationTypeFields.isStockLocation] as bool,
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        LocationTypeFields.name: name,
+        LocationTypeFields.isStockLocation: isStockLocation,
+      };
 }

@@ -32,7 +32,7 @@ class _SourceDocumentTileState extends State<SourceDocumentTile> {
 
   Future<void> setEntityFromSourceDocument(PickingTask pickingTask) async {
     final Entity entity = widget.sourceDocument.entity!;
-    pickingTask.setEntity(entity);
+    await pickingTask.setEntity(entity);
   }
 
   @override
@@ -63,7 +63,9 @@ class _SourceDocumentTileState extends State<SourceDocumentTile> {
                 ),
           ),
           subtitle: Text(
-            '# ${widget.sourceDocument.number}',
+            widget.sourceDocument.documentType.number == 999
+                ? widget.sourceDocument.name!
+                : '# ${widget.sourceDocument.number}',
             style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontSize: 14.0,
                   fontWeight: FontWeight.w500,

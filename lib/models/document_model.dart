@@ -15,6 +15,7 @@ mixin DocumentFields {
     erpId,
     documentType,
     number,
+    name,
     entity,
     loadingAddress,
     unloadingAddress,
@@ -25,6 +26,7 @@ mixin DocumentFields {
   static const String erpId = 'erpId';
   static const String documentType = 'documentType';
   static const String number = 'number';
+  static const String name = 'name';
   static const String entity = 'entity';
   static const String loadingAddress = 'loadingAddress';
   static const String unloadingAddress = 'unloadingAddress';
@@ -36,6 +38,7 @@ class Document {
   String? erpId;
   DocumentType documentType;
   int? number;
+  String? name;
   Entity? entity;
   Address? loadingAddress;
   Address? unloadingAddress;
@@ -46,6 +49,7 @@ class Document {
     this.erpId,
     required this.documentType,
     this.number,
+    this.name,
     this.entity,
     this.loadingAddress,
     this.unloadingAddress,
@@ -59,6 +63,7 @@ class Document {
           json[DocumentFields.documentType] as Map<String, dynamic>,
         ),
         number: json[DocumentFields.number] as int?,
+        name: json[DocumentFields.name] as String?,
         entity: Entity.fromJson(
           json[DocumentFields.entity] as Map<String, dynamic>,
         ),
@@ -88,6 +93,7 @@ class Document {
         DocumentFields.erpId: erpId,
         DocumentFields.documentType: documentType.toJson(),
         DocumentFields.number: number,
+        DocumentFields.name: name,
         DocumentFields.entity: entity?.toJson(),
         DocumentFields.loadingAddress: loadingAddress?.toJson(),
         DocumentFields.unloadingAddress: unloadingAddress?.toJson(),
@@ -113,5 +119,23 @@ mixin DocumentApi {
     }
 
     return documentsList;
+  }
+
+  static Future<Document?> getPendingFromBarcode(
+    PickingTask task,
+    String barcode,
+  ) async {
+    Document? document;
+    final String url = ApiEndPoint.getPendingDocumentByBarcode(task, barcode);
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      document = Document.fromJson(jsonBody['result'] as Map<String, dynamic>);
+    }
+
+    return document;
   }
 }

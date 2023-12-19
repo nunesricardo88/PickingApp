@@ -30,10 +30,18 @@ class Stock {
   });
 
   factory Stock.fromJson(Map<String, dynamic> json) => Stock(
-        product:
-            Product.fromJson(json[StockFields.product] as Map<String, dynamic>),
+        product: Product.fromJsonAPI(
+          json[StockFields.product] as Map<String, dynamic>,
+        ),
         batch: Batch.fromJson(json[StockFields.batch] as Map<String, dynamic>),
         locationId: Guid(json[StockFields.locationId] as String),
         quantity: json[StockFields.quantity] as double,
       );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        StockFields.product: product.toJsonAPI(),
+        StockFields.batch: batch.toJson(),
+        StockFields.locationId: locationId.toString(),
+        StockFields.quantity: quantity,
+      };
 }

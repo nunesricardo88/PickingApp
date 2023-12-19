@@ -17,8 +17,9 @@ class SourceEntityTile extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: ListTile(
-            onTap: () {
-              pickingData.setEntity(entity);
+            onTap: () async {
+              await pickingData.setEntity(entity);
+              // ignore: use_build_context_synchronously
               Navigator.pop(context);
             },
             dense: true,

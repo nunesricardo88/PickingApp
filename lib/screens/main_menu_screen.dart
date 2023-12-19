@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/menu_item_card.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/screens/login_screen.dart';
@@ -23,7 +24,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   bool showSpinner = false;
   late Future menuBuild;
   bool _updatingProductList = true;
-  bool _updatingPickingTasks = true;
+  bool _updatingLocationList = false;
+  bool _updatingPickingTasks = false;
 
   @override
   void initState() {
@@ -38,12 +40,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   Future<bool> buildMenu() async {
     setState(() {
       _updatingProductList = true;
+      _updatingLocationList = false;
       _updatingPickingTasks = false;
     });
 
     await ProductApi.instance.initialize();
     setState(() {
       _updatingProductList = false;
+      _updatingLocationList = true;
+    });
+
+    await LocationApi.instance.initialize();
+    setState(() {
+      _updatingLocationList = false;
       _updatingPickingTasks = true;
     });
 
@@ -206,7 +215,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                     ),
                   ],
                 )
-              : _updatingPickingTasks
+              : _updatingLocationList
                   ? const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -219,68 +228,86 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                           height: 20.0,
                         ),
                         Text(
-                          'A carregar o menu...',
+                          'A sincronizar as localizações...',
                           textAlign: TextAlign.center,
                         ),
                       ],
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: FutureBuilder(
-                            future: menuBuild,
-                            builder: (context, snapshot) {
-                              List<Widget> noSnapshotWidgets;
-                              if (snapshot.hasData) {
-                                return SingleChildScrollView(
-                                  child: menuItemCardsList,
-                                );
-                              } else if (snapshot.hasError &&
-                                  snapshot.connectionState !=
-                                      ConnectionState.waiting) {
-                                noSnapshotWidgets = [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: kPrimaryColor.withOpacity(0.6),
-                                    size: 60,
-                                  ),
-                                  const SizedBox(
-                                    height: 20.0,
-                                  ),
-                                  Text(
-                                    snapshot.error.toString(),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ];
-                              } else {
-                                noSnapshotWidgets = [
-                                  const Center(
-                                    child: CircularProgressIndicator(
-                                      color: kPrimaryColor,
-                                    ),
-                                  ),
-                                ];
-                              }
+                  : _updatingPickingTasks
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Center(
+                              child: CircularProgressIndicator(
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 20.0,
+                            ),
+                            Text(
+                              'A carregar o menu...',
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: FutureBuilder(
+                                future: menuBuild,
+                                builder: (context, snapshot) {
+                                  List<Widget> noSnapshotWidgets;
+                                  if (snapshot.hasData) {
+                                    return SingleChildScrollView(
+                                      child: menuItemCardsList,
+                                    );
+                                  } else if (snapshot.hasError &&
+                                      snapshot.connectionState !=
+                                          ConnectionState.waiting) {
+                                    noSnapshotWidgets = [
+                                      Icon(
+                                        Icons.error_outline,
+                                        color: kPrimaryColor.withOpacity(0.6),
+                                        size: 60,
+                                      ),
+                                      const SizedBox(
+                                        height: 20.0,
+                                      ),
+                                      Text(
+                                        snapshot.error.toString(),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ];
+                                  } else {
+                                    noSnapshotWidgets = [
+                                      const Center(
+                                        child: CircularProgressIndicator(
+                                          color: kPrimaryColor,
+                                        ),
+                                      ),
+                                    ];
+                                  }
 
-                              return Column(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: noSnapshotWidgets,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                                  return Column(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: noSnapshotWidgets,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
         ),
       ),
     );

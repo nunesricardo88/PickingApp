@@ -54,6 +54,7 @@ class Batch {
         batchNumber: json[BatchFields.batchNumber] as String,
         expirationDate:
             DateTime.parse(json[BatchFields.expirationDate] as String),
+        // ignore: avoid_bool_literals_in_conditional_expressions
         usaMolho: json[BatchFields.usaMolho] == null
             ? false
             : json[BatchFields.usaMolho] as bool,
@@ -100,6 +101,9 @@ mixin BatchApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      if (jsonBody['result'] == null) {
+        return null;
+      }
       final Map<String, dynamic> result =
           jsonBody['result'] as Map<String, dynamic>;
 

@@ -70,7 +70,7 @@ mixin UserApi {
     final String url = ApiEndPoint.getAllUsersURL();
     final NetworkHelper networkHelper = NetworkHelper(url);
     final http.Response response =
-        await networkHelper.getDataNoAuth(seconds: 5) as http.Response;
+        await networkHelper.getDataNoAuth(seconds: 10) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;

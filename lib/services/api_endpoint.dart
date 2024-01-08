@@ -64,7 +64,7 @@ mixin ApiEndPoint {
     double compBarra,
   ) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Batch/getSplitBatches/noFl=$noFl&reference=$reference&numMolhos=$numMolhos&numBarras=$numBarras&compBarra=$compBarra';
+    return '$baseUrlPath/Batch/getSplitBatches/noFl=$noFl&reference=${reference.trim()}&numMolhos=$numMolhos&numBarras=$numBarras&compBarra=$compBarra';
   }
 
   //Entities
@@ -105,6 +105,16 @@ mixin ApiEndPoint {
     return '$baseUrlPath/PickingTask/post';
   }
 
+  static String printDocumentLineLabel() {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/DocumentLine/printLabel';
+  }
+
+  static String postNewBarcode() {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Product/postNewBarcode';
+  }
+
   //DocumentLines
   static String getLinesFromDocuments(
     PickingTask task,
@@ -114,14 +124,12 @@ mixin ApiEndPoint {
     final String pickingTaskErpId = task.erpId.trim();
     final StringBuffer sb = StringBuffer();
     sb.write(
-      '$baseUrlPath/DocumentLine/getFromDocuments/taskErpId=$pickingTaskErpId&documentErpIds=',
+      '$baseUrlPath/DocumentLine/getFromDocuments/taskErpId=${Uri.encodeComponent(pickingTaskErpId.trim())}?',
     );
     for (int i = 0; i < documents.length; i++) {
       final Document document = documents[i];
+      sb.write('&documentErpIds=');
       sb.write(Uri.encodeComponent(document.erpId!.trim()));
-      if (i < documents.length - 1) {
-        sb.write(',');
-      }
     }
     return sb.toString();
   }

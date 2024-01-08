@@ -1,3 +1,4 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -25,8 +26,11 @@ class DocumentLineScreen extends StatefulWidget {
 }
 
 class _DocumentLineScreenState extends State<DocumentLineScreen> {
+  TextEditingController labelQuantityController = TextEditingController();
+  TextEditingController newBarcodeController = TextEditingController();
   bool showSpinner = false;
   double calculatedValue = 0.0;
+  bool isExiting = false;
 
   @override
   void initState() {
@@ -58,7 +62,41 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     return taskOperation;
   }
 
+  Future<void> submitLabelPrint() async {
+    final String value = labelQuantityController.text;
+    final int valueInt = value.isEmpty ? 0 : int.parse(value);
+
+    if (valueInt > 0) {
+      setState(() {
+        showSpinner = true;
+      });
+      final TaskOperation taskOperation = await printLabel(valueInt);
+      setState(() {
+        showSpinner = false;
+      });
+      // ignore: use_build_context_synchronously
+      Flushbar(
+        titleSize: 0,
+        message: taskOperation.message,
+        duration: const Duration(seconds: 2),
+      ).show(context);
+    }
+  }
+
+  Future<TaskOperation> printLabel(int quantity) async {
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    final TaskOperation taskOperation =
+        await pickingTask.printLabel(widget.documentLine, quantity);
+
+    return taskOperation;
+  }
+
   void exit(List<double>? value) {
+    isExiting = true;
+    labelQuantityController.dispose();
+    newBarcodeController.dispose();
     if (value != null) {
       Navigator.pop(context, value);
     } else {
@@ -66,7 +104,35 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     }
   }
 
-  //TODO - Save a new barcode
+  Future<void> submitNewBarcode() async {
+    final String value = newBarcodeController.text;
+
+    if (value.isNotEmpty) {
+      setState(() {
+        showSpinner = true;
+      });
+      final TaskOperation taskOperation = await postNewBarcode(value);
+      setState(() {
+        showSpinner = false;
+      });
+      // ignore: use_build_context_synchronously
+      Flushbar(
+        titleSize: 0,
+        message: taskOperation.message,
+        duration: const Duration(seconds: 2),
+      ).show(context);
+    }
+  }
+
+  Future<TaskOperation> postNewBarcode(String barcode) async {
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    final TaskOperation taskOperation =
+        await pickingTask.postNewBarcode(widget.documentLine, barcode);
+
+    return taskOperation;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +151,11 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                   onTap: () {
                     Navigator.pop(context);
                   },
-                  child: const FaIcon(
-                    FontAwesomeIcons.angleLeft,
-                    color: kPrimaryColorLight,
+                  child: const Center(
+                    child: FaIcon(
+                      FontAwesomeIcons.angleLeft,
+                      color: kPrimaryColorLight,
+                    ),
                   ),
                 ),
                 const SizedBox(
@@ -107,7 +175,8 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
             actions: [
               if (widget.documentLine.product.usaMolho &&
                   widget.documentLine.product.isBatchTracked)
-                MaterialButton(
+                IconButton(
+                  padding: EdgeInsets.zero,
                   onPressed: () async {
                     await showDialog(
                       barrierDismissible: false,
@@ -123,24 +192,225 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                       },
                     );
                   },
-                  child: Row(
-                    children: [
-                      Text(
-                        'Dividir lotes',
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: kWhiteBackground,
-                            ),
-                      ),
-                      const SizedBox(
-                        width: 5.0,
-                      ),
-                      const FaIcon(
-                        FontAwesomeIcons.layerGroup,
-                        color: kPrimaryColorLight,
-                      ),
-                    ],
+                  icon: const FaIcon(
+                    FontAwesomeIcons.layerGroup,
+                    color: kPrimaryColorLight,
                   ),
                 ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        surfaceTintColor: kWhiteBackground,
+                        actionsPadding: const EdgeInsets.only(
+                          right: 10.0,
+                          bottom: 5.0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                        contentPadding: const EdgeInsets.only(
+                          top: 20.0,
+                          left: 20.0,
+                          right: 20.0,
+                          bottom: 5.0,
+                        ),
+                        content: SingleChildScrollView(
+                          child: isExiting
+                              ? const SizedBox(height: 100.0)
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.documentLine.product.designation,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 20.0),
+                                    TextField(
+                                      autofocus: true,
+                                      onTap: () {
+                                        newBarcodeController.selection =
+                                            TextSelection(
+                                          baseOffset: 0,
+                                          extentOffset:
+                                              newBarcodeController.text.length,
+                                        );
+                                      },
+                                      controller: newBarcodeController,
+                                      keyboardType: TextInputType.name,
+                                      decoration: InputDecoration(
+                                        labelText: 'Novo código de barras',
+                                        labelStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium,
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                        actions: [
+                          MaterialButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Cancelar',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kPrimaryColor.withOpacity(0.8),
+                                  ),
+                            ),
+                          ),
+                          MaterialButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              submitNewBarcode();
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Submeter',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: const FaIcon(
+                  FontAwesomeIcons.barcode,
+                  color: kPrimaryColorLight,
+                ),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  labelQuantityController.text = '1';
+                  await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        surfaceTintColor: kWhiteBackground,
+                        actionsPadding: const EdgeInsets.only(
+                          right: 10.0,
+                          bottom: 5.0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                        ),
+                        contentPadding: const EdgeInsets.only(
+                          top: 20.0,
+                          left: 20.0,
+                          right: 20.0,
+                          bottom: 5.0,
+                        ),
+                        content: SingleChildScrollView(
+                          child: isExiting
+                              ? const SizedBox(height: 100.0)
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.documentLine.product.designation,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 20.0),
+                                    TextField(
+                                      onTap: () {
+                                        labelQuantityController.selection =
+                                            TextSelection(
+                                          baseOffset: 0,
+                                          extentOffset: labelQuantityController
+                                              .text.length,
+                                        );
+                                      },
+                                      controller: labelQuantityController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        labelText: 'Nº de etiquetas a imprimir',
+                                        labelStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium,
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                        ),
+                                        suffix: Text(
+                                          widget.documentLine.product.unit,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                        actions: [
+                          MaterialButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Cancelar',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kPrimaryColor.withOpacity(0.8),
+                                  ),
+                            ),
+                          ),
+                          MaterialButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              submitLabelPrint();
+                              Navigator.pop(context);
+                            },
+                            child: Text(
+                              'Submeter',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: const FaIcon(
+                  FontAwesomeIcons.print,
+                  color: kPrimaryColorLight,
+                ),
+              ),
             ],
           ),
           body: Padding(

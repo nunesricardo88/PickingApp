@@ -88,9 +88,11 @@ class _SourceEntityScreenState extends State<SourceEntityScreen> {
                 onTap: () {
                   Navigator.pop(context);
                 },
-                child: const FaIcon(
-                  FontAwesomeIcons.angleLeft,
-                  color: kPrimaryColorLight,
+                child: const Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.angleLeft,
+                    color: kPrimaryColorLight,
+                  ),
                 ),
               ),
               const SizedBox(

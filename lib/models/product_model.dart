@@ -45,7 +45,7 @@ class Product {
   String erpId;
   String reference;
   String designation;
-  String barcode;
+  List<String> barcode;
   String unit;
   String alternativeUnit;
   double conversionFactor;
@@ -74,7 +74,7 @@ class Product {
         erpId: json[ProductFields.erpId] as String,
         reference: json[ProductFields.reference] as String,
         designation: json[ProductFields.designation] as String,
-        barcode: json[ProductFields.barcode] as String,
+        barcode: (json[ProductFields.barcode] as String).split(','),
         unit: json[ProductFields.unit] as String,
         alternativeUnit: json[ProductFields.alternativeUnit] as String,
         conversionFactor: json[ProductFields.conversionFactor] as double,
@@ -90,7 +90,7 @@ class Product {
         erpId: json[ProductFields.erpId] as String,
         reference: json[ProductFields.reference] as String,
         designation: json[ProductFields.designation] as String,
-        barcode: json[ProductFields.barcode] as String,
+        barcode: (json[ProductFields.barcode] as String).split(','),
         unit: json[ProductFields.unit] as String,
         alternativeUnit: json[ProductFields.alternativeUnit] as String,
         conversionFactor: json[ProductFields.conversionFactor] as double,
@@ -105,7 +105,7 @@ class Product {
         ProductFields.erpId: erpId,
         ProductFields.reference: reference,
         ProductFields.designation: designation,
-        ProductFields.barcode: barcode,
+        ProductFields.barcode: barcode.join(','),
         ProductFields.unit: unit,
         ProductFields.alternativeUnit: alternativeUnit,
         ProductFields.conversionFactor: conversionFactor,
@@ -120,7 +120,7 @@ class Product {
         ProductFields.erpId: erpId,
         ProductFields.reference: reference,
         ProductFields.designation: designation,
-        ProductFields.barcode: barcode,
+        ProductFields.barcode: barcode.join(','),
         ProductFields.unit: unit,
         ProductFields.alternativeUnit: alternativeUnit,
         ProductFields.conversionFactor: conversionFactor,
@@ -135,7 +135,7 @@ class Product {
     String? erpId,
     String? reference,
     String? designation,
-    String? barcode,
+    List<String>? barcode,
     String? unit,
     String? alternativeUnit,
     double? conversionFactor,
@@ -193,6 +193,11 @@ class ProductApi {
     return productList;
   }
 
+  Future<void> updateProduct(Product product) async {
+    await ProductDatabase.instance.delete(product.reference);
+    await ProductDatabase.instance.create(product);
+  }
+
   static Future<List<Product>> fetchFromApi() async {
     List<Product> productList = [];
     final DateTime lastSyncDate =
@@ -201,7 +206,7 @@ class ProductApi {
 
     final NetworkHelper networkHelper = NetworkHelper(getUrl);
     final http.Response response =
-        await networkHelper.getData(seconds: 60) as http.Response;
+        await networkHelper.getData(seconds: 120) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
@@ -223,11 +228,11 @@ mixin ProductHelper {
         (element) => element.reference.trim() == reference.trim(),
       );
       product ??= ProductApi.instance.allProducts.firstWhereOrNull(
-        (element) => element.barcode.trim() == reference.trim(),
+        (element) => element.barcode.contains(reference.trim()),
       );
     } else if (barcode.isNotEmpty) {
       product = ProductApi.instance.allProducts.firstWhereOrNull(
-        (element) => element.barcode.trim() == barcode.trim(),
+        (element) => element.barcode.contains(barcode.trim()),
       );
     }
     return product;

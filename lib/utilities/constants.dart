@@ -44,6 +44,8 @@ enum ErrorCode {
   errorSavingDocument,
   productNotFound,
   batchNotFound,
+  insufficientDataSubmitted,
+  unknownError,
 }
 
 //Colors
@@ -58,6 +60,7 @@ const kDividerColor = Color.fromRGBO(189, 189, 189, 1);
 const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
 const kWhiteBackground = Color.fromRGBO(255, 255, 255, 1);
 const kGreyBackground = Color.fromRGBO(230, 230, 230, 1);
+const kInactiveColor = Color.fromRGBO(240, 240, 240, 1);
 
 //Themes
 final ThemeData defaultThemeData = ThemeData(

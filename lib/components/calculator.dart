@@ -35,12 +35,12 @@ class _CalculatorState extends State<Calculator> {
   Widget build(BuildContext context) {
     final SimpleCalculator calc = SimpleCalculator(
       value: _currentValue,
-      hideExpression: true,
       onChanged: (key, value, expression) {
-        setState(() {
-          _currentValue = value ?? 0.0;
-        });
-        widget.callBackValue(_currentValue);
+        // print('$key\t$value\t$expression');
+
+        if (RegExp(r'^[0-9.]+$').hasMatch(expression!) || key == '=') {
+          widget.callBackValue(value);
+        }
       },
     );
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/batch_model.dart';
@@ -225,6 +226,8 @@ mixin DocumentLineApi {
     List<DocumentLine> documentLines = [];
     final String url = ApiEndPoint.getLinesFromDocuments(task, documents);
     final NetworkHelper networkHelper = NetworkHelper(url);
+    final RegExp pattern = RegExp('.{1,800}');
+    pattern.allMatches(url).forEach((match) => debugPrint(match.group(0)));
     final http.Response response =
         await networkHelper.getData(seconds: 10) as http.Response;
 

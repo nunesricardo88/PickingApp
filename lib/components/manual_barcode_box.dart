@@ -25,7 +25,7 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: kWhiteBackground,
+      surfaceTintColor: kWhiteBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5.0),
       ),
@@ -60,6 +60,7 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
       ),
       actions: [
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () {
             Navigator.pop(context, "");
           },
@@ -71,6 +72,7 @@ class _ManualBarcodeBoxState extends State<ManualBarcodeBox> {
           ),
         ),
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () {
             Navigator.pop(context, myController.text);
           },

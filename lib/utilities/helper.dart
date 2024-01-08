@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
@@ -34,12 +35,18 @@ mixin Helper {
       barCodeType = BarCodeType.batch;
     } else if (barcode.startsWith('C_')) {
       barCodeType = BarCodeType.container;
-    } else if (barcode.startsWith('ALV')) {
-      barCodeType = BarCodeType.location;
     } else if (barcode.startsWith('D_')) {
       barCodeType = BarCodeType.document;
     } else {
-      barCodeType = BarCodeType.product;
+      //Check if barcode is the erpId of any location
+      final Location? location =
+          LocationApi.getByErpId(barcode, LocationApi.instance.allLocations);
+
+      if (location != null) {
+        barCodeType = BarCodeType.location;
+      } else {
+        barCodeType = BarCodeType.product;
+      }
     }
 
     return barCodeType;

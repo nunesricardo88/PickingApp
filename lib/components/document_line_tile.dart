@@ -9,6 +9,7 @@ import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:provider/provider.dart';
 
 class DocumentLineTile extends StatefulWidget {
+  final GlobalKey containerKey;
   final DocumentLine documentLine;
   final Location? location;
   final Function(
@@ -16,6 +17,7 @@ class DocumentLineTile extends StatefulWidget {
     Location? location,
   ) callDocumentLineScreen;
   const DocumentLineTile({
+    required this.containerKey,
     required this.documentLine,
     this.location,
     required this.callDocumentLineScreen,
@@ -26,12 +28,20 @@ class DocumentLineTile extends StatefulWidget {
 }
 
 class _DocumentLineTileState extends State<DocumentLineTile> {
+  GlobalKey containerKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
   }
 
   Color getTileBackgroundColor() {
+    final pickingTask = Provider.of<PickingTask>(context, listen: false);
+    if (pickingTask.stockMovement == StockMovement.inventory) {
+      if (widget.documentLine.quantity == widget.documentLine.totalQuantity) {
+        return kInactiveColor;
+      }
+    }
     return kWhiteBackground;
   }
 
@@ -80,6 +90,7 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
 
   @override
   Widget build(BuildContext context) {
+    final PickingTask pickingTask = context.watch<PickingTask>();
     fetchData();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.5),
@@ -206,7 +217,9 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                                       fontWeight: FontWeight.w700,
                                     ),
                           ),
-                          if (widget.documentLine.linkedLineErpId != null &&
+                          if (pickingTask.stockMovement !=
+                                  StockMovement.inventory &&
+                              widget.documentLine.linkedLineErpId != null &&
                               widget.documentLine.linkedLineErpId!
                                   .trim()
                                   .isNotEmpty)

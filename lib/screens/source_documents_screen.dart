@@ -3,6 +3,7 @@
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/source_document_tile.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
@@ -24,6 +25,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   List<Widget> documentTiles = [];
   Column documentTilesList = const Column();
   late Future listBuild;
+  bool showSpinner = false;
 
   @override
   void initState() {
@@ -121,9 +123,11 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                 onTap: () {
                   Navigator.pop(context);
                 },
-                child: const FaIcon(
-                  FontAwesomeIcons.angleLeft,
-                  color: kPrimaryColorLight,
+                child: const Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.angleLeft,
+                    color: kPrimaryColorLight,
+                  ),
                 ),
               ),
               const SizedBox(
@@ -143,7 +147,13 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
           actions: [
             IconButton(
               onPressed: () async {
+                setState(() {
+                  showSpinner = true;
+                });
                 await pickingTask.setSourceDocumentsFromList(selectedDocuments);
+                setState(() {
+                  showSpinner = false;
+                });
                 Navigator.pop(context, true);
               },
               icon: const FaIcon(
@@ -154,80 +164,83 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: FutureBuilder(
-                future: listBuild,
-                builder: (context, snapshot) {
-                  List<Widget> noSnapshotWidgets;
-                  if (snapshot.hasData) {
-                    return SingleChildScrollView(child: documentTilesList);
-                  } else if (snapshot.hasError &&
-                      snapshot.connectionState != ConnectionState.waiting) {
-                    noSnapshotWidgets = [
-                      Icon(
-                        Icons.error_outline,
-                        color: kPrimaryColor.withOpacity(0.6),
-                        size: 50,
-                      ),
-                      const SizedBox(
-                        height: 20.0,
-                      ),
-                      Text(
-                        snapshot.error.toString(),
-                        textAlign: TextAlign.center,
-                      ),
-                    ];
-                  } else {
-                    noSnapshotWidgets = [
-                      const Center(
-                        child: CircularProgressIndicator(
-                          color: kPrimaryColor,
+        body: LoadingOverlay(
+          isLoading: showSpinner,
+          child: Column(
+            children: [
+              Expanded(
+                child: FutureBuilder(
+                  future: listBuild,
+                  builder: (context, snapshot) {
+                    List<Widget> noSnapshotWidgets;
+                    if (snapshot.hasData) {
+                      return SingleChildScrollView(child: documentTilesList);
+                    } else if (snapshot.hasError &&
+                        snapshot.connectionState != ConnectionState.waiting) {
+                      noSnapshotWidgets = [
+                        Icon(
+                          Icons.error_outline,
+                          color: kPrimaryColor.withOpacity(0.6),
+                          size: 50,
                         ),
-                      ),
-                    ];
-                  }
+                        const SizedBox(
+                          height: 20.0,
+                        ),
+                        Text(
+                          snapshot.error.toString(),
+                          textAlign: TextAlign.center,
+                        ),
+                      ];
+                    } else {
+                      noSnapshotWidgets = [
+                        const Center(
+                          child: CircularProgressIndicator(
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                      ];
+                    }
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: noSnapshotWidgets,
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: noSnapshotWidgets,
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            Visibility(
-              visible: pickingTask.document!.entity != null &&
-                  pickingTask.document!.entity!.entityType !=
-                      EntityType.interno,
-              child: Flushbar(
-                title: 'Entidade atribuída',
-                message: pickingTask.document!.entity != null
-                    ? pickingTask.document!.entity!.name
-                    : '(sem atribuição)',
-                mainButton: MaterialButton(
-                  onPressed: () async {
-                    clearSelectedDocuments();
-                    await pickingTask.setEntity(null);
-                    await getDocumentsList();
+                      ],
+                    );
                   },
-                  child: Text(
-                    'Limpar',
-                    style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                          color: Colors.amber,
-                        ),
+                ),
+              ),
+              Visibility(
+                visible: pickingTask.document!.entity != null &&
+                    pickingTask.document!.entity!.entityType !=
+                        EntityType.interno,
+                child: Flushbar(
+                  title: 'Entidade atribuída',
+                  message: pickingTask.document!.entity != null
+                      ? pickingTask.document!.entity!.name
+                      : '(sem atribuição)',
+                  mainButton: MaterialButton(
+                    onPressed: () async {
+                      clearSelectedDocuments();
+                      await pickingTask.setEntity(null);
+                      await getDocumentsList();
+                    },
+                    child: Text(
+                      'Limpar',
+                      style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                            color: Colors.amber,
+                          ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

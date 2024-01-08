@@ -17,7 +17,6 @@ class _SplitBatchesDialogState extends State<SplitBatchesDialog> {
   TextEditingController molhosController = TextEditingController();
   TextEditingController barrasController = TextEditingController();
   TextEditingController compController = TextEditingController();
-  late bool _isValid;
 
   @override
   void initState() {
@@ -165,6 +164,7 @@ class _SplitBatchesDialogState extends State<SplitBatchesDialog> {
       ),
       actions: [
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -176,6 +176,7 @@ class _SplitBatchesDialogState extends State<SplitBatchesDialog> {
           ),
         ),
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () async {
             final TaskOperation taskOperation = await submit();
             if (taskOperation.success) {

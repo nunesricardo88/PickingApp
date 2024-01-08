@@ -9,7 +9,6 @@ import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
-import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
@@ -249,6 +248,11 @@ class PickingTask extends ChangeNotifier {
           documentLine.quantityPicked * documentLine.product.conversionFactor;
     }
 
+    //Remove from Document if it has no quantity and no linkedLineErpId
+    if (documentLine.quantity == 0 && documentLine.linkedLineErpId == null) {
+      document!.lines.remove(documentLine);
+    }
+
     notifyListeners();
     return taskOperation;
   }
@@ -338,12 +342,23 @@ class PickingTask extends ChangeNotifier {
     final List<DocumentLine> documentLines = [];
     for (final Document sourceDocument in sourceDocuments) {
       for (final DocumentLine sourceDocumentLine in sourceDocument.lines) {
-        documentLines.add(
-          sourceDocumentLine.copyWith(
-            linkedLineErpId: sourceDocumentLine.erpId,
-          ),
-        );
+        if (stockMovement == StockMovement.inventory) {
+          documentLines.add(
+            sourceDocumentLine.copyWith(
+              linkedLineErpId: sourceDocumentLine.erpId,
+              quantity: sourceDocumentLine.quantityPicked,
+            ),
+          );
+        } else {
+          documentLines.add(
+            sourceDocumentLine.copyWith(
+              linkedLineErpId: sourceDocumentLine.erpId,
+            ),
+          );
+        }
       }
+      document!.name = sourceDocument.name;
+      document!.erpId = sourceDocument.erpId;
     }
     document!.lines = documentLines;
   }
@@ -361,11 +376,127 @@ class PickingTask extends ChangeNotifier {
     return sourceDocumentLine;
   }
 
-  //Send full path name separated by dots
-  dynamic getCustomOptionValue(String optionFullPath) {
-    dynamic optionValue;
+  Future<TaskOperation> printLabel(
+    DocumentLine documentLine,
+    int labelsToPrint,
+  ) async {
+    try {
+      final TaskOperation taskOperation = TaskOperation(
+        success: true,
+        errorCode: ErrorCode.none,
+        message: 'Pedido enviado para a impressora',
+      );
 
-    return optionValue;
+      final DocumentLine line = documentLine.copyWith(
+        alternativeQuantity: labelsToPrint.toDouble(),
+        order: 1,
+      );
+
+      final Map<String, dynamic> documentLineJsonBody = line.toJson();
+      String postPutUrl = '';
+      http.Response response;
+      final String jsonBody = json.encode(documentLineJsonBody);
+
+      // final RegExp pattern = RegExp('.{1,800}');
+      // pattern
+      //     .allMatches(jsonBody)
+      //     .forEach((match) => debugPrint(match.group(0)));
+
+      postPutUrl = ApiEndPoint.printDocumentLineLabel();
+      final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
+      response = await networkHelper.postData(
+        json: jsonBody,
+        seconds: 30,
+      ) as http.Response;
+
+      final Map<String, dynamic> responseBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> result =
+          responseBody['result'] as Map<String, dynamic>;
+      final int statusCode = result['statusCode'] as int;
+      final String message = result['message'] as String;
+
+      if (statusCode == 201 || statusCode == 200) {
+        return taskOperation;
+      } else {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.unknownError,
+          message: message,
+        );
+      }
+    } catch (e) {
+      return TaskOperation(
+        success: false,
+        errorCode: ErrorCode.unknownError,
+        message: 'Erro ao imprimir a etiqueta',
+      );
+    }
+  }
+
+  Future<TaskOperation> postNewBarcode(
+    DocumentLine documentLine,
+    String barcode,
+  ) async {
+    try {
+      final TaskOperation taskOperation = TaskOperation(
+        success: true,
+        errorCode: ErrorCode.none,
+        message: 'Código de barras criado com sucesso',
+      );
+
+      final Product productPost = documentLine.product.copy(
+        barcode: [],
+      );
+      productPost.barcode.add(barcode);
+
+      final Map<String, dynamic> documentLineJsonBody = productPost.toJsonAPI();
+      String postPutUrl = '';
+      http.Response response;
+      final String jsonBody = json.encode(documentLineJsonBody);
+
+      final RegExp pattern = RegExp('.{1,800}');
+      pattern
+          .allMatches(jsonBody)
+          .forEach((match) => debugPrint(match.group(0)));
+
+      postPutUrl = ApiEndPoint.postNewBarcode();
+      final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
+      response = await networkHelper.postData(
+        json: jsonBody,
+        seconds: 30,
+      ) as http.Response;
+
+      final Map<String, dynamic> responseBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> result =
+          responseBody['result'] as Map<String, dynamic>;
+      final int statusCode = result['statusCode'] as int;
+      final String message = result['message'] as String;
+
+      if (statusCode == 201 || statusCode == 200) {
+        for (final Product product in ProductApi.instance.allProducts) {
+          if (product.erpId == documentLine.product.erpId) {
+            product.barcode.add(barcode);
+            await ProductApi.instance.updateProduct(product);
+            break;
+          }
+        }
+        return taskOperation;
+      } else {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.unknownError,
+          message: message,
+        );
+      }
+    } catch (e) {
+      return TaskOperation(
+        success: false,
+        errorCode: ErrorCode.unknownError,
+        message: 'Erro ao criar o código de barras',
+      );
+    }
   }
 
   Future<TaskOperation> saveToServer() async {
@@ -375,6 +506,13 @@ class PickingTask extends ChangeNotifier {
         errorCode: ErrorCode.none,
         message: '',
       );
+
+      //Remove extra lines
+      if (stockMovement == StockMovement.inventory) {
+        document!.lines.removeWhere(
+          (element) => element.quantity == element.totalQuantity,
+        );
+      }
 
       //Check if lines that need a batch have a batch
       for (final DocumentLine documentLine in document!.lines) {
@@ -389,15 +527,30 @@ class PickingTask extends ChangeNotifier {
       }
 
       int lineOrder = 0;
-      for (final DocumentLine documentLine in document!.lines) {
-        if (documentLine.quantity > 0) {
-          lineOrder += 1000;
+      if (stockMovement == StockMovement.inventory) {
+        for (final DocumentLine documentLine in document!.lines) {
+          if (documentLine.erpId != null) {
+            lineOrder = documentLine.order ?? lineOrder;
+          } else {
+            lineOrder += 1000;
+          }
           documentLine.order = lineOrder;
+        }
+      } else {
+        for (final DocumentLine documentLine in document!.lines) {
+          if (documentLine.quantity > 0) {
+            lineOrder += 1000;
+            documentLine.order = lineOrder;
+          }
         }
       }
 
       //Delete all documentLines with quantity = 0
-      document!.lines.removeWhere((element) => element.quantity <= 0);
+      if (stockMovement != StockMovement.inventory) {
+        document!.lines.removeWhere(
+          (element) => element.quantity <= 0,
+        );
+      }
 
       //Clean not needed fields
       userErpId = System.instance.activeUser!.erpId;
@@ -410,8 +563,10 @@ class PickingTask extends ChangeNotifier {
       http.Response response;
       final String jsonBody = json.encode(documentJsonBody);
 
-      final pattern = RegExp('.{1,800}');
-      pattern.allMatches(jsonBody).forEach((match) => print(match.group(0)));
+      // final RegExp pattern = RegExp('.{1,800}');
+      // pattern
+      //     .allMatches(jsonBody)
+      //     .forEach((match) => debugPrint(match.group(0)));
 
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
@@ -420,8 +575,10 @@ class PickingTask extends ChangeNotifier {
         seconds: 30,
       ) as http.Response;
 
-      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final result = responseBody['result'] as Map<String, dynamic>;
+      final Map<String, dynamic> responseBody =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic> result =
+          responseBody['result'] as Map<String, dynamic>;
       final int statusCode = result['statusCode'] as int;
       final String message = result['message'] as String;
 
@@ -456,7 +613,7 @@ mixin PickingTaskApi {
     final String url = ApiEndPoint.getTasksByAccessId(accessId);
     final NetworkHelper networkHelper = NetworkHelper(url);
     final http.Response response =
-        await networkHelper.getData(seconds: 5) as http.Response;
+        await networkHelper.getData(seconds: 10) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;

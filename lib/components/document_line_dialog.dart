@@ -4,7 +4,6 @@ import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
-import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +20,11 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
   TextEditingController batchController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
   late bool _isValid;
+  late bool _isQuantityValid;
   late bool _isBatchValid;
+  bool alreadyValidated = false;
+  bool setupDone = false;
+  bool isExiting = false;
 
   @override
   void initState() {
@@ -38,6 +41,11 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
         extentOffset: quantityController.text.length,
       );
     }
+    await isDataValid();
+    setupDone = true;
+  }
+
+  Future<void> validate() async {
     await isDataValid();
   }
 
@@ -58,13 +66,16 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
 
     //Check if the quantity is not empty
     if (quantityController.text.trim().isEmpty ||
-        quantityController.text == '0') {
+        double.parse(quantityController.text) == 0) {
       isQuantityValid = false;
     } else {
       isQuantityValid = true;
     }
 
-    final double quantity = double.parse(quantityController.text.trim());
+    // //Validate Quantity
+    // final double quantity = quantityController.text.isNotEmpty
+    //     ? double.parse(quantityController.text.trim())
+    //     : 0.0;
 
     //Validade the existence of the batch if the task is outbound or transfer
     if (isBatchValid) {
@@ -89,6 +100,10 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
     setState(() {
       _isBatchValid = isBatchValid;
       _isValid = isValid;
+      _isQuantityValid = isQuantityValid;
+      if (setupDone) {
+        alreadyValidated = true;
+      }
     });
   }
 
@@ -105,14 +120,25 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
 
     widget.documentLine.quantity = double.parse(quantityController.text.trim());
 
-    return TaskOperation(
-      success: true,
-      errorCode: ErrorCode.none,
-      message: '',
-    );
+    if (_isBatchValid && _isQuantityValid) {
+      return TaskOperation(
+        success: true,
+        errorCode: ErrorCode.none,
+        message: '',
+      );
+    } else {
+      return TaskOperation(
+        success: false,
+        errorCode: ErrorCode.insufficientDataSubmitted,
+        message: 'Dados insuficientes',
+      );
+    }
   }
 
   void exit() {
+    setState(() {
+      isExiting = true;
+    });
     batchController.dispose();
     quantityController.dispose();
     Navigator.pop(context);
@@ -129,61 +155,113 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5.0),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            widget.documentLine.product.designation,
-            style: Theme.of(context).textTheme.labelMedium,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 20.0),
-          if (widget.documentLine.product.isBatchTracked)
-            TextField(
-              autofocus: batchController.text.isEmpty,
-              controller: batchController,
-              decoration: InputDecoration(
-                labelText: 'Lote',
-                labelStyle: Theme.of(context).textTheme.labelMedium,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
+      contentPadding: const EdgeInsets.only(
+        top: 20.0,
+        left: 20.0,
+        right: 20.0,
+        bottom: 5.0,
+      ),
+      content: SingleChildScrollView(
+        child: isExiting
+            ? const SizedBox(height: 100.0)
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.documentLine.product.designation,
+                    style: Theme.of(context).textTheme.labelMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 20.0),
+                  if (widget.documentLine.product.isBatchTracked)
+                    Column(
+                      children: [
+                        TextField(
+                          autofocus: batchController.text.isEmpty,
+                          controller: batchController,
+                          decoration: InputDecoration(
+                            labelText: 'Lote',
+                            labelStyle: Theme.of(context).textTheme.labelMedium,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          onSubmitted: (value) async {
+                            await isDataValid();
+                          },
+                        ),
+                        if (alreadyValidated && !_isBatchValid)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              batchController.text.isEmpty
+                                  ? 'Preencha o lote'
+                                  : 'Lote inválido',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kErrorColor,
+                                    fontSize: 12.0,
+                                  ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  const SizedBox(height: 20.0),
+                  Column(
+                    children: [
+                      TextField(
+                        autofocus: quantityController.text.isEmpty &&
+                            !widget.documentLine.product.isBatchTracked,
+                        onTap: () {
+                          quantityController.selection = TextSelection(
+                            baseOffset: 0,
+                            extentOffset: quantityController.text.length,
+                          );
+                        },
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Quantidade',
+                          labelStyle: Theme.of(context).textTheme.labelMedium,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          suffix: Text(
+                            widget.documentLine.product.unit,
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                        ),
+                        onSubmitted: (value) async {
+                          await isDataValid();
+                        },
+                      ),
+                      if (alreadyValidated && !_isQuantityValid)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            quantityController.text.isEmpty ||
+                                    double.parse(quantityController.text) == 0
+                                ? 'Preencha a quantidade'
+                                : 'Quantidade inválida',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall!
+                                .copyWith(
+                                  color: kErrorColor,
+                                  fontSize: 12.0,
+                                ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              onSubmitted: (value) async {
-                await isDataValid();
-              },
-            ),
-          const SizedBox(height: 20.0),
-          TextField(
-            autofocus: quantityController.text.isEmpty &&
-                !widget.documentLine.product.isBatchTracked,
-            onTap: () {
-              quantityController.selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: quantityController.text.length,
-              );
-            },
-            controller: quantityController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Quantidade',
-              labelStyle: Theme.of(context).textTheme.labelMedium,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              suffix: Text(
-                widget.documentLine.product.unit,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            ),
-            onSubmitted: (value) async {
-              await isDataValid();
-            },
-          ),
-        ],
       ),
       actions: [
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () {
             Navigator.pop(context);
           },
@@ -195,17 +273,15 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
           ),
         ),
         MaterialButton(
+          padding: EdgeInsets.zero,
           onPressed: () async {
+            await validate();
+            if (!_isValid) {
+              return;
+            }
             final TaskOperation taskOperation = await submit();
             if (taskOperation.success) {
               exit();
-            } else {
-              // ignore: use_build_context_synchronously
-              Helper.showMsg(
-                'Atenção',
-                taskOperation.message,
-                context,
-              );
             }
           },
           child: Text(

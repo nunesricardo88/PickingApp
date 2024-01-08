@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
+import 'package:flutter_guid/flutter_guid.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
@@ -21,6 +23,7 @@ import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
 import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PickingScreen extends StatefulWidget {
   static const String id = 'picking_screen_id';
@@ -32,15 +35,13 @@ class PickingScreen extends StatefulWidget {
 class _PickingScreenState extends State<PickingScreen> {
   bool showSpinner = false;
   bool isSavingToServer = false;
-  bool canPick = false;
+  bool canPick = true;
+  DocumentLine? documentLineToScroll;
 
   //Location variables
   bool _useLocations = false;
-  bool _isTransfer = false;
-  Location? _fromLocation;
-  Location? _toLocation;
-  bool _forceFromLocation = false;
-  bool _forceToLocation = false;
+  late Location? _fromLocation;
+  late Location? _toLocation;
 
   //Entity variables
   late bool _canChangeEntity;
@@ -52,7 +53,7 @@ class _PickingScreenState extends State<PickingScreen> {
   late TextEditingController _toLocationController;
 
   //ScrollControllers
-  late ScrollController _listScrollController;
+  late ItemScrollController _listScrollController;
 
   //FutureBuilder
   List<Widget> documentLineTiles = [];
@@ -68,14 +69,13 @@ class _PickingScreenState extends State<PickingScreen> {
 
   Future<void> setup() async {
     final PickingTask pickingTask =
-        // ignore: use_build_context_synchronously
         Provider.of<PickingTask>(context, listen: false);
 
     _entityController = TextEditingController();
     _sourceDocumentsController = TextEditingController();
     _fromLocationController = TextEditingController();
     _toLocationController = TextEditingController();
-    _listScrollController = ScrollController();
+    _listScrollController = ItemScrollController();
 
     await getDocumentLinesList();
 
@@ -95,6 +95,12 @@ class _PickingScreenState extends State<PickingScreen> {
 
     //Locations
     switch (pickingTask.stockMovement) {
+      case StockMovement.none:
+        setState(() {
+          _useLocations = false;
+          _fromLocation = null;
+        });
+        break;
       case StockMovement.inbound:
         final Location? location = LocationApi.getByErpId(
           'ALV22120258773.125352084',
@@ -102,41 +108,35 @@ class _PickingScreenState extends State<PickingScreen> {
         );
         setState(() {
           _useLocations = true;
-          _isTransfer = false;
-          _forceFromLocation = false;
-          _forceToLocation = true;
+          _fromLocation = null;
           _toLocation = location;
-          _toLocationController.text = getLocationName(_toLocation);
         });
 
         break;
       case StockMovement.outbound:
         setState(() {
           _useLocations = true;
-          _isTransfer = false;
-          _forceFromLocation = false;
-          _forceToLocation = false;
+          _fromLocation = null;
         });
 
         break;
       case StockMovement.transfer:
         setState(() {
           _useLocations = true;
-          _isTransfer = true;
-          _forceFromLocation = false;
-          _forceToLocation = false;
+          _fromLocation = null;
         });
         break;
       case StockMovement.inventory:
         setState(() {
+          canPick = true;
           _useLocations = true;
-          _isTransfer = false;
-          _forceFromLocation = false;
-          _forceToLocation = false;
+          _fromLocation = null;
         });
 
         break;
     }
+    _toLocationController.text = getLocationName(_toLocation);
+    _fromLocationController.text = getLocationName(_fromLocation);
   }
 
   void allowPicking() {
@@ -157,7 +157,6 @@ class _PickingScreenState extends State<PickingScreen> {
     _sourceDocumentsController.dispose();
     _fromLocationController.dispose();
     _toLocationController.dispose();
-    _listScrollController.dispose();
     super.dispose();
   }
 
@@ -189,10 +188,35 @@ class _PickingScreenState extends State<PickingScreen> {
 
     for (final DocumentLine documentLine in documentLineList) {
       documentLineTiles.add(
-        DocumentLineTile(
+        Slidable(
+          endActionPane: ActionPane(
+            extentRatio: 0.15,
+            motion: const ScrollMotion(),
+            children: [
+              Builder(
+                builder: (BuildContext context) {
+                  return IconButton(
+                    icon: const FaIcon(
+                      FontAwesomeIcons.trashCan,
+                      color: kPrimaryColorDark,
+                    ),
+                    onPressed: () async {
+                      setState(() => showSpinner = true);
+                      await removeFromDocument(documentLine);
+                      setState(() => showSpinner = false);
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+          child: DocumentLineTile(
+            containerKey: GlobalKey(),
             documentLine: documentLine,
             location: _toLocation,
-            callDocumentLineScreen: _onCallDocumentLineScreen),
+            callDocumentLineScreen: _onCallDocumentLineScreen,
+          ),
+        ),
       );
     }
 
@@ -207,6 +231,11 @@ class _PickingScreenState extends State<PickingScreen> {
     DocumentLine documentLine,
     Location? location,
   ) async {
+    setState(() {
+      canPick = false;
+      showSpinner = true;
+      documentLineToScroll = null;
+    });
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -225,16 +254,17 @@ class _PickingScreenState extends State<PickingScreen> {
       }
     });
     await getDocumentLinesList();
-    setState(() {});
+    setState(() {
+      canPick = true;
+      showSpinner = false;
+    });
+    _scrollToDocumentLine();
   }
 
   Future<void> _onSplitBatches(
     DocumentLine documentLine,
     List<double> batchData,
   ) async {
-    final PickingTask pickingTask =
-        Provider.of<PickingTask>(context, listen: false);
-
     await splitBatches(
       documentLine,
       batchData,
@@ -246,13 +276,44 @@ class _PickingScreenState extends State<PickingScreen> {
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _listScrollController.animateTo(
-        _listScrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 500),
+    Future.delayed(const Duration(milliseconds: 300)).then((value) {
+      _listScrollController.scrollTo(
+        index: documentLineTiles.length - 1,
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
     });
+  }
+
+  void _scrollToDocumentLine() {
+    if (documentLineToScroll == null) {
+      return;
+    }
+    bool alreadyScrolled = false;
+    for (final Widget slidables in documentLineTiles) {
+      if (!alreadyScrolled && slidables is Slidable) {
+        if (slidables.child is DocumentLineTile) {
+          final DocumentLineTile tile = slidables.child as DocumentLineTile;
+          //widgetsHeight += tile.containerKey.currentContext!.size!.height;
+          if (tile.documentLine.id == documentLineToScroll!.id) {
+            final int index = documentLineTiles.indexOf(slidables);
+            if (index >= documentLineTiles.length - 2) {
+              alreadyScrolled = true;
+              _scrollToBottom();
+            } else {
+              alreadyScrolled = true;
+              Future.delayed(const Duration(milliseconds: 300)).then((value) {
+                _listScrollController.scrollTo(
+                  index: index,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                );
+              });
+            }
+          }
+        }
+      }
+    }
   }
 
   Future<void> splitBatches(DocumentLine line, List<double> batchData) async {
@@ -271,11 +332,55 @@ class _PickingScreenState extends State<PickingScreen> {
       comp,
     );
 
+    //Increment the last 2 digits of the batch number if necessary
+    String batchPrefix;
+    String batchSuffix;
+    int batchIndex;
+    String lineBatchPrefix;
+    String lineBatchSuffix;
+    int lineBatchIndex;
+    int maxLineBatchIndex;
+    for (final Batch batch in newLines) {
+      batchPrefix = batch.batchNumber.substring(
+        0,
+        batch.batchNumber.length - 2,
+      );
+      batchSuffix = batch.batchNumber.substring(
+        batch.batchNumber.length - 2,
+      );
+      batchIndex = int.tryParse(batchSuffix) ?? 0;
+      maxLineBatchIndex = -1;
+      for (final DocumentLine documentLine in pickingTask.document!.lines) {
+        if (documentLine.product.reference.trim() ==
+                line.product.reference.trim() &&
+            documentLine.batch != null &&
+            documentLine.batch!.batchNumber.length > 2) {
+          lineBatchPrefix = documentLine.batch!.batchNumber.substring(
+            0,
+            documentLine.batch!.batchNumber.length - 2,
+          );
+          lineBatchSuffix = documentLine.batch!.batchNumber.substring(
+            documentLine.batch!.batchNumber.length - 2,
+          );
+          lineBatchIndex = int.tryParse(lineBatchSuffix) ?? 0;
+          if (lineBatchPrefix == batchPrefix &&
+              lineBatchIndex > maxLineBatchIndex) {
+            maxLineBatchIndex = lineBatchIndex;
+          }
+        }
+      }
+      if (maxLineBatchIndex >= batchIndex) {
+        batchIndex = maxLineBatchIndex + 1;
+        batchSuffix = batchIndex.toString().padLeft(2, '0');
+        batch.batchNumber = batchPrefix + batchSuffix;
+      }
+    }
+
     final DocumentLine oldDocumentLine = line.copyWith();
     pickingTask.document!.lines.removeWhere((element) => element.id == line.id);
 
     for (final Batch batch in newLines) {
-      final double quantity = double.tryParse(batch.erpId!) ?? 0;
+      final double quantity = double.tryParse(batch.erpId!.trim()) ?? 0;
 
       addProduct(
         product: oldDocumentLine.product,
@@ -300,6 +405,8 @@ class _PickingScreenState extends State<PickingScreen> {
       canPick = false;
     });
 
+    documentLineToScroll = null;
+
     final TaskOperation taskOperation = await handleBarcode(barcode);
 
     if (!taskOperation.success) {
@@ -317,6 +424,38 @@ class _PickingScreenState extends State<PickingScreen> {
       showSpinner = false;
       canPick = true;
     });
+    _scrollToDocumentLine();
+  }
+
+  Future<void> _onProductSelectedBottomBar(Product product) async {
+    setState(() {
+      showSpinner = true;
+      canPick = false;
+    });
+
+    documentLineToScroll = null;
+
+    final TaskOperation taskOperation = await addProduct(
+      product: product,
+      location: _toLocation,
+    );
+
+    if (!taskOperation.success) {
+      // ignore: use_build_context_synchronously
+      Helper.showMsg(
+        'Atenção',
+        taskOperation.message,
+        context,
+      );
+    } else {
+      await getDocumentLinesList();
+    }
+
+    setState(() {
+      showSpinner = false;
+      canPick = true;
+    });
+    _scrollToDocumentLine();
   }
 
   Future<TaskOperation> handleBarcode(String barcode) async {
@@ -335,10 +474,11 @@ class _PickingScreenState extends State<PickingScreen> {
     final BarCodeType barCodeType = Helper.getBarCodeType(barcode);
 
     //Initialize variables
+    final bool useOnlyCreatedBatches =
+        pickingTask.stockMovement == StockMovement.outbound ||
+            pickingTask.stockMovement == StockMovement.transfer;
     Product? product;
     Batch? batch;
-
-    //TODO - Check if barcode is valid
 
     switch (barCodeType) {
       case BarCodeType.unknown:
@@ -367,14 +507,15 @@ class _PickingScreenState extends State<PickingScreen> {
         }
         break;
       case BarCodeType.batch:
-        //Json with product ref and batch number
-        //{"ref":"000","lote":"000"}
         final Map<String, dynamic> json =
             jsonDecode(barcode) as Map<String, dynamic>;
         final String productRef = json['ref'] as String;
         final String batchNumber = json['lote'] as String;
+        final String? barcodeQR = json['barcode'] as String?;
+
         product = ProductHelper.getProduct(
           reference: productRef,
+          barcode: barcodeQR ?? '',
         );
         if (product == null) {
           taskOperation = TaskOperation(
@@ -387,13 +528,20 @@ class _PickingScreenState extends State<PickingScreen> {
             productRef,
             batchNumber,
           );
-          if (batch == null) {
+          if (batch == null && useOnlyCreatedBatches) {
             taskOperation = TaskOperation(
               success: false,
               errorCode: ErrorCode.batchNotFound,
               message: 'Lote não encontrado',
             );
           } else {
+            batch ??= Batch(
+              id: Guid.newGuid,
+              erpId: '',
+              batchNumber: batchNumber,
+              expirationDate: DateTime(1900),
+              usaMolho: product.usaMolho,
+            );
             taskOperation = await addProduct(
               product: product,
               batch: batch,
@@ -481,6 +629,7 @@ class _PickingScreenState extends State<PickingScreen> {
       product: product,
       batch: batch,
     );
+    documentLineToAdd.destinationLocation = location;
 
     //====GET THE BATCH AND QUANTITY====
     if (quantity == 0 || (batch == null && product.isBatchTracked)) {
@@ -534,7 +683,7 @@ class _PickingScreenState extends State<PickingScreen> {
                           documentLineToAdd.batch != null &&
                           element.batch == null)
 
-                      // Botch Batch tracked but neither have batch
+                      // Both Batch tracked but neither have batch
                       ||
                       (product.isBatchTracked &&
                           documentLineToAdd.batch == null &&
@@ -582,10 +731,35 @@ class _PickingScreenState extends State<PickingScreen> {
       quantityToAdd = documentLineToAdd.quantity;
     }
 
+    for (final DocumentLine documentLine in documentLines) {
+      if (documentLine.id == finalDocumentLine.id) {
+        documentLineToScroll = documentLine;
+      }
+    }
+    documentLineToScroll ??= finalDocumentLine;
+
     return pickingTask.changeDocumentLineQuantity(
       finalDocumentLine,
       quantityToAdd,
     );
+  }
+
+  Future<TaskOperation> removeFromDocument(DocumentLine documentLine) async {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    final TaskOperation taskOperation = pickingTask.changeDocumentLineQuantity(
+      documentLine,
+      -documentLine.quantity,
+    );
+
+    if (taskOperation.success) {
+      await getDocumentLinesList();
+    }
+
+    return taskOperation;
   }
 
   Future<void> _onChangeEntity() async {
@@ -674,9 +848,11 @@ class _PickingScreenState extends State<PickingScreen> {
                 onTap: () {
                   exitPickingScreen();
                 },
-                child: const FaIcon(
-                  FontAwesomeIcons.angleLeft,
-                  color: kPrimaryColorLight,
+                child: const Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.angleLeft,
+                    color: kPrimaryColorLight,
+                  ),
                 ),
               ),
               const SizedBox(
@@ -808,9 +984,12 @@ class _PickingScreenState extends State<PickingScreen> {
                                   ),
                                 ],
                               )
-                            : SingleChildScrollView(
-                                controller: _listScrollController,
-                                child: documentTilesList,
+                            : ScrollablePositionedList.builder(
+                                itemScrollController: _listScrollController,
+                                itemCount: documentLineTiles.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return documentLineTiles[index];
+                                },
                               );
                       } else if (snapshot.hasError &&
                           snapshot.connectionState != ConnectionState.waiting) {
@@ -860,6 +1039,84 @@ class _PickingScreenState extends State<PickingScreen> {
         floatingActionButton: FloatingActionButton(
           shape: const CircleBorder(),
           onPressed: () async {
+            bool canSave = true;
+
+            //If it's Inventory, get the name of the document from the user
+            if (pickingTask.stockMovement == StockMovement.inventory &&
+                (pickingTask.sourceDocuments.isEmpty)) {
+              final TextEditingController inventoryNameController =
+                  TextEditingController();
+              await showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    surfaceTintColor: kWhiteBackground,
+                    title: const Text('Nome do inventário'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    actionsPadding: const EdgeInsets.only(
+                      right: 10.0,
+                      bottom: 5.0,
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          autofocus: true,
+                          controller: inventoryNameController,
+                          style: Theme.of(context).textTheme.labelSmall,
+                          decoration: kPickTextFieldsInputDecoration.copyWith(
+                            hintText: 'Nome',
+                            prefixIcon: const Icon(
+                              FontAwesomeIcons.fileWord,
+                              size: 15.0,
+                              color: kPrimaryColorDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      MaterialButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          canSave = false;
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Cancelar',
+                          style:
+                              Theme.of(context).textTheme.labelSmall!.copyWith(
+                                    color: kPrimaryColor.withOpacity(0.8),
+                                  ),
+                        ),
+                      ),
+                      MaterialButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Submeter',
+                          style:
+                              Theme.of(context).textTheme.labelSmall!.copyWith(
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+              pickingTask.document!.name = inventoryNameController.text;
+            }
+
+            if (!canSave) {
+              return;
+            }
+
             setState(() {
               isSavingToServer = true;
               showSpinner = true;
@@ -903,6 +1160,7 @@ class _PickingScreenState extends State<PickingScreen> {
         ),
         bottomNavigationBar: AppBottomBar(
           onBarcodeScan: _onBarcodeScanned,
+          onProductSelected: _onProductSelectedBottomBar,
         ),
       ),
     );

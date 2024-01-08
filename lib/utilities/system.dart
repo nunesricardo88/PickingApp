@@ -82,7 +82,7 @@ class System {
       final String url = ApiEndPoint.apiVersionURL();
       final NetworkHelper networkHelper = NetworkHelper(url);
       final http.Response result =
-          await networkHelper.getDataNoAuth(seconds: 5) as http.Response;
+          await networkHelper.getDataNoAuth(seconds: 10) as http.Response;
 
       if (result.statusCode == 200) {
         final resultBody = result.body;

@@ -23,7 +23,6 @@ class _CalculatorState extends State<Calculator> {
   @override
   void initState() {
     super.initState();
-
     getData();
   }
 
@@ -36,9 +35,9 @@ class _CalculatorState extends State<Calculator> {
     final SimpleCalculator calc = SimpleCalculator(
       value: _currentValue,
       onChanged: (key, value, expression) {
-        // print('$key\t$value\t$expression');
+        //print('$key\t$value\t$expression');
 
-        if (RegExp(r'^[0-9.]+$').hasMatch(expression!) || key == '=') {
+        if (RegExp(r'^[0-9,]+$').hasMatch(expression!) || key == '=') {
           widget.callBackValue(value);
         }
       },

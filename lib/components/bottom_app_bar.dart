@@ -88,12 +88,12 @@ class _AppBottomBarState extends State<AppBottomBar> {
         menuChildren: [
           MenuItemButton(
             leadingIcon: FaIcon(
-              FontAwesomeIcons.layerGroup,
+              FontAwesomeIcons.objectUngroup,
               color: Theme.of(context).colorScheme.onPrimary,
               size: 20.0,
             ),
             child: Text(
-              'Inserir molho',
+              'Agrupamento',
               style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),

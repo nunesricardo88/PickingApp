@@ -216,7 +216,7 @@ class PickingTask extends ChangeNotifier {
     );
   }
 
-  TaskOperation changeDocumentLineQuantity(
+  TaskOperation addToDocumentLineQuantity(
     DocumentLine documentLine,
     double quantity,
   ) {
@@ -397,11 +397,6 @@ class PickingTask extends ChangeNotifier {
       http.Response response;
       final String jsonBody = json.encode(documentLineJsonBody);
 
-      // final RegExp pattern = RegExp('.{1,800}');
-      // pattern
-      //     .allMatches(jsonBody)
-      //     .forEach((match) => debugPrint(match.group(0)));
-
       postPutUrl = ApiEndPoint.printDocumentLineLabel();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
       response = await networkHelper.postData(
@@ -454,11 +449,6 @@ class PickingTask extends ChangeNotifier {
       String postPutUrl = '';
       http.Response response;
       final String jsonBody = json.encode(documentLineJsonBody);
-
-      final RegExp pattern = RegExp('.{1,800}');
-      pattern
-          .allMatches(jsonBody)
-          .forEach((match) => debugPrint(match.group(0)));
 
       postPutUrl = ApiEndPoint.postNewBarcode();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
@@ -562,11 +552,6 @@ class PickingTask extends ChangeNotifier {
       String postPutUrl = '';
       http.Response response;
       final String jsonBody = json.encode(documentJsonBody);
-
-      // final RegExp pattern = RegExp('.{1,800}');
-      // pattern
-      //     .allMatches(jsonBody)
-      //     .forEach((match) => debugPrint(match.group(0)));
 
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);

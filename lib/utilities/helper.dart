@@ -5,7 +5,7 @@ import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 mixin Helper {
-  static String removeDecimalZeroFormat(double n, {int decimalPlaces = 1}) {
+  static String removeDecimalZeroFormat(double n, {int decimalPlaces = 2}) {
     final RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
     final String nString = n.toStringAsFixed(decimalPlaces);
     return nString.replaceAll(regex, '');
@@ -145,5 +145,10 @@ mixin Helper {
     }).toList();
 
     return entities;
+  }
+
+  static void printDebug(String message) {
+    final RegExp pattern = RegExp('.{1,800}');
+    pattern.allMatches(message).forEach((match) => debugPrint(match.group(0)));
   }
 }

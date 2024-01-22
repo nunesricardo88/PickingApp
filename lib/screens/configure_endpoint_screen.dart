@@ -3,6 +3,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:n6picking_flutterapp/screens/camera_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
 
@@ -71,44 +73,92 @@ class _ConfigureEndpointScreenState extends State<ConfigureEndpointScreen> {
       onBarcodeScanned: (barcode) async {
         await getScannerQRConnection(barcode);
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Ligação ao servidor',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(
-            height: 20.0,
-          ),
-          Row(
-            children: [
-              Text(
-                'Estado:',
-                style: Theme.of(context).textTheme.labelMedium,
+      child: Container(
+        decoration: BoxDecoration(
+          color: kPrimaryColorLight,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: kPrimaryColorDark,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
               ),
-              const SizedBox(
-                width: 5.0,
+              child: SizedBox(
+                height: 45.0,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Ligação ao servidor',
+                    style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                          color: kPrimaryColorLight,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ),
               ),
-              Text(
-                isCheckingServerConnection || firstSetup
-                    ? 'A verificar'
-                    : isOnline
-                        ? 'Online'
-                        : 'Offline',
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: isCheckingServerConnection || firstSetup
-                          ? kPrimaryColorDark
-                          : isOnline
-                              ? kAccentColor
-                              : kErrorColor,
-                      fontWeight: FontWeight.w500,
-                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Estado:',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  const SizedBox(
+                    width: 5.0,
+                  ),
+                  Text(
+                    isCheckingServerConnection || firstSetup
+                        ? 'A verificar'
+                        : isOnline
+                            ? 'Online'
+                            : 'Offline',
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: isCheckingServerConnection || firstSetup
+                              ? kPrimaryColorDark
+                              : isOnline
+                                  ? kAccentColor
+                                  : kErrorColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(
+              height: 20.0,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CameraScreen(onBarcodeScan: getScannerQRConnection),
+                      ),
+                    );
+                  },
+                  icon: const FaIcon(
+                    FontAwesomeIcons.camera,
+                    color: kPrimaryColor,
+                    size: 15.0,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

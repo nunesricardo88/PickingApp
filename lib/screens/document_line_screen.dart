@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/calculator.dart';
+import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_property_tile.dart';
 import 'package:n6picking_flutterapp/components/split_batches_dialog.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
@@ -53,10 +54,24 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
       widget.documentLine.destinationLocation = widget.location;
     }
 
-    final TaskOperation taskOperation = pickingTask.changeDocumentLineQuantity(
+    final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       widget.documentLine,
       calculatedValue - widget.documentLine.quantity,
     );
+
+    if (widget.documentLine.product.isBatchTracked &&
+        calculatedValue > 0.0 &&
+        widget.documentLine.batch == null) {
+      await showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return DocumentLineDialog(
+            documentLine: widget.documentLine,
+          );
+        },
+      );
+    }
 
     setState(() {});
     return taskOperation;
@@ -452,11 +467,28 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                 : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity)} ${widget.documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.quantityToPick)}' : ''}',
                           ),
                           if (widget.documentLine.product.isBatchTracked)
-                            DocumentLinePropertyTile(
-                              title: 'Lote',
-                              value: widget.documentLine.batch != null
-                                  ? widget.documentLine.batch!.batchNumber
-                                  : '(sem lote)',
+                            GestureDetector(
+                              onTap: () async {
+                                await showDialog(
+                                  barrierDismissible: false,
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return DocumentLineDialog(
+                                      documentLine: widget.documentLine,
+                                    );
+                                  },
+                                ).then(
+                                  (value) => setState(() {
+                                    setup();
+                                  }),
+                                );
+                              },
+                              child: DocumentLinePropertyTile(
+                                title: 'Lote',
+                                value: widget.documentLine.batch != null
+                                    ? widget.documentLine.batch!.batchNumber
+                                    : '(sem lote)',
+                              ),
                             ),
                         ],
                       ),

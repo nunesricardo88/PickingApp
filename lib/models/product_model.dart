@@ -230,6 +230,9 @@ mixin ProductHelper {
       product ??= ProductApi.instance.allProducts.firstWhereOrNull(
         (element) => element.barcode.contains(reference.trim()),
       );
+      product ??= ProductApi.instance.allProducts.firstWhereOrNull(
+        (element) => element.barcode.contains(barcode.trim()),
+      );
     } else if (barcode.isNotEmpty) {
       product = ProductApi.instance.allProducts.firstWhereOrNull(
         (element) => element.barcode.contains(barcode.trim()),

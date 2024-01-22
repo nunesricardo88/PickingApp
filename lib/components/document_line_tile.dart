@@ -9,7 +9,6 @@ import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:provider/provider.dart';
 
 class DocumentLineTile extends StatefulWidget {
-  final GlobalKey containerKey;
   final DocumentLine documentLine;
   final Location? location;
   final Function(
@@ -17,7 +16,6 @@ class DocumentLineTile extends StatefulWidget {
     Location? location,
   ) callDocumentLineScreen;
   const DocumentLineTile({
-    required this.containerKey,
     required this.documentLine,
     this.location,
     required this.callDocumentLineScreen,

@@ -35,13 +35,13 @@ class PickingScreen extends StatefulWidget {
 class _PickingScreenState extends State<PickingScreen> {
   bool showSpinner = false;
   bool isSavingToServer = false;
-  bool canPick = true;
+  bool canPick = false;
   DocumentLine? documentLineToScroll;
 
   //Location variables
   bool _useLocations = false;
-  late Location? _fromLocation;
-  late Location? _toLocation;
+  Location? _fromLocation;
+  Location? _toLocation;
 
   //Entity variables
   late bool _canChangeEntity;
@@ -99,6 +99,7 @@ class _PickingScreenState extends State<PickingScreen> {
         setState(() {
           _useLocations = false;
           _fromLocation = null;
+          _toLocation = null;
         });
         break;
       case StockMovement.inbound:
@@ -117,6 +118,7 @@ class _PickingScreenState extends State<PickingScreen> {
         setState(() {
           _useLocations = true;
           _fromLocation = null;
+          _toLocation = null;
         });
 
         break;
@@ -124,6 +126,7 @@ class _PickingScreenState extends State<PickingScreen> {
         setState(() {
           _useLocations = true;
           _fromLocation = null;
+          _toLocation = null;
         });
         break;
       case StockMovement.inventory:
@@ -131,12 +134,17 @@ class _PickingScreenState extends State<PickingScreen> {
           canPick = true;
           _useLocations = true;
           _fromLocation = null;
+          _toLocation = null;
         });
 
         break;
     }
     _toLocationController.text = getLocationName(_toLocation);
     _fromLocationController.text = getLocationName(_fromLocation);
+
+    setState(() {
+      canPick = true;
+    });
   }
 
   void allowPicking() {
@@ -160,10 +168,17 @@ class _PickingScreenState extends State<PickingScreen> {
     super.dispose();
   }
 
-  void setLocation(Location location) {
+  void setToLocation(Location? location) {
     setState(() {
       _toLocation = location;
       _toLocationController.text = getLocationName(_toLocation);
+    });
+  }
+
+  void setFromLocation(Location location) {
+    setState(() {
+      _fromLocation = location;
+      _fromLocationController.text = getLocationName(_fromLocation);
     });
   }
 
@@ -193,29 +208,36 @@ class _PickingScreenState extends State<PickingScreen> {
             extentRatio: 0.15,
             motion: const ScrollMotion(),
             children: [
-              Builder(
-                builder: (BuildContext context) {
-                  return IconButton(
-                    icon: const FaIcon(
-                      FontAwesomeIcons.trashCan,
-                      color: kPrimaryColorDark,
-                    ),
-                    onPressed: () async {
-                      setState(() => showSpinner = true);
-                      await removeFromDocument(documentLine);
-                      setState(() => showSpinner = false);
-                    },
-                  );
+              SlidableAction(
+                padding: const EdgeInsets.only(right: 10.0),
+                backgroundColor: kGreyBackground,
+                icon: FontAwesomeIcons.trashCan,
+                foregroundColor: kPrimaryColorDark,
+                onPressed: (BuildContext context) async {
+                  setState(() => showSpinner = true);
+                  await removeFromDocument(documentLine);
+                  setState(() => showSpinner = false);
                 },
               ),
             ],
           ),
           child: DocumentLineTile(
-            containerKey: GlobalKey(),
             documentLine: documentLine,
             location: _toLocation,
             callDocumentLineScreen: _onCallDocumentLineScreen,
           ),
+        ),
+      );
+    }
+
+    if (documentLineTiles.isNotEmpty) {
+      documentLineTiles.add(
+        const Row(
+          children: [
+            SizedBox(
+              height: 25.0,
+            ),
+          ],
         ),
       );
     }
@@ -294,7 +316,6 @@ class _PickingScreenState extends State<PickingScreen> {
       if (!alreadyScrolled && slidables is Slidable) {
         if (slidables.child is DocumentLineTile) {
           final DocumentLineTile tile = slidables.child as DocumentLineTile;
-          //widgetsHeight += tile.containerKey.currentContext!.size!.height;
           if (tile.documentLine.id == documentLineToScroll!.id) {
             final int index = documentLineTiles.indexOf(slidables);
             if (index >= documentLineTiles.length - 2) {
@@ -565,7 +586,7 @@ class _PickingScreenState extends State<PickingScreen> {
             message: 'Localização não encontrada',
           );
         } else {
-          setLocation(location);
+          setToLocation(location);
         }
         break;
       case BarCodeType.document:
@@ -738,7 +759,7 @@ class _PickingScreenState extends State<PickingScreen> {
     }
     documentLineToScroll ??= finalDocumentLine;
 
-    return pickingTask.changeDocumentLineQuantity(
+    return pickingTask.addToDocumentLineQuantity(
       finalDocumentLine,
       quantityToAdd,
     );
@@ -750,12 +771,14 @@ class _PickingScreenState extends State<PickingScreen> {
       listen: false,
     );
 
-    final TaskOperation taskOperation = pickingTask.changeDocumentLineQuantity(
+    final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       documentLine,
       -documentLine.quantity,
     );
 
     if (taskOperation.success) {
+      documentLine.destinationLocation = null;
+      documentLine.batch = null;
       await getDocumentLinesList();
     }
 
@@ -925,16 +948,6 @@ class _PickingScreenState extends State<PickingScreen> {
                             ),
                           ],
                         ),
-                      if (_useLocations)
-                        const SizedBox(
-                          height: 15.0,
-                        ),
-                      if (pickingTask.stockMovement == StockMovement.inbound ||
-                          pickingTask.stockMovement == StockMovement.inventory)
-                        Text(
-                          ' Localização: ${_toLocation != null ? _toLocation!.name : '(Nenhuma)'}',
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
                     ],
                   ),
                 ),
@@ -942,10 +955,49 @@ class _PickingScreenState extends State<PickingScreen> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10.0,
                   ),
-                  child: Divider(
-                    height: 2.0,
-                    color: kPrimaryColor.withOpacity(0.2),
-                  ),
+                  child: _useLocations &&
+                          pickingTask.stockMovement != StockMovement.transfer
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                height: 2.0,
+                                color: kPrimaryColor.withOpacity(0.2),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 10.0,
+                            ),
+                            FaIcon(
+                              FontAwesomeIcons.warehouse,
+                              color: kPrimaryColor.withOpacity(0.8),
+                              size: 13.0,
+                            ),
+                            const SizedBox(
+                              width: 10.0,
+                            ),
+                            Text(
+                              _toLocation != null
+                                  ? _toLocation!.name
+                                  : '(Sem localização)',
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                            const SizedBox(
+                              width: 10.0,
+                            ),
+                            Expanded(
+                              child: Divider(
+                                height: 2.0,
+                                color: kPrimaryColor.withOpacity(0.2),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Divider(
+                          height: 2.0,
+                          color: kPrimaryColor.withOpacity(0.2),
+                        ),
                 ),
                 const SizedBox(
                   height: 10.0,
@@ -984,12 +1036,20 @@ class _PickingScreenState extends State<PickingScreen> {
                                   ),
                                 ],
                               )
-                            : ScrollablePositionedList.builder(
-                                itemScrollController: _listScrollController,
-                                itemCount: documentLineTiles.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return documentLineTiles[index];
-                                },
+                            : Column(
+                                children: [
+                                  Expanded(
+                                    child: ScrollablePositionedList.builder(
+                                      itemScrollController:
+                                          _listScrollController,
+                                      itemCount: documentLineTiles.length,
+                                      itemBuilder:
+                                          (BuildContext context, int index) {
+                                        return documentLineTiles[index];
+                                      },
+                                    ),
+                                  ),
+                                ],
                               );
                       } else if (snapshot.hasError &&
                           snapshot.connectionState != ConnectionState.waiting) {

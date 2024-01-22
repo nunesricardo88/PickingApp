@@ -93,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          contentPadding: EdgeInsets.zero,
           surfaceTintColor: kWhiteBackground,
           content: ConfigureEndpointScreen(),
         );

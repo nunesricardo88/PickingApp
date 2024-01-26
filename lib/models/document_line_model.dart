@@ -229,12 +229,14 @@ mixin DocumentLineApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-
-      final Iterable l = jsonBody['result'] as Iterable;
-      documentLines = List<DocumentLine>.from(
-        l.map((model) => DocumentLine.fromJson(model as Map<String, dynamic>)),
-      );
-      documentLines.sort((a, b) => a.order!.compareTo(b.order!));
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
+        documentLines = List<DocumentLine>.from(
+          l.map(
+              (model) => DocumentLine.fromJson(model as Map<String, dynamic>)),
+        );
+        documentLines.sort((a, b) => a.order!.compareTo(b.order!));
+      }
     }
 
     return documentLines;

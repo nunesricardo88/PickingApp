@@ -78,11 +78,13 @@ mixin EntityApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final Iterable l = jsonBody['result'] as Iterable;
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
 
-      entitiesList = List<Entity>.from(
-        l.map((model) => Entity.fromJson(model as Map<String, dynamic>)),
-      );
+        entitiesList = List<Entity>.from(
+          l.map((model) => Entity.fromJson(model as Map<String, dynamic>)),
+        );
+      }
     }
 
     return entitiesList;

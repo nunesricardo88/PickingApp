@@ -13,9 +13,11 @@ import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
+import 'package:n6picking_flutterapp/models/misc_data_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/screens/document_line_screen.dart';
+import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_documents_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_entity_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
@@ -36,7 +38,13 @@ class _PickingScreenState extends State<PickingScreen> {
   bool showSpinner = false;
   bool isSavingToServer = false;
   bool canPick = false;
+  bool alreadyShowedPostOperationInput = false;
   DocumentLine? documentLineToScroll;
+
+  //MiscData variables
+  List<MiscData> miscDataList = [];
+  bool _hasPreOperationInput = false;
+  bool _hasPostOperationInput = false;
 
   //Location variables
   bool _useLocations = false;
@@ -67,6 +75,15 @@ class _PickingScreenState extends State<PickingScreen> {
     setup();
   }
 
+  @override
+  void dispose() {
+    _entityController.dispose();
+    _sourceDocumentsController.dispose();
+    _fromLocationController.dispose();
+    _toLocationController.dispose();
+    super.dispose();
+  }
+
   Future<void> setup() async {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
@@ -76,6 +93,8 @@ class _PickingScreenState extends State<PickingScreen> {
     _fromLocationController = TextEditingController();
     _toLocationController = TextEditingController();
     _listScrollController = ItemScrollController();
+
+    loadMiscData();
 
     await getDocumentLinesList();
 
@@ -142,8 +161,47 @@ class _PickingScreenState extends State<PickingScreen> {
     _toLocationController.text = getLocationName(_toLocation);
     _fromLocationController.text = getLocationName(_fromLocation);
 
+    if (_hasPreOperationInput) {
+      final List<MiscData> miscDataPreOperationList =
+          miscDataList.where((element) => element.preOperationInput).toList();
+      // ignore: use_build_context_synchronously
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MiscDataScreen(
+            miscDataList: miscDataPreOperationList,
+          ),
+        ),
+      ).then((value) async {
+        if (value != null) {
+          final List<MiscData> miscDataIncomingList = value as List<MiscData>;
+          await _onMiscDataChanged(miscDataIncomingList);
+        }
+      });
+    }
+
+    allowPicking();
+  }
+
+  void loadMiscData() {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    final List<MiscData> miscData = MiscDataHelper.fromTask(pickingTask);
+
+    final bool hasPreOperationInput = miscData.any(
+      (element) => element.preOperationInput,
+    );
+
+    final bool hasPostOperationInput = miscData.any(
+      (element) => element.postOperationInput,
+    );
     setState(() {
-      canPick = true;
+      _hasPreOperationInput = hasPreOperationInput;
+      _hasPostOperationInput = hasPostOperationInput;
+      miscDataList = miscData;
     });
   }
 
@@ -157,15 +215,6 @@ class _PickingScreenState extends State<PickingScreen> {
     setState(() {
       canPick = false;
     });
-  }
-
-  @override
-  void dispose() {
-    _entityController.dispose();
-    _sourceDocumentsController.dispose();
-    _fromLocationController.dispose();
-    _toLocationController.dispose();
-    super.dispose();
   }
 
   void setToLocation(Location? location) {
@@ -477,6 +526,17 @@ class _PickingScreenState extends State<PickingScreen> {
       canPick = true;
     });
     _scrollToDocumentLine();
+  }
+
+  Future<void> _onMiscDataChanged(List<MiscData> miscDataIncomingList) async {
+    for (final MiscData miscData in miscDataIncomingList) {
+      final int index = miscDataList.indexWhere(
+        (element) => element.id == miscData.id,
+      );
+      if (index != -1) {
+        miscDataList[index] = miscData;
+      }
+    }
   }
 
   Future<TaskOperation> handleBarcode(String barcode) async {
@@ -1101,11 +1161,53 @@ class _PickingScreenState extends State<PickingScreen> {
           onPressed: () async {
             bool canSave = true;
 
+            //Check if there are any MiscData that are not filled
+            final List<MiscData> miscDataNotFilled =
+                alreadyShowedPostOperationInput
+                    ? miscDataList
+                        .where(
+                          (element) =>
+                              element.isMandatory && element.value.isEmpty,
+                        )
+                        .toList()
+                    : miscDataList
+                        .where(
+                          (element) =>
+                              element.postOperationInput ||
+                              (element.preOperationInput &&
+                                  element.isMandatory &&
+                                  element.value.isEmpty),
+                        )
+                        .toList();
+            if (miscDataNotFilled.isNotEmpty) {
+              canSave = false;
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MiscDataScreen(
+                    miscDataList: miscDataNotFilled,
+                  ),
+                ),
+              ).then((value) async {
+                alreadyShowedPostOperationInput = true;
+                if (value != null) {
+                  final List<MiscData> miscDataIncomingList =
+                      value as List<MiscData>;
+                  await _onMiscDataChanged(miscDataIncomingList);
+                }
+              });
+            }
+
+            if (!canSave) {
+              return;
+            }
+
             //If it's Inventory, get the name of the document from the user
             if (pickingTask.stockMovement == StockMovement.inventory &&
                 (pickingTask.sourceDocuments.isEmpty)) {
               final TextEditingController inventoryNameController =
                   TextEditingController();
+              // ignore: use_build_context_synchronously
               await showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -1177,6 +1279,9 @@ class _PickingScreenState extends State<PickingScreen> {
               return;
             }
 
+            //Replace task customOptions with miscDataList JSON
+            MiscDataHelper.toTask(pickingTask, miscDataList);
+
             setState(() {
               isSavingToServer = true;
               showSpinner = true;
@@ -1221,6 +1326,8 @@ class _PickingScreenState extends State<PickingScreen> {
         bottomNavigationBar: AppBottomBar(
           onBarcodeScan: _onBarcodeScanned,
           onProductSelected: _onProductSelectedBottomBar,
+          onMiscDataChanged: _onMiscDataChanged,
+          miscDataList: miscDataList,
         ),
       ),
     );

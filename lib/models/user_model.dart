@@ -74,11 +74,13 @@ mixin UserApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final Iterable l = jsonBody['result'] as Iterable;
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
 
-      userList = List<User>.from(
-        l.map((model) => User.fromJson(model as Map<String, dynamic>)),
-      );
+        userList = List<User>.from(
+          l.map((model) => User.fromJson(model as Map<String, dynamic>)),
+        );
+      }
     }
 
     return userList;

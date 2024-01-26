@@ -544,7 +544,6 @@ class PickingTask extends ChangeNotifier {
 
       //Clean not needed fields
       userErpId = System.instance.activeUser!.erpId;
-      customOptions = '';
       document!.number = 0;
       document!.entity!.addresses = [];
 
@@ -555,6 +554,7 @@ class PickingTask extends ChangeNotifier {
 
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
+
       response = await networkHelper.postData(
         json: jsonBody,
         seconds: 30,
@@ -602,11 +602,13 @@ mixin PickingTaskApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final Iterable l = jsonBody['result'] as Iterable;
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
 
-      pickingTasksList = List<PickingTask>.from(
-        l.map((model) => PickingTask.fromJson(model as Map<String, dynamic>)),
-      );
+        pickingTasksList = List<PickingTask>.from(
+          l.map((model) => PickingTask.fromJson(model as Map<String, dynamic>)),
+        );
+      }
     }
 
     return pickingTasksList;

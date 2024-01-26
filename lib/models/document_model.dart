@@ -111,11 +111,13 @@ mixin DocumentApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final Iterable l = jsonBody['result'] as Iterable;
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
 
-      documentsList = List<Document>.from(
-        l.map((model) => Document.fromJson(model as Map<String, dynamic>)),
-      );
+        documentsList = List<Document>.from(
+          l.map((model) => Document.fromJson(model as Map<String, dynamic>)),
+        );
+      }
     }
 
     return documentsList;
@@ -133,7 +135,10 @@ mixin DocumentApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      document = Document.fromJson(jsonBody['result'] as Map<String, dynamic>);
+      if (jsonBody['result'] != null) {
+        document =
+            Document.fromJson(jsonBody['result'] as Map<String, dynamic>);
+      }
     }
 
     return document;

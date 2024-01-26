@@ -134,11 +134,12 @@ mixin BatchApi {
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
-      final Iterable l = jsonBody['result'] as Iterable;
-
-      batches = List<Batch>.from(
-        l.map((model) => Batch.fromJson(model as Map<String, dynamic>)),
-      );
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
+        batches = List<Batch>.from(
+          l.map((model) => Batch.fromJson(model as Map<String, dynamic>)),
+        );
+      }
     }
     return batches;
   }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/manual_barcode_box.dart';
+import 'package:n6picking_flutterapp/models/misc_data_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/screens/camera_screen.dart';
+import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 class AppBottomBar extends StatefulWidget {
@@ -11,12 +13,16 @@ class AppBottomBar extends StatefulWidget {
     this.shape = const CircularNotchedRectangle(),
     required this.onBarcodeScan,
     required this.onProductSelected,
+    required this.onMiscDataChanged,
+    required this.miscDataList,
   });
 
   final FloatingActionButtonLocation fabLocation;
   final NotchedShape? shape;
   final Future<void> Function(String) onBarcodeScan;
   final Future<void> Function(Product) onProductSelected;
+  final Future<void> Function(List<MiscData>) onMiscDataChanged;
+  final List<MiscData> miscDataList;
   @override
   _AppBottomBarState createState() => _AppBottomBarState();
 }
@@ -86,20 +92,36 @@ class _AppBottomBarState extends State<AppBottomBar> {
           );
         },
         menuChildren: [
-          MenuItemButton(
-            leadingIcon: FaIcon(
-              FontAwesomeIcons.objectUngroup,
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 20.0,
-            ),
-            child: Text(
-              'Agrupamento',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
+          if (widget.miscDataList.isNotEmpty)
+            MenuItemButton(
+              leadingIcon: FaIcon(
+                FontAwesomeIcons.penToSquare,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 20.0,
+              ),
+              child: Text(
+                'Outros dados',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MiscDataScreen(
+                      miscDataList: widget.miscDataList,
+                    ),
                   ),
+                ).then(
+                  (value) {
+                    if (value is List<MiscData>) {
+                      widget.onMiscDataChanged(value);
+                    }
+                  },
+                );
+              },
             ),
-            onPressed: () async {},
-          ),
         ],
       ),
     );

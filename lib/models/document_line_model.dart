@@ -233,7 +233,8 @@ mixin DocumentLineApi {
         final Iterable l = jsonBody['result'] as Iterable;
         documentLines = List<DocumentLine>.from(
           l.map(
-              (model) => DocumentLine.fromJson(model as Map<String, dynamic>)),
+            (model) => DocumentLine.fromJson(model as Map<String, dynamic>),
+          ),
         );
         documentLines.sort((a, b) => a.order!.compareTo(b.order!));
       }

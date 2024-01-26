@@ -44,7 +44,6 @@ class _PickingScreenState extends State<PickingScreen> {
   //MiscData variables
   List<MiscData> miscDataList = [];
   bool _hasPreOperationInput = false;
-  bool _hasPostOperationInput = false;
 
   //Location variables
   bool _useLocations = false;
@@ -195,12 +194,8 @@ class _PickingScreenState extends State<PickingScreen> {
       (element) => element.preOperationInput,
     );
 
-    final bool hasPostOperationInput = miscData.any(
-      (element) => element.postOperationInput,
-    );
     setState(() {
       _hasPreOperationInput = hasPreOperationInput;
-      _hasPostOperationInput = hasPostOperationInput;
       miscDataList = miscData;
     });
   }

@@ -6,6 +6,7 @@ enum License {
   rialto,
   rrmp,
   greenkinetics,
+  techsysflui,
 }
 
 enum StockMovement {

@@ -122,6 +122,7 @@ class ProductDatabase {
   Future<int> deleteBulk(List<Product> products) async {
     final db = await instance.database;
     final batch = db.batch();
+
     for (final Product product in products) {
       batch.delete(
         tableProduct,
@@ -136,13 +137,25 @@ class ProductDatabase {
   Future<int> deleteAndCreateBulk(List<Product> products) async {
     final db = await instance.database;
     final batch = db.batch();
+
+    //Check if table is empty
+    final result = await db.query(
+      tableProduct,
+      columns: ProductFields.allValues,
+    );
+    final bool isEmpty = result.isEmpty;
+
     for (final Product product in products) {
-      batch.delete(
-        tableProduct,
-        where: '${ProductFields.reference} = ?',
-        whereArgs: [product.reference],
-      );
-      batch.insert(tableProduct, product.toJson());
+      if (!isEmpty) {
+        batch.delete(
+          tableProduct,
+          where: '${ProductFields.reference} = ?',
+          whereArgs: [product.reference],
+        );
+        batch.insert(tableProduct, product.toJson());
+      } else {
+        batch.insert(tableProduct, product.toJson());
+      }
     }
     await batch.commit(noResult: true);
     return products.length;

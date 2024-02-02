@@ -165,8 +165,13 @@ class ProductApi {
 
   static ProductApi instance = ProductApi._init();
 
+  bool isInitialized = false;
+
   ProductApi._init() {
-    initialize();
+    if (!isInitialized) {
+      isInitialized = true;
+      initialize();
+    }
   }
 
   Future<void> initialize() async {

@@ -468,7 +468,6 @@ class PickingTask extends ChangeNotifier {
         for (final Product product in ProductApi.instance.allProducts) {
           if (product.erpId == documentLine.product.erpId) {
             product.barcode.add(barcode);
-            await ProductApi.instance.updateProduct(product);
             break;
           }
         }

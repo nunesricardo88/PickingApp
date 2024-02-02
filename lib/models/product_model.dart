@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
-import 'package:n6picking_flutterapp/database/api_connection_table.dart';
-import 'package:n6picking_flutterapp/database/product_table.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
@@ -179,28 +177,7 @@ class ProductApi {
   }
 
   Future<List<Product>> syncAllProducts() async {
-    List<Product> productList = [];
-    productList = await fetchFromApi();
-    if (productList.isNotEmpty) {
-      await ProductDatabase.instance.deleteAndCreateBulk(productList);
-    }
-    productList = await fetchFromAppDatabase();
-    System.instance.apiConnection!.lastConnection = DateTime.now();
-    ApiConnectionDatabase.instance.update(System.instance.apiConnection!);
-    return productList;
-  }
-
-  Future<List<Product>> fetchFromAppDatabase() async {
-    List<Product> productList = [];
-    await ProductDatabase.instance.readAll().then((value) {
-      productList = value;
-    });
-    return productList;
-  }
-
-  Future<void> updateProduct(Product product) async {
-    await ProductDatabase.instance.delete(product.reference);
-    await ProductDatabase.instance.create(product);
+    return fetchFromApi();
   }
 
   static Future<List<Product>> fetchFromApi() async {

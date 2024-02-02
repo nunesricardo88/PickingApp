@@ -23,6 +23,13 @@ enum EntityType {
   interno,
 }
 
+enum LocationKind {
+  none,
+  standard,
+  transferFrom,
+  transferTo,
+}
+
 enum BarCodeType {
   unknown,
   product,
@@ -42,10 +49,12 @@ enum ErrorCode {
   documentNotFound,
   documentNotSuitable,
   locationNotFound,
+  cannotChangeLocation,
   errorSavingDocument,
   productNotFound,
   batchNotFound,
   insufficientDataSubmitted,
+  inDevelopment,
   unknownError,
 }
 

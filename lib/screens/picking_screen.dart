@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +48,12 @@ class _PickingScreenState extends State<PickingScreen> {
   bool _hasPreOperationInput = false;
 
   //Location variables
+  //When the stock movement is not a Transfer, use only the destination location
   bool _useLocations = false;
-  Location? _fromLocation;
-  Location? _toLocation;
+  bool _canChangeOriginLocation = true;
+  bool _canChangeDestinationLocation = true;
+  Location? _originLocation;
+  Location? _destinationLocation;
 
   //Entity variables
   late bool _canChangeEntity;
@@ -56,13 +61,13 @@ class _PickingScreenState extends State<PickingScreen> {
   //TextControllers
   late TextEditingController _entityController;
   late TextEditingController _sourceDocumentsController;
-  late TextEditingController _fromLocationController;
-  late TextEditingController _toLocationController;
+  late TextEditingController _originLocationController;
+  late TextEditingController _destinationLocationController;
 
   //ScrollControllers
   late ItemScrollController _listScrollController;
 
-  //FutureBuilder
+  //FutureBuilder DocumentLines
   List<Widget> documentLineTiles = [];
   Column documentTilesList = const Column();
   late Future<bool> listBuild;
@@ -78,8 +83,8 @@ class _PickingScreenState extends State<PickingScreen> {
   void dispose() {
     _entityController.dispose();
     _sourceDocumentsController.dispose();
-    _fromLocationController.dispose();
-    _toLocationController.dispose();
+    _originLocationController.dispose();
+    _destinationLocationController.dispose();
     super.dispose();
   }
 
@@ -89,9 +94,11 @@ class _PickingScreenState extends State<PickingScreen> {
 
     _entityController = TextEditingController();
     _sourceDocumentsController = TextEditingController();
-    _fromLocationController = TextEditingController();
-    _toLocationController = TextEditingController();
+    _originLocationController = TextEditingController();
+    _destinationLocationController = TextEditingController();
     _listScrollController = ItemScrollController();
+
+    loadDefaultLocations();
 
     loadMiscData();
 
@@ -111,59 +118,13 @@ class _PickingScreenState extends State<PickingScreen> {
       });
     }
 
-    //Locations
-    switch (pickingTask.stockMovement) {
-      case StockMovement.none:
-        setState(() {
-          _useLocations = false;
-          _fromLocation = null;
-          _toLocation = null;
-        });
-        break;
-      case StockMovement.inbound:
-        final Location? location = LocationApi.getByErpId(
-          'ALV22120258773.125352084',
-          LocationApi.instance.allLocations,
-        );
-        setState(() {
-          _useLocations = true;
-          _fromLocation = null;
-          _toLocation = location;
-        });
+    _destinationLocationController.text = getLocationName(_destinationLocation);
+    _originLocationController.text = getLocationName(_originLocation);
 
-        break;
-      case StockMovement.outbound:
-        setState(() {
-          _useLocations = true;
-          _fromLocation = null;
-          _toLocation = null;
-        });
-
-        break;
-      case StockMovement.transfer:
-        setState(() {
-          _useLocations = true;
-          _fromLocation = null;
-          _toLocation = null;
-        });
-        break;
-      case StockMovement.inventory:
-        setState(() {
-          canPick = true;
-          _useLocations = true;
-          _fromLocation = null;
-          _toLocation = null;
-        });
-
-        break;
-    }
-    _toLocationController.text = getLocationName(_toLocation);
-    _fromLocationController.text = getLocationName(_fromLocation);
-
+    //Pre Operation Input
     if (_hasPreOperationInput) {
       final List<MiscData> miscDataPreOperationList =
           miscDataList.where((element) => element.preOperationInput).toList();
-      // ignore: use_build_context_synchronously
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -180,6 +141,95 @@ class _PickingScreenState extends State<PickingScreen> {
     }
 
     allowPicking();
+  }
+
+  void loadDefaultLocations() {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    bool useLocations = false;
+    bool canChangeFromLocation = true;
+    bool canChangeToLocation = true;
+    Location? fromLocation;
+    Location? toLocation;
+
+    final String customOptions = pickingTask.customOptions;
+    if (customOptions.isNotEmpty) {
+      final Map<String, dynamic> customOptionsJSON =
+          jsonDecode(customOptions) as Map<String, dynamic>;
+
+      if (customOptionsJSON.containsKey('LocationsOptions')) {
+        final Map<String, dynamic> locationsOptionsJSON =
+            customOptionsJSON['LocationsOptions'] as Map<String, dynamic>;
+
+        if (locationsOptionsJSON.isNotEmpty) {
+          useLocations = locationsOptionsJSON['UseLocations'] as bool;
+
+          //Default Locations
+          if (useLocations &&
+              locationsOptionsJSON.containsKey('DefaultLocations')) {
+            final List<dynamic> defaultLocationsJSON =
+                locationsOptionsJSON['DefaultLocations'] as List<dynamic>;
+
+            //cast List<dynamic> to Iterable<Map<String, dynamic>>
+            final Iterable<Map<String, dynamic>> defaultLocationsIterable =
+                defaultLocationsJSON.cast<Map<String, dynamic>>();
+
+            for (final Map<String, dynamic> locationJSON
+                in defaultLocationsIterable) {
+              final String erpId = locationJSON['ErpId'] as String;
+              final bool canBeChanged = locationJSON['CanBeChanged'] as bool;
+              final String locationKind =
+                  locationJSON['LocationKind'] as String;
+
+              final Location? location = LocationApi.getByErpId(
+                erpId,
+                LocationApi.instance.allLocations,
+              );
+
+              if (location != null) {
+                switch (locationKind) {
+                  case 'Standard':
+                    fromLocation = null;
+                    toLocation = location;
+                    canChangeFromLocation = false;
+                    canChangeToLocation = canBeChanged;
+                    break;
+                  case 'Origin':
+                    fromLocation = location;
+                    canChangeFromLocation = canBeChanged;
+                    break;
+                  case 'Destination':
+                    toLocation = location;
+                    canChangeToLocation = canBeChanged;
+                    break;
+                  default:
+                    break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    //Handler if useLocations is false
+    if (!useLocations) {
+      fromLocation = null;
+      toLocation = null;
+      canChangeToLocation = false;
+      canChangeFromLocation = false;
+    }
+
+    setState(() {
+      _useLocations = useLocations;
+      _canChangeOriginLocation = canChangeFromLocation;
+      _canChangeDestinationLocation = canChangeToLocation;
+      _originLocation = fromLocation;
+      _destinationLocation = toLocation;
+    });
   }
 
   void loadMiscData() {
@@ -214,15 +264,16 @@ class _PickingScreenState extends State<PickingScreen> {
 
   void setToLocation(Location? location) {
     setState(() {
-      _toLocation = location;
-      _toLocationController.text = getLocationName(_toLocation);
+      _destinationLocation = location;
+      _destinationLocationController.text =
+          getLocationName(_destinationLocation);
     });
   }
 
   void setFromLocation(Location location) {
     setState(() {
-      _fromLocation = location;
-      _fromLocationController.text = getLocationName(_fromLocation);
+      _originLocation = location;
+      _originLocationController.text = getLocationName(_originLocation);
     });
   }
 
@@ -267,7 +318,7 @@ class _PickingScreenState extends State<PickingScreen> {
           ),
           child: DocumentLineTile(
             documentLine: documentLine,
-            location: _toLocation,
+            location: _destinationLocation,
             callDocumentLineScreen: _onCallDocumentLineScreen,
           ),
         ),
@@ -456,7 +507,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
       addProduct(
         product: oldDocumentLine.product,
-        location: _toLocation,
+        location: _destinationLocation,
         batch: batch,
         quantity: quantity,
       );
@@ -482,7 +533,6 @@ class _PickingScreenState extends State<PickingScreen> {
     final TaskOperation taskOperation = await handleBarcode(barcode);
 
     if (!taskOperation.success) {
-      // ignore: use_build_context_synchronously
       Helper.showMsg(
         'Atenção',
         taskOperation.message,
@@ -509,11 +559,10 @@ class _PickingScreenState extends State<PickingScreen> {
 
     final TaskOperation taskOperation = await addProduct(
       product: product,
-      location: _toLocation,
+      location: _destinationLocation,
     );
 
     if (!taskOperation.success) {
-      // ignore: use_build_context_synchronously
       Helper.showMsg(
         'Atenção',
         taskOperation.message,
@@ -585,7 +634,7 @@ class _PickingScreenState extends State<PickingScreen> {
         } else {
           taskOperation = await addProduct(
             product: product,
-            location: _toLocation,
+            location: _destinationLocation,
           );
         }
         break;
@@ -628,7 +677,7 @@ class _PickingScreenState extends State<PickingScreen> {
             taskOperation = await addProduct(
               product: product,
               batch: batch,
-              location: _toLocation,
+              location: _destinationLocation,
             );
           }
         }
@@ -637,6 +686,31 @@ class _PickingScreenState extends State<PickingScreen> {
       case BarCodeType.container:
         break;
       case BarCodeType.location:
+
+        //Non Transfers
+        if (pickingTask.stockMovement != StockMovement.transfer) {
+          if (!_canChangeDestinationLocation) {
+            taskOperation = TaskOperation(
+              success: false,
+              errorCode: ErrorCode.cannotChangeLocation,
+              message: 'Localização não pode ser alterada',
+            );
+            break;
+          }
+        }
+
+        //Transfers
+        if (pickingTask.stockMovement == StockMovement.transfer) {
+          if (!_canChangeDestinationLocation) {
+            taskOperation = TaskOperation(
+              success: false,
+              errorCode: ErrorCode.cannotChangeLocation,
+              message: 'Localização não pode ser alterada',
+            );
+            break;
+          }
+        }
+
         final Location? location = LocationApi.getByErpId(
           barcode,
           LocationApi.instance.allLocations,
@@ -648,7 +722,36 @@ class _PickingScreenState extends State<PickingScreen> {
             message: 'Localização não encontrada',
           );
         } else {
-          setToLocation(location);
+          //Transfers
+          if (pickingTask.stockMovement == StockMovement.transfer) {
+            //Forced locations
+            if (!_canChangeDestinationLocation && !_canChangeOriginLocation) {
+              taskOperation = TaskOperation(
+                success: false,
+                errorCode: ErrorCode.cannotChangeLocation,
+                message: 'Localização não pode ser alterada',
+              );
+              break;
+            }
+            if (!_canChangeDestinationLocation && _canChangeOriginLocation) {
+              setFromLocation(location);
+            }
+            if (_canChangeDestinationLocation && !_canChangeOriginLocation) {
+              setToLocation(location);
+            }
+
+            //Standard Transfer
+            if (_canChangeDestinationLocation && _canChangeOriginLocation) {
+              taskOperation = TaskOperation(
+                success: false,
+                errorCode: ErrorCode.inDevelopment,
+                message: 'Esta funcionalidade ainda não foi implementada',
+              );
+              break;
+            }
+          } else {
+            setToLocation(location);
+          }
         }
         break;
       case BarCodeType.document:
@@ -738,7 +841,17 @@ class _PickingScreenState extends State<PickingScreen> {
 
     //Get a list of the document lines with the same product
     //and batch if applicable and location if applicable
-    final List<DocumentLine> documentLines = pickingTask.document!.lines
+
+    final List<DocumentLine> documentLinesWithSameProduct =
+        pickingTask.document!.lines
+            .where(
+              (element) =>
+                  element.product.reference.trim() ==
+                  documentLineToAdd.product.reference.trim(),
+            )
+            .toList();
+
+    final List<DocumentLine> documentLines = documentLinesWithSameProduct
         .where(
           (element) =>
               //Same product
@@ -1040,8 +1153,8 @@ class _PickingScreenState extends State<PickingScreen> {
                               width: 10.0,
                             ),
                             Text(
-                              _toLocation != null
-                                  ? _toLocation!.name
+                              _destinationLocation != null
+                                  ? _destinationLocation!.name
                                   : '(Sem localização)',
                               style: Theme.of(context).textTheme.labelSmall,
                             ),
@@ -1163,6 +1276,16 @@ class _PickingScreenState extends State<PickingScreen> {
           onPressed: () async {
             bool canSave = true;
 
+            //Check if the entity is filled
+            if (pickingTask.document!.entity == null) {
+              await Helper.showMsg(
+                'Atenção',
+                'Escolha um ${pickingTask.destinationDocumentType.entityType.name}',
+                context,
+              );
+              return;
+            }
+
             //Check if there are any MiscData that are not filled
             final List<MiscData> miscDataNotFilled =
                 alreadyShowedPostOperationInput
@@ -1182,7 +1305,6 @@ class _PickingScreenState extends State<PickingScreen> {
                         )
                         .toList();
             if (miscDataNotFilled.isNotEmpty) {
-              canSave = false;
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -1198,9 +1320,6 @@ class _PickingScreenState extends State<PickingScreen> {
                   await _onMiscDataChanged(miscDataIncomingList);
                 }
               });
-            }
-
-            if (!canSave) {
               return;
             }
 
@@ -1209,7 +1328,6 @@ class _PickingScreenState extends State<PickingScreen> {
                 (pickingTask.sourceDocuments.isEmpty)) {
               final TextEditingController inventoryNameController =
                   TextEditingController();
-              // ignore: use_build_context_synchronously
               await showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -1293,14 +1411,12 @@ class _PickingScreenState extends State<PickingScreen> {
                 await pickingTask.saveToServer();
 
             if (!taskOperation.success) {
-              // ignore: use_build_context_synchronously
               await Helper.showMsg(
                 'Atenção',
                 taskOperation.message,
                 context,
               );
             } else {
-              // ignore: use_build_context_synchronously
               await Helper.showMsg(
                 'Operação concluída',
                 'Documento guardado com sucesso',

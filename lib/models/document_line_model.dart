@@ -10,7 +10,7 @@ import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
 
 mixin DocumentLineFields {
-  static const List<String> allFields = <String>[
+  static const List<String> allFields = [
     id,
     erpId,
     documentId,

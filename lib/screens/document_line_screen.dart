@@ -464,7 +464,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                 ? Helper.removeDecimalZeroFormat(
                                     widget.documentLine.quantity,
                                   )
-                                : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity)} ${widget.documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.quantityToPick)}' : ''}',
+                                : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantityPicked)} ${widget.documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.totalQuantity)}' : ''}',
                           ),
                           if (widget.documentLine.product.isBatchTracked)
                             GestureDetector(

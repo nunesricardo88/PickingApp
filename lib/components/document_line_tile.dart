@@ -35,12 +35,65 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
 
   Color getTileBackgroundColor() {
     final pickingTask = Provider.of<PickingTask>(context, listen: false);
-    if (pickingTask.stockMovement == StockMovement.inventory) {
-      if (widget.documentLine.quantity == widget.documentLine.totalQuantity) {
-        return kInactiveColor;
-      }
+
+    final bool hasOrigin = widget.documentLine.linkedLineErpId != null &&
+        widget.documentLine.linkedLineErpId!.trim().isNotEmpty;
+    final bool isSatisfied =
+        widget.documentLine.quantityPicked == widget.documentLine.totalQuantity;
+    final bool isEmpty = widget.documentLine.quantityPicked == 0.0;
+    final bool isPartial = widget.documentLine.quantityPicked > 0.0 &&
+        widget.documentLine.quantityPicked < widget.documentLine.totalQuantity;
+    final bool isOverPicked =
+        widget.documentLine.quantityPicked > widget.documentLine.totalQuantity;
+
+    switch (pickingTask.stockMovement) {
+      case StockMovement.none:
+        return kWhiteBackground;
+      case StockMovement.inbound:
+        if (!hasOrigin) {
+          return kWhiteBackground;
+        }
+        if (isSatisfied) {
+          return kDocumentLineSatisfied;
+        }
+        if (isEmpty) {
+          return kWhiteBackground;
+        }
+        if (isPartial) {
+          return kDocumentLinePartial;
+        }
+        if (isOverPicked) {
+          return kDocumentLineSatisfied;
+        }
+
+        return kWhiteBackground;
+      case StockMovement.outbound:
+        if (!hasOrigin) {
+          return kWhiteBackground;
+        }
+        if (isSatisfied) {
+          return kDocumentLineSatisfied;
+        }
+        if (isEmpty) {
+          return kWhiteBackground;
+        }
+        if (isPartial) {
+          return kDocumentLinePartial;
+        }
+        if (isOverPicked) {
+          return kDocumentLineOverPicked;
+        }
+        return kWhiteBackground;
+      case StockMovement.transfer:
+        return kWhiteBackground;
+      case StockMovement.inventory:
+        if (widget.documentLine.quantity == widget.documentLine.totalQuantity) {
+          return kInactiveColor;
+        }
+        return kWhiteBackground;
+      default:
+        return kWhiteBackground;
     }
-    return kWhiteBackground;
   }
 
   void fetchData() {

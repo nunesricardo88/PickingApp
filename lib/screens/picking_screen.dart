@@ -381,6 +381,7 @@ class _PickingScreenState extends State<PickingScreen> {
     }
   }
 
+  // RRMP License
   Future<void> splitBatches(DocumentLine line, List<double> batchData) async {
     final double molhos = batchData[0];
     final double barras = batchData[1];
@@ -442,7 +443,13 @@ class _PickingScreenState extends State<PickingScreen> {
     }
 
     final DocumentLine oldDocumentLine = line.copyWith();
-    pickingTask.document!.lines.removeWhere((element) => element.id == line.id);
+
+    //If the original line has no batch or quantity, remove it
+    pickingTask.document!.lines.removeWhere(
+      (element) =>
+          element.id == line.id &&
+          (element.batch == null || element.quantity == 0),
+    );
 
     for (final Batch batch in newLines) {
       final double quantity = double.tryParse(batch.erpId!.trim()) ?? 0;
@@ -455,7 +462,7 @@ class _PickingScreenState extends State<PickingScreen> {
       );
 
       final DocumentLine documentLine = pickingTask.document!.lines.last;
-      documentLine.linkedLineErpId = oldDocumentLine.erpId;
+      documentLine.linkedLineErpId = oldDocumentLine.linkedLineErpId;
     }
 
     setState(() {});

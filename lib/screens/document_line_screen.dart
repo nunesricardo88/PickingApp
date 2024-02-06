@@ -168,6 +168,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                 child: FaIcon(
                   FontAwesomeIcons.angleLeft,
                   color: kPrimaryColorLight,
+                  size: 30.0,
                 ),
               ),
             ),

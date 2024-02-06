@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
-import 'package:n6picking_flutterapp/models/entity_model.dart';
-import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 
 class SourceDocumentTile extends StatefulWidget {
   final Document sourceDocument;
@@ -18,21 +16,9 @@ class SourceDocumentTile extends StatefulWidget {
 }
 
 class _SourceDocumentTileState extends State<SourceDocumentTile> {
-  bool _isSelected = false;
-
   @override
   void initState() {
     super.initState();
-    setup();
-  }
-
-  void setup() {
-    _isSelected = widget.isSelected;
-  }
-
-  Future<void> setEntityFromSourceDocument(PickingTask pickingTask) async {
-    final Entity entity = widget.sourceDocument.entity!;
-    await pickingTask.setEntity(entity);
   }
 
   @override
@@ -42,14 +28,11 @@ class _SourceDocumentTileState extends State<SourceDocumentTile> {
         CheckboxListTile(
           dense: true,
           controlAffinity: ListTileControlAffinity.leading,
-          value: _isSelected,
+          value: widget.isSelected,
           onChanged: (value) async {
             final bool selected = value!;
             // ignore: avoid_dynamic_calls
-            widget.onChange(selected, widget.sourceDocument);
-            setState(() {
-              _isSelected = selected;
-            });
+            await widget.onChange(selected, widget.sourceDocument);
           },
           contentPadding: const EdgeInsets.only(
             left: 10.0,
@@ -62,14 +45,28 @@ class _SourceDocumentTileState extends State<SourceDocumentTile> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          subtitle: Text(
-            widget.sourceDocument.documentType.number == 999
-                ? widget.sourceDocument.name!
-                : '# ${widget.sourceDocument.number}',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w500,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.sourceDocument.documentType.number != 999)
+                Text(
+                  widget.sourceDocument.entity!.name,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                  overflow: TextOverflow.ellipsis,
                 ),
+              Text(
+                widget.sourceDocument.documentType.number == 999
+                    ? widget.sourceDocument.name!
+                    : '# ${widget.sourceDocument.number}',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w500,
+                    ),
+              ),
+            ],
           ),
         ),
         const Divider(

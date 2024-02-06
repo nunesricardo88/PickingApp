@@ -143,9 +143,11 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         backgroundColor: kGreyBackground,
         appBar: AppBar(
           backgroundColor: kPrimaryColor,
-          leading: const FaIcon(
-            FontAwesomeIcons.house,
-            color: kPrimaryColorLight,
+          leading: const Center(
+            child: FaIcon(
+              FontAwesomeIcons.house,
+              color: kPrimaryColorLight,
+            ),
           ),
           title: Text(
             'Menu Principal',

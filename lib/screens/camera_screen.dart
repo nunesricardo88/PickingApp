@@ -47,6 +47,7 @@ class _CameraScreenState extends State<CameraScreen> {
               child: FaIcon(
                 FontAwesomeIcons.angleLeft,
                 color: kPrimaryColorLight,
+                size: 30.0,
               ),
             ),
           ),

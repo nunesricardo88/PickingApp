@@ -1,5 +1,4 @@
 import 'package:n6picking_flutterapp/models/document_model.dart';
-import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
@@ -84,13 +83,8 @@ mixin ApiEndPoint {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
     final String pickingTaskErpId = task.erpId.trim();
     final EntityType entityType = task.document!.documentType.entityType;
-    final Entity? entity = task.document!.entity;
 
-    if (entity == null) {
-      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityErpId=null';
-    } else {
-      return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&entityErpId=${entity.erpId.trim()}';
-    }
+    return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}';
   }
 
   static String getPendingDocumentByBarcode(PickingTask task, String barcode) {

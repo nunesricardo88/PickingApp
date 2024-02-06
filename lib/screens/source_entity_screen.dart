@@ -89,6 +89,7 @@ class _SourceEntityScreenState extends State<SourceEntityScreen> {
               child: FaIcon(
                 FontAwesomeIcons.angleLeft,
                 color: kPrimaryColorLight,
+                size: 30.0,
               ),
             ),
           ),

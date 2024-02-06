@@ -1,6 +1,4 @@
 // ignore_for_file: avoid_dynamic_calls, use_build_context_synchronously
-
-import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_overlay/loading_overlay.dart';
@@ -20,34 +18,87 @@ class SourceDocumentsScreen extends StatefulWidget {
 
 class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   List<Document> documentList = [];
+  List<Document> filteredDocumentList = [];
   List<Document> selectedDocuments = [];
-  bool haveDocumentsSelected = false;
+  Entity? selectedEntity;
   List<Widget> documentTiles = [];
   Column documentTilesList = const Column();
   late Future listBuild;
   bool showSpinner = false;
+  bool setupDone = false;
 
   @override
   void initState() {
     super.initState();
-    getDocumentsList();
+    setup();
+  }
+
+  Future<void> setup() async {
+    final pickingTask = Provider.of<PickingTask>(context, listen: false);
+    selectedEntity = pickingTask.document!.entity;
+    await getDocumentsList();
+    setupDone = true;
   }
 
   Future<void> getDocumentsList() async {
+    selectedDocuments = getSelectedSourceDocumentsFromTask();
     listBuild = getSourceDocumentsList();
   }
 
   Future<bool> getSourceDocumentsList() async {
-    documentTiles.clear();
     final pickingTask = Provider.of<PickingTask>(context, listen: false);
 
-    selectedDocuments = getSelectedSourceDocumentsFromTask();
     documentList = await DocumentApi.getPendingDocuments(pickingTask);
+    await filterSourceDocumentsByEntity();
 
-    for (final Document document in documentList) {
+    return true;
+  }
+
+  Future<bool> toggleDocumentSelection(bool select, Document document) async {
+    setState(() {
+      showSpinner = true;
+    });
+
+    if (select) {
+      await addToSelectedDocuments(document);
+    } else {
+      await removeFromSelectedDocuments(document);
+    }
+
+    Entity? newSelectedEntity;
+    if (selectedDocuments.isNotEmpty) {
+      newSelectedEntity = selectedDocuments.first.entity;
+    } else {
+      newSelectedEntity = null;
+    }
+
+    setState(() {
+      selectedEntity = newSelectedEntity;
+    });
+
+    await filterSourceDocumentsByEntity();
+
+    setState(() {
+      showSpinner = false;
+    });
+
+    return true;
+  }
+
+  Future<void> filterSourceDocumentsByEntity() async {
+    filteredDocumentList = documentList.where((document) {
+      if (selectedEntity != null) {
+        return document.entity!.erpId.trim() == selectedEntity!.erpId.trim();
+      } else {
+        return true;
+      }
+    }).toList();
+
+    documentTiles.clear();
+    for (final Document document in filteredDocumentList) {
       bool isSelected = false;
       for (final Document selectedDocument in selectedDocuments) {
-        if (selectedDocument.erpId == document.erpId) {
+        if (selectedDocument.erpId!.trim() == document.erpId!.trim()) {
           isSelected = true;
         }
       }
@@ -63,18 +114,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     documentTilesList = Column(
       children: documentTiles,
     );
-
-    return true;
-  }
-
-  bool toggleDocumentSelection(bool select, Document document) {
-    if (select) {
-      addToSelectedDocuments(document);
-    } else {
-      removeFromSelectedDocuments(document);
-    }
-    setState(() {});
-    return true;
   }
 
   List<Document> getSelectedSourceDocumentsFromTask() {
@@ -86,17 +125,20 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     selectedDocuments = [];
   }
 
-  void addToSelectedDocuments(Document document) {
-    selectedDocuments.add(document);
+  Future<void> addToSelectedDocuments(Document document) async {
+    final bool alreadySelected = selectedDocuments.any(
+      (element) => element.erpId!.trim() == document.erpId!.trim(),
+    );
+
+    if (!alreadySelected) {
+      selectedDocuments.add(document);
+    }
   }
 
-  void removeFromSelectedDocuments(Document document) {
-    for (final Document selectedDocument in selectedDocuments) {
-      if (selectedDocument.erpId == document.erpId) {
-        selectedDocuments.remove(selectedDocument);
-        break;
-      }
-    }
+  Future<void> removeFromSelectedDocuments(Document document) async {
+    selectedDocuments.removeWhere(
+      (element) => element.erpId!.trim() == document.erpId!.trim(),
+    );
   }
 
   Future<void> setEntityFromSourceDocument(
@@ -125,6 +167,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
               child: FaIcon(
                 FontAwesomeIcons.angleLeft,
                 color: kPrimaryColorLight,
+                size: 30.0,
               ),
             ),
           ),
@@ -143,11 +186,20 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                 setState(() {
                   showSpinner = true;
                 });
-                await setEntityFromSourceDocument(
-                  pickingTask,
-                  selectedDocuments.first,
-                );
+
+                //Set Entity
+                if (selectedDocuments.isEmpty) {
+                  await pickingTask.setEntity(null);
+                } else {
+                  await setEntityFromSourceDocument(
+                    pickingTask,
+                    selectedDocuments.first,
+                  );
+                }
+
+                //Set Source Documents
                 await pickingTask.setSourceDocumentsFromList(selectedDocuments);
+
                 setState(() {
                   showSpinner = false;
                 });
@@ -156,7 +208,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
               icon: const FaIcon(
                 FontAwesomeIcons.check,
                 color: kPrimaryColorLight,
-                size: 20.0,
+                size: 30.0,
               ),
             ),
           ],
@@ -210,30 +262,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                       ],
                     );
                   },
-                ),
-              ),
-              Visibility(
-                visible: pickingTask.document!.entity != null &&
-                    pickingTask.document!.entity!.entityType !=
-                        EntityType.interno,
-                child: Flushbar(
-                  title: 'Entidade atribuída',
-                  message: pickingTask.document!.entity != null
-                      ? pickingTask.document!.entity!.name
-                      : '(sem atribuição)',
-                  mainButton: MaterialButton(
-                    onPressed: () async {
-                      clearSelectedDocuments();
-                      await pickingTask.setEntity(null);
-                      await getDocumentsList();
-                    },
-                    child: Text(
-                      'Limpar',
-                      style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                            color: Colors.amber,
-                          ),
-                    ),
-                  ),
                 ),
               ),
             ],

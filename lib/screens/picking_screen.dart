@@ -1036,6 +1036,7 @@ class _PickingScreenState extends State<PickingScreen> {
     await Navigator.pushNamed(context, SourceDocumentsScreen.id);
     setState(() {
       _sourceDocumentsController.text = getSourceDocumentsName();
+      _entityController.text = getEntityName();
       canPick = true;
     });
     getDocumentLinesList();

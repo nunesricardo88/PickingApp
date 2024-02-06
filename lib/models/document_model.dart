@@ -107,7 +107,7 @@ mixin DocumentApi {
     final String url = ApiEndPoint.getPendingDocuments(task);
     final NetworkHelper networkHelper = NetworkHelper(url);
     final http.Response response =
-        await networkHelper.getData(seconds: 10) as http.Response;
+        await networkHelper.getData(seconds: 30) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;

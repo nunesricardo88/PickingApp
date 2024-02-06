@@ -26,8 +26,6 @@ class DocumentLineTile extends StatefulWidget {
 }
 
 class _DocumentLineTileState extends State<DocumentLineTile> {
-  GlobalKey containerKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
@@ -143,6 +141,9 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
   Widget build(BuildContext context) {
     final PickingTask pickingTask = context.watch<PickingTask>();
     fetchData();
+
+    final bool isTransfer = pickingTask.stockMovement == StockMovement.transfer;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 7.5),
       child: Material(
@@ -219,37 +220,112 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                                   ),
                             ),
                           ),
-                        if (widget.documentLine.destinationLocation != null)
+                        if (widget.documentLine.destinationLocation != null ||
+                            isTransfer)
                           const SizedBox(
                             height: 5.0,
                           ),
-                        if (widget.documentLine.destinationLocation != null)
+                        if (widget.documentLine.destinationLocation != null ||
+                            isTransfer)
                           Opacity(
-                            opacity:
-                                widget.documentLine.destinationLocation == null
-                                    ? 0.8
-                                    : 0.5,
-                            child: Row(
+                            opacity: 0.5,
+                            child: Column(
                               children: [
-                                const FaIcon(
-                                  FontAwesomeIcons.warehouse,
-                                  size: 10.0,
-                                  color: kPrimaryColorDark,
-                                ),
-                                const SizedBox(
-                                  width: 5.0,
-                                ),
-                                Text(
-                                  '${widget.documentLine.destinationLocation?.name}',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall!
-                                      .copyWith(
-                                        fontWeight: FontWeight.w400,
-                                        color: kPrimaryColorDark,
+                                if (isTransfer)
+                                  Row(
+                                    children: [
+                                      const Stack(
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.warehouse,
+                                            size: 10.0,
+                                            color: kOutboundStockMovement,
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.only(
+                                              left: 15.0,
+                                            ),
+                                            child: FaIcon(
+                                              FontAwesomeIcons.arrowRight,
+                                              size: 10.0,
+                                              color: kOutboundStockMovement,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                ),
+                                      const SizedBox(
+                                        width: 5.0,
+                                      ),
+                                      Text(
+                                        '${widget.documentLine.originLocation != null ? widget.documentLine.originLocation?.name : '(Sem origem)'}',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: kPrimaryColorDark,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                if (widget.documentLine.destinationLocation !=
+                                        null ||
+                                    isTransfer)
+                                  Row(
+                                    children: [
+                                      Stack(
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.warehouse,
+                                            size: 10.0,
+                                            color: isTransfer
+                                                ? kInboundStockMovement
+                                                : pickingTask.stockMovement ==
+                                                        StockMovement.outbound
+                                                    ? kOutboundStockMovement
+                                                    : kInboundStockMovement,
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 15.0,
+                                            ),
+                                            child: FaIcon(
+                                              isTransfer
+                                                  ? FontAwesomeIcons.arrowLeft
+                                                  : pickingTask.stockMovement ==
+                                                          StockMovement.outbound
+                                                      ? FontAwesomeIcons
+                                                          .arrowRight
+                                                      : FontAwesomeIcons
+                                                          .arrowLeft,
+                                              size: 10.0,
+                                              color: isTransfer
+                                                  ? kInboundStockMovement
+                                                  : pickingTask.stockMovement ==
+                                                          StockMovement.outbound
+                                                      ? kOutboundStockMovement
+                                                      : kInboundStockMovement,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        width: 5.0,
+                                      ),
+                                      Text(
+                                        '${widget.documentLine.destinationLocation != null ? widget.documentLine.destinationLocation?.name : '(Sem destino)'}',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: kPrimaryColorDark,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),

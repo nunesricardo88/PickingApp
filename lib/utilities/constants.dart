@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 //Enums
 enum License {
-  nenhuma,
+  none,
   rialto,
   rrmp,
   greenkinetics,
@@ -74,6 +74,8 @@ const kInactiveColor = Color.fromRGBO(240, 240, 240, 1);
 const kDocumentLineSatisfied = Color.fromRGBO(151, 231, 207, 1);
 const kDocumentLinePartial = Color.fromRGBO(253, 204, 111, 1);
 const kDocumentLineOverPicked = Color.fromRGBO(255, 169, 163, 1);
+const kInboundStockMovement = Color.fromRGBO(151, 231, 207, 1);
+const kOutboundStockMovement = Color.fromRGBO(255, 169, 163, 1);
 
 //Themes
 final ThemeData defaultThemeData = ThemeData(

@@ -14,7 +14,7 @@ class System {
   static final System instance = System._init();
 
   User? activeUser;
-  License activeLicense = License.nenhuma;
+  License activeLicense = License.none;
   Entity? selfEntity;
   ApiConnection? apiConnection;
   List<int>? appVersion;

@@ -52,6 +52,12 @@ class _PickingScreenState extends State<PickingScreen> {
   bool _useLocations = false;
   bool _canChangeOriginLocation = true;
   bool _canChangeDestinationLocation = true;
+  bool _showOnlyOriginLocation = false;
+  bool _showOnlyDestinationLocation = false;
+  bool _showSingleLocation = false;
+  bool _showBothLocations = false;
+  bool _isPickingUp = true;
+  bool _isDroppingOff = false;
   Location? _originLocation;
   Location? _destinationLocation;
 
@@ -104,9 +110,8 @@ class _PickingScreenState extends State<PickingScreen> {
 
     await getDocumentLinesList();
 
-    //Set default entity if StockMovement is Internal
-    if (pickingTask.stockMovement == StockMovement.transfer ||
-        pickingTask.stockMovement == StockMovement.inventory) {
+    //Set default entity if EntityType is internal
+    if (pickingTask.destinationDocumentType.entityType == EntityType.interno) {
       await pickingTask.setEntity(System.instance.selfEntity);
       setState(() {
         _entityController.text = getEntityName();
@@ -150,8 +155,14 @@ class _PickingScreenState extends State<PickingScreen> {
     );
 
     bool useLocations = false;
-    bool canChangeFromLocation = true;
-    bool canChangeToLocation = true;
+    bool canChangeOriginLocation = true;
+    bool canChangeDestinationLocation = true;
+    bool showOnlyOriginLocation = false;
+    bool showOnlyDestinationLocation = false;
+    bool showSingleLocation = false;
+    bool showBothLocations = false;
+    bool isPickingUp = true;
+    bool isDroppingOff = false;
     Location? fromLocation;
     Location? toLocation;
 
@@ -194,16 +205,17 @@ class _PickingScreenState extends State<PickingScreen> {
                   case 'Standard':
                     fromLocation = null;
                     toLocation = location;
-                    canChangeFromLocation = false;
-                    canChangeToLocation = canBeChanged;
+                    canChangeOriginLocation = false;
+                    canChangeDestinationLocation = canBeChanged;
+                    showSingleLocation = true;
                     break;
                   case 'Origin':
                     fromLocation = location;
-                    canChangeFromLocation = canBeChanged;
+                    canChangeOriginLocation = canBeChanged;
                     break;
                   case 'Destination':
                     toLocation = location;
-                    canChangeToLocation = canBeChanged;
+                    canChangeDestinationLocation = canBeChanged;
                     break;
                   default:
                     break;
@@ -219,16 +231,37 @@ class _PickingScreenState extends State<PickingScreen> {
     if (!useLocations) {
       fromLocation = null;
       toLocation = null;
-      canChangeToLocation = false;
-      canChangeFromLocation = false;
+      canChangeDestinationLocation = false;
+      canChangeOriginLocation = false;
+      showOnlyOriginLocation = false;
+      showSingleLocation = false;
+      showBothLocations = false;
+    } else {
+      if (pickingTask.stockMovement == StockMovement.transfer) {
+        if (canChangeDestinationLocation && canChangeOriginLocation) {
+          showBothLocations = true;
+        } else {
+          if (canChangeOriginLocation) {
+            showOnlyOriginLocation = true;
+            showSingleLocation = true;
+          } else {
+            showOnlyDestinationLocation = true;
+            showSingleLocation = true;
+          }
+        }
+      }
     }
 
     setState(() {
       _useLocations = useLocations;
-      _canChangeOriginLocation = canChangeFromLocation;
-      _canChangeDestinationLocation = canChangeToLocation;
+      _canChangeOriginLocation = canChangeOriginLocation;
+      _canChangeDestinationLocation = canChangeDestinationLocation;
       _originLocation = fromLocation;
       _destinationLocation = toLocation;
+      _showOnlyOriginLocation = showOnlyOriginLocation;
+      _showOnlyDestinationLocation = showOnlyDestinationLocation;
+      _showSingleLocation = showSingleLocation;
+      _showBothLocations = showBothLocations;
     });
   }
 
@@ -507,7 +540,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
       addProduct(
         product: oldDocumentLine.product,
-        location: _destinationLocation,
+        destinationLocation: _destinationLocation,
         batch: batch,
         quantity: quantity,
       );
@@ -559,7 +592,8 @@ class _PickingScreenState extends State<PickingScreen> {
 
     final TaskOperation taskOperation = await addProduct(
       product: product,
-      location: _destinationLocation,
+      originLocation: _originLocation,
+      destinationLocation: _destinationLocation,
     );
 
     if (!taskOperation.success) {
@@ -621,6 +655,10 @@ class _PickingScreenState extends State<PickingScreen> {
         );
         break;
       case BarCodeType.product:
+
+        //Check if has location
+        if (_useLocations) {}
+
         product = ProductHelper.getProduct(
           reference: barcode,
           barcode: barcode,
@@ -634,7 +672,8 @@ class _PickingScreenState extends State<PickingScreen> {
         } else {
           taskOperation = await addProduct(
             product: product,
-            location: _destinationLocation,
+            originLocation: _originLocation,
+            destinationLocation: _destinationLocation,
           );
         }
         break;
@@ -677,7 +716,8 @@ class _PickingScreenState extends State<PickingScreen> {
             taskOperation = await addProduct(
               product: product,
               batch: batch,
-              location: _destinationLocation,
+              originLocation: _originLocation,
+              destinationLocation: _destinationLocation,
             );
           }
         }
@@ -701,7 +741,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
         //Transfers
         if (pickingTask.stockMovement == StockMovement.transfer) {
-          if (!_canChangeDestinationLocation) {
+          if (!_canChangeDestinationLocation && !_canChangeOriginLocation) {
             taskOperation = TaskOperation(
               success: false,
               errorCode: ErrorCode.cannotChangeLocation,
@@ -799,7 +839,8 @@ class _PickingScreenState extends State<PickingScreen> {
   Future<TaskOperation> addProduct({
     required Product product,
     Batch? batch,
-    Location? location,
+    Location? originLocation,
+    Location? destinationLocation,
     double quantity = 0,
   }) async {
     final PickingTask pickingTask = Provider.of<PickingTask>(
@@ -815,7 +856,8 @@ class _PickingScreenState extends State<PickingScreen> {
       product: product,
       batch: batch,
     );
-    documentLineToAdd.destinationLocation = location;
+    documentLineToAdd.originLocation = originLocation;
+    documentLineToAdd.destinationLocation = destinationLocation;
 
     //====GET THE BATCH AND QUANTITY====
     if (quantity == 0 || (batch == null && product.isBatchTracked)) {
@@ -886,18 +928,27 @@ class _PickingScreenState extends State<PickingScreen> {
                           element.batch == null)) &&
               //Location
               (
-                  //Both without location
+                  //Both without both locations
                   (documentLineToAdd.destinationLocation == null &&
-                          element.destinationLocation == null) ||
-                      //Both in the same location
+                          element.destinationLocation == null &&
+                          documentLineToAdd.originLocation == null &&
+                          element.originLocation == null) ||
+
+                      //Both in the same locations
                       (documentLineToAdd.destinationLocation != null &&
                           element.destinationLocation != null &&
                           documentLineToAdd.destinationLocation!.erpId ==
-                              element.destinationLocation!.erpId) ||
+                              element.destinationLocation!.erpId &&
+                          documentLineToAdd.originLocation != null &&
+                          element.originLocation != null &&
+                          documentLineToAdd.originLocation!.erpId ==
+                              element.originLocation!.erpId) ||
 
-                      //Element without location and documentLine with location
+                      //Element without locations and documentLine with locations
                       (documentLineToAdd.destinationLocation != null &&
-                          element.destinationLocation == null)),
+                          element.destinationLocation == null &&
+                          documentLineToAdd.originLocation != null &&
+                          element.originLocation == null)),
         )
         .toList();
 
@@ -911,8 +962,8 @@ class _PickingScreenState extends State<PickingScreen> {
       finalDocumentLine = documentLineToAdd;
       pickingTask.document!.lines.add(finalDocumentLine);
       quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
-      if (location != null) {
-        finalDocumentLine.destinationLocation = location;
+      if (destinationLocation != null) {
+        finalDocumentLine.destinationLocation = destinationLocation;
       }
     } else {
       finalDocumentLine = documentLines.firstWhereOrNull(
@@ -921,8 +972,8 @@ class _PickingScreenState extends State<PickingScreen> {
           ) ??
           documentLines.first;
       finalDocumentLine.batch = documentLineToAdd.batch;
-      if (location != null) {
-        finalDocumentLine.destinationLocation = location;
+      if (destinationLocation != null) {
+        finalDocumentLine.destinationLocation = destinationLocation;
       }
       quantityToAdd = documentLineToAdd.quantity;
     }
@@ -1130,8 +1181,7 @@ class _PickingScreenState extends State<PickingScreen> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10.0,
                   ),
-                  child: _useLocations &&
-                          pickingTask.stockMovement != StockMovement.transfer
+                  child: _useLocations && _showSingleLocation
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -1153,9 +1203,14 @@ class _PickingScreenState extends State<PickingScreen> {
                               width: 10.0,
                             ),
                             Text(
-                              _destinationLocation != null
-                                  ? _destinationLocation!.name
-                                  : '(Sem localização)',
+                              _showOnlyOriginLocation &&
+                                      !_showOnlyDestinationLocation
+                                  ? _originLocation != null
+                                      ? _originLocation!.name
+                                      : '(Sem localização)'
+                                  : _destinationLocation != null
+                                      ? _destinationLocation!.name
+                                      : '(Sem localização)',
                               style: Theme.of(context).textTheme.labelSmall,
                             ),
                             const SizedBox(

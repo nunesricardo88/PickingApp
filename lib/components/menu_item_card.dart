@@ -31,6 +31,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
     final String description = widget.pickingTask.description;
     if (int.tryParse(description) != null) {
       final int pendingItems = int.parse(description);
+      if (pendingItems == -1) {
+        return 'Interno';
+      }
       if (pendingItems == 1) {
         return '$pendingItems item pendente';
       } else {

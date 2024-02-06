@@ -143,26 +143,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
         backgroundColor: kGreyBackground,
         appBar: AppBar(
           backgroundColor: kPrimaryColor,
-          automaticallyImplyLeading: false,
-          title: Row(
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.house,
-                color: kPrimaryColorLight,
-              ),
-              const SizedBox(
-                width: 15.0,
-              ),
-              Text(
-                'Menu Principal',
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      color: kPrimaryColorLight,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ],
+          leading: const FaIcon(
+            FontAwesomeIcons.house,
+            color: kPrimaryColorLight,
           ),
+          title: Text(
+            'Menu Principal',
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                  color: kPrimaryColorLight,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          titleSpacing: 0.0,
           elevation: 10.0,
           actions: [
             Row(

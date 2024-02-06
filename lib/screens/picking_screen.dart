@@ -1090,32 +1090,26 @@ class _PickingScreenState extends State<PickingScreen> {
         backgroundColor: kGreyBackground,
         appBar: AppBar(
           backgroundColor: kPrimaryColor,
-          automaticallyImplyLeading: false,
-          title: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  exitPickingScreen();
-                },
-                child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.angleLeft,
-                    color: kPrimaryColorLight,
-                  ),
-                ),
+          leading: GestureDetector(
+            onTap: () {
+              exitPickingScreen();
+            },
+            child: const Center(
+              child: FaIcon(
+                FontAwesomeIcons.angleLeft,
+                color: kPrimaryColorLight,
+                size: 30.0,
               ),
-              const SizedBox(
-                width: 15.0,
-              ),
-              Text(
-                pickingTask.name,
-                style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      color: kPrimaryColorLight,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ],
+            ),
           ),
+          title: Text(
+            pickingTask.name,
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                  color: kPrimaryColorLight,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          titleSpacing: 0.0,
           elevation: 10.0,
         ),
         body: LoadingOverlay(

@@ -80,33 +80,26 @@ class _SourceEntityScreenState extends State<SourceEntityScreen> {
         resizeToAvoidBottomInset: false,
         backgroundColor: kGreyBackground,
         appBar: AppBar(
-          automaticallyImplyLeading: false,
           backgroundColor: kPrimaryColor,
-          title: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.angleLeft,
-                    color: kPrimaryColorLight,
-                  ),
-                ),
+          leading: GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: const Center(
+              child: FaIcon(
+                FontAwesomeIcons.angleLeft,
+                color: kPrimaryColorLight,
               ),
-              const SizedBox(
-                width: 15.0,
-              ),
-              Text(
-                'Selecionar ${pickingTask.destinationDocumentType.entityType.name}',
-                style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      color: kPrimaryColorLight,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ],
+            ),
           ),
+          title: Text(
+            'Selecionar ${pickingTask.destinationDocumentType.entityType.name}',
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                  color: kPrimaryColorLight,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          titleSpacing: 0.0,
           elevation: 10,
         ),
         body: Column(

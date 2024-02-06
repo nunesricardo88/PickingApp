@@ -116,40 +116,37 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
         resizeToAvoidBottomInset: false,
         backgroundColor: kGreyBackground,
         appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.angleLeft,
-                    color: kPrimaryColorLight,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                width: 15.0,
-              ),
-              Text(
-                'Selecionar documentos',
-                style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                      color: kPrimaryColorLight,
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ],
-          ),
-          elevation: 10,
           backgroundColor: kPrimaryColor,
+          leading: GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+            },
+            child: const Center(
+              child: FaIcon(
+                FontAwesomeIcons.angleLeft,
+                color: kPrimaryColorLight,
+              ),
+            ),
+          ),
+          title: Text(
+            'Selecionar documentos',
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                  color: kPrimaryColorLight,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+          titleSpacing: 0.0,
+          elevation: 10,
           actions: [
             IconButton(
               onPressed: () async {
                 setState(() {
                   showSpinner = true;
                 });
+                await setEntityFromSourceDocument(
+                  pickingTask,
+                  selectedDocuments.first,
+                );
                 await pickingTask.setSourceDocumentsFromList(selectedDocuments);
                 setState(() {
                   showSpinner = false;

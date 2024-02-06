@@ -159,34 +159,27 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
           resizeToAvoidBottomInset: false,
           backgroundColor: kGreyBackground,
           appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Center(
-                    child: FaIcon(
-                      FontAwesomeIcons.angleLeft,
-                      color: kPrimaryColorLight,
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  width: 15.0,
-                ),
-                Text(
-                  'Editar linha',
-                  style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                        color: kPrimaryColorLight,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ],
-            ),
-            elevation: 10,
             backgroundColor: kPrimaryColor,
+            leading: GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: const Center(
+                child: FaIcon(
+                  FontAwesomeIcons.angleLeft,
+                  color: kPrimaryColorLight,
+                ),
+              ),
+            ),
+            title: Text(
+              'Editar linha',
+              style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: kPrimaryColorLight,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            titleSpacing: 0.0,
+            elevation: 10,
             actions: [
               if (widget.documentLine.product.usaMolho &&
                   widget.documentLine.product.isBatchTracked)

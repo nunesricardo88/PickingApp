@@ -19,6 +19,7 @@ mixin DocumentFields {
     entity,
     loadingAddress,
     unloadingAddress,
+    extraFields,
     lines,
   ];
 
@@ -30,6 +31,7 @@ mixin DocumentFields {
   static const String entity = 'entity';
   static const String loadingAddress = 'loadingAddress';
   static const String unloadingAddress = 'unloadingAddress';
+  static const String extraFields = 'extraFields';
   static const String lines = 'lines';
 }
 
@@ -42,6 +44,7 @@ class Document {
   Entity? entity;
   Address? loadingAddress;
   Address? unloadingAddress;
+  String? extraFields;
   List<DocumentLine> lines = [];
 
   Document({
@@ -53,6 +56,7 @@ class Document {
     this.entity,
     this.loadingAddress,
     this.unloadingAddress,
+    this.extraFields,
     required this.lines,
   });
 
@@ -77,6 +81,7 @@ class Document {
             : Address.fromJson(
                 json[DocumentFields.unloadingAddress] as Map<String, dynamic>,
               ),
+        extraFields: json[DocumentFields.extraFields] as String?,
         lines: json[DocumentFields.lines] == null
             ? []
             : List<DocumentLine>.from(
@@ -97,6 +102,7 @@ class Document {
         DocumentFields.entity: entity?.toJson(),
         DocumentFields.loadingAddress: loadingAddress?.toJson(),
         DocumentFields.unloadingAddress: unloadingAddress?.toJson(),
+        DocumentFields.extraFields: extraFields,
         DocumentFields.lines: List<dynamic>.from(lines.map((model) => model)),
       };
 }

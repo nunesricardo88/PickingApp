@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
+import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/location_type_model.dart';
+import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/models/stock_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
@@ -131,5 +133,35 @@ class LocationApi {
           (element) => element.erpId == parentErpId,
         )
         .toList();
+  }
+
+  static Future<double> getProductStockByLocation(
+    Location location,
+    Product product,
+    Batch? batch,
+  ) async {
+    double stock = 0.0;
+
+    final String productErpId = product.erpId.trim();
+    final String locationErpId = location.erpId.trim();
+    final String batchErpId = batch?.erpId?.trim() ?? 'null';
+
+    final String url = ApiEndPoint.getProductStockByLocation(
+      locationErpId,
+      productErpId,
+      batchErpId,
+    );
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      if (jsonBody['result'] != null) {
+        stock = jsonBody['result'] as double;
+      }
+    }
+
+    return stock;
   }
 }

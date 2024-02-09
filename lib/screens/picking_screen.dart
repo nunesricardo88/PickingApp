@@ -44,22 +44,21 @@ class _PickingScreenState extends State<PickingScreen> {
   DocumentLine? documentLineToScroll;
 
   //MiscData variables
-  List<MiscData> miscDataList = [];
+  List<MiscData> documentExtraFieldsList = [];
   bool _hasPreOperationInput = false;
 
   //Location variables
-  //When the stock movement is not a Transfer, use only the destination location
   bool _useLocations = false;
   bool _canChangeOriginLocation = true;
   bool _canChangeDestinationLocation = true;
-  bool _showOnlyOriginLocation = false;
-  bool _showOnlyDestinationLocation = false;
-  bool _showSingleLocation = false;
-  bool _showBothLocations = false;
   bool _isPickingUp = true;
   bool _isDroppingOff = false;
-  Location? _originLocation;
-  Location? _destinationLocation;
+  Location? _defaultOriginLocation;
+  Location? _defaultDestinationLocation;
+  Location? _currentLocation;
+
+  //Save variables
+  bool _ignoreNotUnloadedProducts = false;
 
   //Entity variables
   late bool _canChangeEntity;
@@ -67,8 +66,6 @@ class _PickingScreenState extends State<PickingScreen> {
   //TextControllers
   late TextEditingController _entityController;
   late TextEditingController _sourceDocumentsController;
-  late TextEditingController _originLocationController;
-  late TextEditingController _destinationLocationController;
 
   //ScrollControllers
   late ItemScrollController _listScrollController;
@@ -89,8 +86,6 @@ class _PickingScreenState extends State<PickingScreen> {
   void dispose() {
     _entityController.dispose();
     _sourceDocumentsController.dispose();
-    _originLocationController.dispose();
-    _destinationLocationController.dispose();
     super.dispose();
   }
 
@@ -100,13 +95,11 @@ class _PickingScreenState extends State<PickingScreen> {
 
     _entityController = TextEditingController();
     _sourceDocumentsController = TextEditingController();
-    _originLocationController = TextEditingController();
-    _destinationLocationController = TextEditingController();
     _listScrollController = ItemScrollController();
 
     loadDefaultLocations();
 
-    loadMiscData();
+    loadDocumentExtraFields();
 
     await getDocumentLinesList();
 
@@ -123,13 +116,14 @@ class _PickingScreenState extends State<PickingScreen> {
       });
     }
 
-    _destinationLocationController.text = getLocationName(_destinationLocation);
-    _originLocationController.text = getLocationName(_originLocation);
-
     //Pre Operation Input
     if (_hasPreOperationInput) {
-      final List<MiscData> miscDataPreOperationList =
-          miscDataList.where((element) => element.preOperationInput).toList();
+      final List<MiscData> miscDataPreOperationList = documentExtraFieldsList
+          .where(
+            (element) =>
+                element.preOperationInput != null && element.preOperationInput!,
+          )
+          .toList();
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -157,14 +151,11 @@ class _PickingScreenState extends State<PickingScreen> {
     bool useLocations = false;
     bool canChangeOriginLocation = true;
     bool canChangeDestinationLocation = true;
-    bool showOnlyOriginLocation = false;
-    bool showOnlyDestinationLocation = false;
-    bool showSingleLocation = false;
-    bool showBothLocations = false;
-    bool isPickingUp = true;
+    bool isPickingUp = false;
     bool isDroppingOff = false;
-    Location? fromLocation;
-    Location? toLocation;
+    Location? defaultFromLocation;
+    Location? defaultToLocation;
+    Location? currentLocation;
 
     final String customOptions = pickingTask.customOptions;
     if (customOptions.isNotEmpty) {
@@ -203,18 +194,20 @@ class _PickingScreenState extends State<PickingScreen> {
               if (location != null) {
                 switch (locationKind) {
                   case 'Standard':
-                    fromLocation = null;
-                    toLocation = location;
+                    defaultFromLocation = null;
+                    defaultToLocation = location;
+                    currentLocation = location;
+                    isPickingUp = false;
+                    isDroppingOff = false;
                     canChangeOriginLocation = false;
                     canChangeDestinationLocation = canBeChanged;
-                    showSingleLocation = true;
                     break;
                   case 'Origin':
-                    fromLocation = location;
+                    defaultFromLocation = location;
                     canChangeOriginLocation = canBeChanged;
                     break;
                   case 'Destination':
-                    toLocation = location;
+                    defaultToLocation = location;
                     canChangeDestinationLocation = canBeChanged;
                     break;
                   default:
@@ -229,24 +222,27 @@ class _PickingScreenState extends State<PickingScreen> {
 
     //Handler if useLocations is false
     if (!useLocations) {
-      fromLocation = null;
-      toLocation = null;
+      defaultFromLocation = null;
+      defaultToLocation = null;
+      isPickingUp = false;
+      isDroppingOff = false;
       canChangeDestinationLocation = false;
       canChangeOriginLocation = false;
-      showOnlyOriginLocation = false;
-      showSingleLocation = false;
-      showBothLocations = false;
     } else {
       if (pickingTask.stockMovement == StockMovement.transfer) {
         if (canChangeDestinationLocation && canChangeOriginLocation) {
-          showBothLocations = true;
+          isPickingUp = true;
+          isDroppingOff = false;
+          currentLocation = defaultFromLocation;
         } else {
           if (canChangeOriginLocation) {
-            showOnlyOriginLocation = true;
-            showSingleLocation = true;
+            isPickingUp = true;
+            isDroppingOff = true;
+            currentLocation = defaultFromLocation;
           } else {
-            showOnlyDestinationLocation = true;
-            showSingleLocation = true;
+            isPickingUp = true;
+            isDroppingOff = true;
+            currentLocation = defaultToLocation;
           }
         }
       }
@@ -256,30 +252,31 @@ class _PickingScreenState extends State<PickingScreen> {
       _useLocations = useLocations;
       _canChangeOriginLocation = canChangeOriginLocation;
       _canChangeDestinationLocation = canChangeDestinationLocation;
-      _originLocation = fromLocation;
-      _destinationLocation = toLocation;
-      _showOnlyOriginLocation = showOnlyOriginLocation;
-      _showOnlyDestinationLocation = showOnlyDestinationLocation;
-      _showSingleLocation = showSingleLocation;
-      _showBothLocations = showBothLocations;
+      _defaultOriginLocation = defaultFromLocation;
+      _defaultDestinationLocation = defaultToLocation;
+      _currentLocation = currentLocation;
+      _isPickingUp = isPickingUp;
+      _isDroppingOff = isDroppingOff;
     });
   }
 
-  void loadMiscData() {
+  void loadDocumentExtraFields() {
     final PickingTask pickingTask = Provider.of<PickingTask>(
       context,
       listen: false,
     );
 
-    final List<MiscData> miscData = MiscDataHelper.fromTask(pickingTask);
+    final List<MiscData> miscData =
+        MiscDataHelper.getDocumentExtraData(pickingTask);
 
     final bool hasPreOperationInput = miscData.any(
-      (element) => element.preOperationInput,
+      (element) =>
+          element.preOperationInput != null && element.preOperationInput!,
     );
 
     setState(() {
       _hasPreOperationInput = hasPreOperationInput;
-      miscDataList = miscData;
+      documentExtraFieldsList = miscData;
     });
   }
 
@@ -295,18 +292,21 @@ class _PickingScreenState extends State<PickingScreen> {
     });
   }
 
-  void setToLocation(Location? location) {
+  void setDefaultToLocation(Location? location) {
     setState(() {
-      _destinationLocation = location;
-      _destinationLocationController.text =
-          getLocationName(_destinationLocation);
+      _defaultDestinationLocation = location;
     });
   }
 
-  void setFromLocation(Location location) {
+  void setDefaultFromLocation(Location location) {
     setState(() {
-      _originLocation = location;
-      _originLocationController.text = getLocationName(_originLocation);
+      _defaultOriginLocation = location;
+    });
+  }
+
+  void setLocation(Location? location) {
+    setState(() {
+      _currentLocation = location;
     });
   }
 
@@ -315,6 +315,39 @@ class _PickingScreenState extends State<PickingScreen> {
       return 'Sem localização';
     } else {
       return location.name;
+    }
+  }
+
+  StockMovement getCurrentLocationStockMovementType() {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    switch (pickingTask.stockMovement) {
+      case StockMovement.inbound:
+        return StockMovement.inbound;
+      case StockMovement.outbound:
+        return StockMovement.outbound;
+      case StockMovement.transfer:
+        if (_canChangeDestinationLocation && _canChangeOriginLocation) {
+          if (_isPickingUp) {
+            return StockMovement.outbound;
+          } else {
+            return StockMovement.inbound;
+          }
+        } else {
+          if (_canChangeOriginLocation) {
+            return StockMovement.outbound;
+          } else {
+            return StockMovement.inbound;
+          }
+        }
+
+      case StockMovement.inventory:
+        return StockMovement.inventory;
+      default:
+        return StockMovement.inbound;
     }
   }
 
@@ -351,7 +384,7 @@ class _PickingScreenState extends State<PickingScreen> {
           ),
           child: DocumentLineTile(
             documentLine: documentLine,
-            location: _destinationLocation,
+            location: _defaultDestinationLocation,
             callDocumentLineScreen: _onCallDocumentLineScreen,
           ),
         ),
@@ -538,9 +571,8 @@ class _PickingScreenState extends State<PickingScreen> {
     for (final Batch batch in newLines) {
       final double quantity = double.tryParse(batch.erpId!.trim()) ?? 0;
 
-      addProduct(
+      await addProduct(
         product: oldDocumentLine.product,
-        destinationLocation: _destinationLocation,
         batch: batch,
         quantity: quantity,
       );
@@ -592,8 +624,6 @@ class _PickingScreenState extends State<PickingScreen> {
 
     final TaskOperation taskOperation = await addProduct(
       product: product,
-      originLocation: _originLocation,
-      destinationLocation: _destinationLocation,
     );
 
     if (!taskOperation.success) {
@@ -615,11 +645,11 @@ class _PickingScreenState extends State<PickingScreen> {
 
   Future<void> _onMiscDataChanged(List<MiscData> miscDataIncomingList) async {
     for (final MiscData miscData in miscDataIncomingList) {
-      final int index = miscDataList.indexWhere(
+      final int index = documentExtraFieldsList.indexWhere(
         (element) => element.id == miscData.id,
       );
       if (index != -1) {
-        miscDataList[index] = miscData;
+        documentExtraFieldsList[index] = miscData;
       }
     }
   }
@@ -657,7 +687,16 @@ class _PickingScreenState extends State<PickingScreen> {
       case BarCodeType.product:
 
         //Check if has location
-        if (_useLocations) {}
+        if (_useLocations) {
+          if (_currentLocation == null) {
+            taskOperation = TaskOperation(
+              success: false,
+              errorCode: ErrorCode.locationNotSet,
+              message: 'Defina primeiro uma localização',
+            );
+            break;
+          }
+        }
 
         product = ProductHelper.getProduct(
           reference: barcode,
@@ -670,11 +709,7 @@ class _PickingScreenState extends State<PickingScreen> {
             message: 'Artigo não encontrado',
           );
         } else {
-          taskOperation = await addProduct(
-            product: product,
-            originLocation: _originLocation,
-            destinationLocation: _destinationLocation,
-          );
+          taskOperation = await addProduct(product: product);
         }
         break;
       case BarCodeType.batch:
@@ -713,12 +748,7 @@ class _PickingScreenState extends State<PickingScreen> {
               expirationDate: DateTime(1900),
               usaMolho: product.usaMolho,
             );
-            taskOperation = await addProduct(
-              product: product,
-              batch: batch,
-              originLocation: _originLocation,
-              destinationLocation: _destinationLocation,
-            );
+            taskOperation = await addProduct(product: product, batch: batch);
           }
         }
 
@@ -726,6 +756,14 @@ class _PickingScreenState extends State<PickingScreen> {
       case BarCodeType.container:
         break;
       case BarCodeType.location:
+        if (!_useLocations) {
+          taskOperation = TaskOperation(
+            success: false,
+            errorCode: ErrorCode.cannotChangeLocation,
+            message: 'Localização não pode ser alterada',
+          );
+          break;
+        }
 
         //Non Transfers
         if (pickingTask.stockMovement != StockMovement.transfer) {
@@ -762,36 +800,7 @@ class _PickingScreenState extends State<PickingScreen> {
             message: 'Localização não encontrada',
           );
         } else {
-          //Transfers
-          if (pickingTask.stockMovement == StockMovement.transfer) {
-            //Forced locations
-            if (!_canChangeDestinationLocation && !_canChangeOriginLocation) {
-              taskOperation = TaskOperation(
-                success: false,
-                errorCode: ErrorCode.cannotChangeLocation,
-                message: 'Localização não pode ser alterada',
-              );
-              break;
-            }
-            if (!_canChangeDestinationLocation && _canChangeOriginLocation) {
-              setFromLocation(location);
-            }
-            if (_canChangeDestinationLocation && !_canChangeOriginLocation) {
-              setToLocation(location);
-            }
-
-            //Standard Transfer
-            if (_canChangeDestinationLocation && _canChangeOriginLocation) {
-              taskOperation = TaskOperation(
-                success: false,
-                errorCode: ErrorCode.inDevelopment,
-                message: 'Esta funcionalidade ainda não foi implementada',
-              );
-              break;
-            }
-          } else {
-            setToLocation(location);
-          }
+          setLocation(location);
         }
         break;
       case BarCodeType.document:
@@ -839,8 +848,6 @@ class _PickingScreenState extends State<PickingScreen> {
   Future<TaskOperation> addProduct({
     required Product product,
     Batch? batch,
-    Location? originLocation,
-    Location? destinationLocation,
     double quantity = 0,
   }) async {
     final PickingTask pickingTask = Provider.of<PickingTask>(
@@ -848,6 +855,7 @@ class _PickingScreenState extends State<PickingScreen> {
       listen: false,
     );
 
+    DocumentLine? sameProductSourceDocumentLine;
     bool gotQuantityFromDialog = false;
 
     //====CREATE A NEW DOCUMENT LINE====
@@ -856,6 +864,54 @@ class _PickingScreenState extends State<PickingScreen> {
       product: product,
       batch: batch,
     );
+
+    //====SET THE LOCATIONS====
+    Location? originLocation;
+    Location? destinationLocation;
+
+    if (_useLocations) {
+      switch (pickingTask.stockMovement) {
+        case StockMovement.inbound:
+          originLocation = null;
+          destinationLocation = _currentLocation;
+          break;
+        case StockMovement.outbound:
+          originLocation = null;
+          destinationLocation = _currentLocation;
+          break;
+        case StockMovement.transfer:
+          if (_canChangeOriginLocation && _canChangeDestinationLocation) {
+            if (_isPickingUp) {
+              originLocation = _currentLocation;
+              destinationLocation = _defaultDestinationLocation;
+            } else {
+              originLocation = _defaultOriginLocation;
+              destinationLocation = _currentLocation;
+            }
+          } else {
+            if (_canChangeOriginLocation) {
+              originLocation = _currentLocation;
+              destinationLocation = _defaultDestinationLocation;
+            } else {
+              originLocation = _defaultOriginLocation;
+              destinationLocation = _currentLocation;
+            }
+          }
+          break;
+        case StockMovement.inventory:
+          originLocation = null;
+          destinationLocation = _currentLocation;
+          break;
+        default:
+          originLocation = null;
+          destinationLocation = null;
+          break;
+      }
+    } else {
+      originLocation = null;
+      destinationLocation = null;
+    }
+
     documentLineToAdd.originLocation = originLocation;
     documentLineToAdd.destinationLocation = destinationLocation;
 
@@ -874,121 +930,297 @@ class _PickingScreenState extends State<PickingScreen> {
         },
       );
       gotQuantityFromDialog = true;
+      batch = documentLineToAdd.batch;
+      if (documentLineToAdd.quantity == 0) {
+        return TaskOperation(
+          success: true,
+          errorCode: ErrorCode.quantityZero,
+          message: 'A quantidade não pode ser zero',
+        );
+      }
       setState(() {
         showSpinner = true;
       });
     }
 
-    //====GET THE CORRESPONDING DOCUMENT LINE====
+    //====CHECK THE STOCK====
+    if (_useLocations) {
+      if (pickingTask.stockMovement == StockMovement.outbound ||
+          (pickingTask.stockMovement == StockMovement.transfer &&
+              _isPickingUp)) {
+        Location location;
+        if (pickingTask.stockMovement == StockMovement.outbound) {
+          location = _currentLocation!;
+        } else {
+          if (_canChangeOriginLocation && _isPickingUp) {
+            location = _currentLocation!;
+          } else {
+            location = _defaultOriginLocation!;
+          }
+        }
 
-    //Get a list of the document lines with the same product
-    //and batch if applicable and location if applicable
+        final bool hasStock = await checkLocationStock(
+          location,
+          product,
+          batch,
+          documentLineToAdd.quantity,
+        );
+        if (!hasStock) {
+          return TaskOperation(
+            success: false,
+            errorCode: ErrorCode.insuficientStock,
+            message: 'Não há stock suficiente',
+          );
+        }
+      }
+    }
 
-    final List<DocumentLine> documentLinesWithSameProduct =
-        pickingTask.document!.lines
-            .where(
-              (element) =>
-                  element.product.reference.trim() ==
-                  documentLineToAdd.product.reference.trim(),
-            )
-            .toList();
+    //====GET THE FITTING DOCUMENT LINE====
+    final DocumentLine? fittingDocumentLine =
+        getFittingDocumentLine(documentLineToAdd);
 
-    final List<DocumentLine> documentLines = documentLinesWithSameProduct
-        .where(
+    //If there is no fittingDocumentLine, search for a SourceDocumentLine with the same product
+    //and set the linkedLineErpId
+    if (pickingTask.sourceDocuments.isNotEmpty) {
+      for (final Document sourceDocument in pickingTask.sourceDocuments) {
+        sameProductSourceDocumentLine = sourceDocument.lines.firstWhereOrNull(
           (element) =>
-              //Same product
               element.product.reference.trim() ==
-                  documentLineToAdd.product.reference.trim() &&
+              documentLineToAdd.product.reference.trim(),
+        );
+        if (sameProductSourceDocumentLine != null) {
+          break;
+        }
+      }
+    }
 
-              //Batch
-              (
-                  // Both not Batch tracked
-                  (!product.isBatchTracked &&
-                          element.batch == null &&
-                          documentLineToAdd.batch == null)
+    //If it's a transfer and the user is unloading
+    if (pickingTask.stockMovement == StockMovement.transfer &&
+        _isDroppingOff &&
+        _canChangeDestinationLocation &&
+        _canChangeOriginLocation) {
+      if (fittingDocumentLine == null) {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.insuficientStock,
+          message: 'Este artigo não foi carregado',
+        );
+      }
 
-                      // Batch tracked and same batch
-                      ||
-                      (product.isBatchTracked &&
-                          documentLineToAdd.batch != null &&
-                          element.batch != null &&
-                          documentLineToAdd.batch!.batchNumber.trim() ==
-                              element.batch!.batchNumber.trim())
+      //Check loaded quantity
+      double quantityToAdd;
+      quantityToAdd = documentLineToAdd.quantity;
+      if (fittingDocumentLine.quantity < quantityToAdd) {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.quantityAboveMax,
+          message:
+              'A quantidade carregada é maior que a quantidade a descarregar',
+        );
+      }
 
-                      // Both Batch tracked but element has no batch and documentLine has batch
-                      ||
-                      (product.isBatchTracked &&
-                          documentLineToAdd.batch != null &&
-                          element.batch == null)
+      //If the quantity is the same, just set the destinationLocation
+      if (fittingDocumentLine.quantity == quantityToAdd) {
+        DocumentLine finalDocumentLine;
+        finalDocumentLine = fittingDocumentLine;
+        finalDocumentLine.batch = documentLineToAdd.batch;
+        finalDocumentLine.destinationLocation =
+            documentLineToAdd.destinationLocation;
 
-                      // Both Batch tracked but neither have batch
-                      ||
-                      (product.isBatchTracked &&
-                          documentLineToAdd.batch == null &&
-                          element.batch == null)) &&
-              //Location
-              (
-                  //Both without both locations
-                  (documentLineToAdd.destinationLocation == null &&
-                          element.destinationLocation == null &&
-                          documentLineToAdd.originLocation == null &&
-                          element.originLocation == null) ||
+        //Prepare the scroll to the document line
+        documentLineToScroll = finalDocumentLine;
 
-                      //Both in the same locations
-                      (documentLineToAdd.destinationLocation != null &&
-                          element.destinationLocation != null &&
-                          documentLineToAdd.destinationLocation!.erpId ==
-                              element.destinationLocation!.erpId &&
-                          documentLineToAdd.originLocation != null &&
-                          element.originLocation != null &&
-                          documentLineToAdd.originLocation!.erpId ==
-                              element.originLocation!.erpId) ||
+        return TaskOperation(
+          success: true,
+          errorCode: ErrorCode.none,
+          message: '',
+        );
+      } else {
+        //If the quantity is different, subtract the quantity from the fittingDocumentLine
+        //and copy the fittingDocumentLine to the new documentLine with the new quantity
+        pickingTask.addToDocumentLineQuantity(
+          fittingDocumentLine,
+          -quantityToAdd,
+        );
+        final DocumentLine finalDocumentLine = fittingDocumentLine.copyWith(
+          id: Guid.newGuid,
+          quantity: quantityToAdd,
+          destinationLocation: _currentLocation,
+        );
+        pickingTask.document!.lines.add(finalDocumentLine);
+        quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
+        if (sameProductSourceDocumentLine != null) {
+          finalDocumentLine.linkedLineErpId =
+              sameProductSourceDocumentLine.erpId;
+        }
 
-                      //Element without locations and documentLine with locations
-                      (documentLineToAdd.destinationLocation != null &&
-                          element.destinationLocation == null &&
-                          documentLineToAdd.originLocation != null &&
-                          element.originLocation == null)),
-        )
-        .toList();
+        //Prepare the scroll to the document line
+        documentLineToScroll = finalDocumentLine;
 
-    //If there are no document lines with the same product,
-    //add the new document line to the document
-    //If not, use the first document line found to add the quantity
-    //Give preference to the document line with the same batch and quantity < quantityPicked
-    DocumentLine finalDocumentLine;
-    double quantityToAdd;
-    if (documentLines.isEmpty) {
-      finalDocumentLine = documentLineToAdd;
-      pickingTask.document!.lines.add(finalDocumentLine);
-      quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
-      if (destinationLocation != null) {
-        finalDocumentLine.destinationLocation = destinationLocation;
+        return TaskOperation(
+          success: true,
+          errorCode: ErrorCode.none,
+          message: '',
+        );
       }
     } else {
-      finalDocumentLine = documentLines.firstWhereOrNull(
-            (element) =>
-                element.quantity + element.quantityPicked < element.quantity,
-          ) ??
-          documentLines.first;
-      finalDocumentLine.batch = documentLineToAdd.batch;
-      if (destinationLocation != null) {
-        finalDocumentLine.destinationLocation = destinationLocation;
+      //Proceed normally
+
+      // Add new documentLine or change existent documentLine
+      DocumentLine finalDocumentLine;
+      double quantityToAdd;
+      if (fittingDocumentLine == null) {
+        finalDocumentLine = documentLineToAdd;
+        pickingTask.document!.lines.add(finalDocumentLine);
+        quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
+        if (sameProductSourceDocumentLine != null) {
+          finalDocumentLine.linkedLineErpId =
+              sameProductSourceDocumentLine.erpId;
+        }
+      } else {
+        finalDocumentLine = fittingDocumentLine;
+        finalDocumentLine.batch = documentLineToAdd.batch;
+        quantityToAdd = documentLineToAdd.quantity;
       }
-      quantityToAdd = documentLineToAdd.quantity;
+
+      //Prepare the scroll to the document line
+      documentLineToScroll = finalDocumentLine;
+
+      return pickingTask.addToDocumentLineQuantity(
+        finalDocumentLine,
+        quantityToAdd,
+      );
+    }
+  }
+
+  Future<bool> checkLocationStock(
+    Location location,
+    Product product,
+    Batch? batch,
+    double quantity,
+  ) async {
+    bool hasStock = true;
+
+    if (_useLocations) {
+      final double stock =
+          await LocationApi.getProductStockByLocation(location, product, batch);
+
+      if (stock < quantity) {
+        hasStock = false;
+      }
     }
 
-    for (final DocumentLine documentLine in documentLines) {
-      if (documentLine.id == finalDocumentLine.id) {
-        documentLineToScroll = documentLine;
-      }
-    }
-    documentLineToScroll ??= finalDocumentLine;
+    return hasStock;
+  }
 
-    return pickingTask.addToDocumentLineQuantity(
-      finalDocumentLine,
-      quantityToAdd,
+  DocumentLine? getFittingDocumentLine(DocumentLine documentLine) {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
     );
+
+    //Lists
+    List<DocumentLine> documentLinesWithFittingProduct = [];
+    List<DocumentLine> documentLinesWithFittingBatch = [];
+    List<DocumentLine> documentLinesWithFittingLocation = [];
+    List<DocumentLine> finalFittingDocumentLines = [];
+
+    //Find the document lines with the same product
+    documentLinesWithFittingProduct = pickingTask.document!.lines
+        .where(
+          (element) =>
+              element.product.reference.trim() ==
+              documentLine.product.reference.trim(),
+        )
+        .toList();
+    if (documentLinesWithFittingProduct.isEmpty) {
+      return null;
+    }
+
+    //Find the document lines with the fitting batch
+    if (documentLine.batch != null) {
+      documentLinesWithFittingBatch = documentLinesWithFittingProduct
+          .where(
+            (element) =>
+                //Same batch
+                (element.batch != null &&
+                    element.batch!.batchNumber.trim() ==
+                        documentLine.batch!.batchNumber.trim()) ||
+
+                //Element and line without batch
+                (element.batch == null && documentLine.batch == null) ||
+
+                //Element without batch and line with batch
+                (element.batch == null && documentLine.batch != null),
+          )
+          .toList();
+    } else {
+      documentLinesWithFittingBatch = documentLinesWithFittingProduct;
+    }
+
+    //Find the document lines with the fitting location
+    if (_useLocations) {
+      documentLinesWithFittingLocation = documentLinesWithFittingBatch
+          .where(
+            (element) =>
+
+                // No Transfers
+                (pickingTask.stockMovement != StockMovement.transfer &&
+                    //No Destination Location on both
+                    ((element.destinationLocation == null &&
+                            documentLine.destinationLocation == null) ||
+                        //Element without Destination Location and line with Destination Location
+                        (element.destinationLocation == null &&
+                            documentLine.destinationLocation != null) ||
+                        //Both with the same Destination Location
+                        (element.destinationLocation != null &&
+                            documentLine.destinationLocation != null &&
+                            element.destinationLocation!.erpId.trim() ==
+                                documentLine.destinationLocation!.erpId
+                                    .trim()))) ||
+
+                //Transfers
+                (pickingTask.stockMovement == StockMovement.transfer &&
+                    //Load Product
+                    //Element without both locations and line only with Origin Location
+                    ((element.originLocation == null &&
+                            element.destinationLocation == null &&
+                            documentLine.originLocation != null &&
+                            documentLine.destinationLocation != null) ||
+
+                        //Load more Product
+                        //Element with only Origin Location and line with the same Origin Location
+                        (element.originLocation != null &&
+                            element.destinationLocation == null &&
+                            documentLine.originLocation != null &&
+                            documentLine.destinationLocation == null &&
+                            element.originLocation!.erpId.trim() ==
+                                documentLine.originLocation!.erpId.trim()) ||
+
+                        //Unload Product
+                        //Element with only Origin Location and line with a Destination Location
+                        (element.originLocation != null &&
+                            element.destinationLocation == null &&
+                            documentLine.originLocation == null &&
+                            documentLine.destinationLocation != null) ||
+
+                        //Unload more Product
+                        //Both with the same Locations
+                        (element.originLocation != null &&
+                            element.destinationLocation != null &&
+                            documentLine.originLocation == null &&
+                            documentLine.destinationLocation != null &&
+                            element.destinationLocation!.erpId.trim() ==
+                                documentLine.destinationLocation!.erpId
+                                    .trim()))),
+          )
+          .toList();
+    } else {
+      documentLinesWithFittingLocation = documentLinesWithFittingBatch;
+    }
+
+    finalFittingDocumentLines = documentLinesWithFittingLocation;
+    return finalFittingDocumentLines.firstOrNull;
   }
 
   Future<TaskOperation> removeFromDocument(DocumentLine documentLine) async {
@@ -1005,6 +1237,15 @@ class _PickingScreenState extends State<PickingScreen> {
     if (taskOperation.success) {
       documentLine.destinationLocation = null;
       documentLine.batch = null;
+
+      if (pickingTask.document!.lines.isEmpty &&
+          pickingTask.stockMovement == StockMovement.transfer) {
+        setState(() {
+          _isPickingUp = true;
+          _isDroppingOff = false;
+        });
+      }
+
       await getDocumentLinesList();
     }
 
@@ -1077,8 +1318,36 @@ class _PickingScreenState extends State<PickingScreen> {
   void exitPickingScreen() {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
-    pickingTask.clear();
-    Navigator.pop(context);
+
+    //If it's a transfer, remove the products that were unloaded
+    if (pickingTask.stockMovement == StockMovement.transfer &&
+        _ignoreNotUnloadedProducts) {
+      //Get the products that were unloaded
+      final List<DocumentLine> unloadedProducts = pickingTask.document!.lines
+          .where(
+            (element) =>
+                element.destinationLocation != null &&
+                element.originLocation != null,
+          )
+          .toList();
+
+      //Remove the products that were unloaded
+      for (final DocumentLine documentLine in unloadedProducts) {
+        final DocumentLine? documentLineToRemove =
+            pickingTask.document!.lines.firstWhereOrNull(
+          (element) => element.id == documentLine.id,
+        );
+        if (documentLineToRemove != null) {
+          removeFromDocument(documentLineToRemove);
+        }
+      }
+      setState(() {
+        _ignoreNotUnloadedProducts = false;
+      });
+    } else {
+      pickingTask.clear();
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -1176,7 +1445,7 @@ class _PickingScreenState extends State<PickingScreen> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10.0,
                   ),
-                  child: _useLocations && _showSingleLocation
+                  child: _useLocations
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -1189,24 +1458,74 @@ class _PickingScreenState extends State<PickingScreen> {
                             const SizedBox(
                               width: 10.0,
                             ),
-                            FaIcon(
-                              FontAwesomeIcons.warehouse,
-                              color: kPrimaryColor.withOpacity(0.8),
-                              size: 13.0,
-                            ),
-                            const SizedBox(
-                              width: 10.0,
-                            ),
-                            Text(
-                              _showOnlyOriginLocation &&
-                                      !_showOnlyDestinationLocation
-                                  ? _originLocation != null
-                                      ? _originLocation!.name
-                                      : '(Sem localização)'
-                                  : _destinationLocation != null
-                                      ? _destinationLocation!.name
-                                      : '(Sem localização)',
-                              style: Theme.of(context).textTheme.labelSmall,
+                            GestureDetector(
+                              onTap: () {
+                                //IF it's a transfer, the user can change if it's picking up or dropping off
+                                if (pickingTask.stockMovement ==
+                                        StockMovement.transfer &&
+                                    _canChangeDestinationLocation &&
+                                    _canChangeOriginLocation) {
+                                  //Only swap if there are documentLines
+                                  if (pickingTask.document!.lines.isNotEmpty) {
+                                    setState(() {
+                                      _isPickingUp = !_isPickingUp;
+                                      _isDroppingOff = !_isDroppingOff;
+                                      _currentLocation = _isPickingUp
+                                          ? _defaultOriginLocation
+                                          : _defaultDestinationLocation;
+                                    });
+                                  }
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  Stack(
+                                    children: [
+                                      FaIcon(
+                                        FontAwesomeIcons.warehouse,
+                                        size: 13.0,
+                                        color: getCurrentLocationStockMovementType() ==
+                                                StockMovement.outbound
+                                            ? kOutboundStockMovement
+                                            : getCurrentLocationStockMovementType() ==
+                                                    StockMovement.inbound
+                                                ? kInboundStockMovement
+                                                : kPrimaryColor
+                                                    .withOpacity(0.8),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 18.0,
+                                          top: 1.0,
+                                        ),
+                                        child: FaIcon(
+                                          getCurrentLocationStockMovementType() ==
+                                                  StockMovement.outbound
+                                              ? FontAwesomeIcons.arrowRight
+                                              : FontAwesomeIcons.arrowLeft,
+                                          size: 13.0,
+                                          color: getCurrentLocationStockMovementType() ==
+                                                  StockMovement.outbound
+                                              ? kOutboundStockMovement
+                                              : getCurrentLocationStockMovementType() ==
+                                                      StockMovement.inbound
+                                                  ? kInboundStockMovement
+                                                  : kPrimaryColor
+                                                      .withOpacity(0.8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    width: 10.0,
+                                  ),
+                                  Text(
+                                    getLocationName(_currentLocation),
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(
                               width: 10.0,
@@ -1336,21 +1655,60 @@ class _PickingScreenState extends State<PickingScreen> {
               return;
             }
 
+            //Check if there are any DocumentLines
+            if (pickingTask.document!.lines.isEmpty) {
+              await Helper.showMsg(
+                'Atenção',
+                'Não encontrei linhas para guardar',
+                context,
+              );
+              return;
+            }
+
+            //Check if it's a transfer and there are lines with no destinationLocation
+            if (pickingTask.stockMovement == StockMovement.transfer &&
+                pickingTask.document!.lines
+                    .any((element) => element.destinationLocation == null)) {
+              if (pickingTask.document!.lines
+                  .any((element) => element.destinationLocation != null)) {
+                _ignoreNotUnloadedProducts = await Helper.askQuestion(
+                  'Atenção',
+                  'Existem linhas ainda por descarregar.\n\nDeseja guardar apenas as linhas descarregadas e continuar o processo?',
+                  context,
+                );
+                if (!_ignoreNotUnloadedProducts) {
+                  return;
+                }
+              } else {
+                await Helper.showMsg(
+                  'Atenção',
+                  'Não encontrei nenhuma linha com localização de destino',
+                  context,
+                );
+                return;
+              }
+            }
+
             //Check if there are any MiscData that are not filled
             final List<MiscData> miscDataNotFilled =
                 alreadyShowedPostOperationInput
-                    ? miscDataList
+                    ? documentExtraFieldsList
                         .where(
                           (element) =>
-                              element.isMandatory && element.value.isEmpty,
+                              element.isMandatory != null &&
+                              element.isMandatory! &&
+                              element.value.isEmpty,
                         )
                         .toList()
-                    : miscDataList
+                    : documentExtraFieldsList
                         .where(
                           (element) =>
-                              element.postOperationInput ||
-                              (element.preOperationInput &&
-                                  element.isMandatory &&
+                              (element.postOperationInput != null &&
+                                  element.postOperationInput!) ||
+                              (element.preOperationInput != null &&
+                                  element.preOperationInput! &&
+                                  element.isMandatory != null &&
+                                  element.isMandatory! &&
                                   element.value.isEmpty),
                         )
                         .toList();
@@ -1450,7 +1808,10 @@ class _PickingScreenState extends State<PickingScreen> {
             }
 
             //Replace task customOptions with miscDataList JSON
-            MiscDataHelper.toTask(pickingTask, miscDataList);
+            MiscDataHelper.setDocumentExtraData(
+              pickingTask,
+              documentExtraFieldsList,
+            );
 
             setState(() {
               isSavingToServer = true;
@@ -1495,7 +1856,7 @@ class _PickingScreenState extends State<PickingScreen> {
           onBarcodeScan: _onBarcodeScanned,
           onProductSelected: _onProductSelectedBottomBar,
           onMiscDataChanged: _onMiscDataChanged,
-          miscDataList: miscDataList,
+          miscDataList: documentExtraFieldsList,
         ),
       ),
     );

@@ -8,6 +8,9 @@ mixin MiscDataFields {
     preOperationInput,
     postOperationInput,
     isMandatory,
+    group,
+    sort,
+    sortType,
     name,
     type,
     table,
@@ -23,6 +26,9 @@ mixin MiscDataFields {
   static const String preOperationInput = 'PreOperationInput';
   static const String postOperationInput = 'PostOperationInput';
   static const String isMandatory = 'Mandatory';
+  static const String group = 'Group';
+  static const String sort = 'Sort';
+  static const String sortType = 'SortType';
   static const String name = 'Name';
   static const String type = 'Type';
   static const String table = 'Table';
@@ -36,9 +42,12 @@ mixin MiscDataFields {
 
 class MiscData {
   int id;
-  bool preOperationInput;
-  bool postOperationInput;
-  bool isMandatory;
+  bool? preOperationInput;
+  bool? postOperationInput;
+  bool? isMandatory;
+  bool? group;
+  bool? sort;
+  String? sortType;
   String name;
   String type;
   String table;
@@ -51,9 +60,12 @@ class MiscData {
 
   MiscData({
     required this.id,
-    required this.preOperationInput,
-    required this.postOperationInput,
-    required this.isMandatory,
+    this.preOperationInput,
+    this.postOperationInput,
+    this.isMandatory,
+    this.group,
+    this.sort,
+    this.sortType,
     required this.name,
     required this.type,
     required this.table,
@@ -67,9 +79,14 @@ class MiscData {
 
   factory MiscData.fromJson(Map<String, dynamic> json) => MiscData(
         id: json[MiscDataFields.id] as int,
-        preOperationInput: json[MiscDataFields.preOperationInput] as bool,
-        postOperationInput: json[MiscDataFields.postOperationInput] as bool,
-        isMandatory: json[MiscDataFields.isMandatory] as bool,
+        preOperationInput:
+            json[MiscDataFields.preOperationInput] as bool? ?? false,
+        postOperationInput:
+            json[MiscDataFields.postOperationInput] as bool? ?? false,
+        isMandatory: json[MiscDataFields.isMandatory] as bool? ?? false,
+        group: json[MiscDataFields.group] as bool? ?? false,
+        sort: json[MiscDataFields.sort] as bool? ?? false,
+        sortType: json[MiscDataFields.sortType] as String? ?? '',
         name: json[MiscDataFields.name] as String,
         type: json[MiscDataFields.type] as String,
         table: json[MiscDataFields.table] as String,
@@ -82,6 +99,9 @@ class MiscData {
     data[MiscDataFields.preOperationInput] = preOperationInput;
     data[MiscDataFields.postOperationInput] = postOperationInput;
     data[MiscDataFields.isMandatory] = isMandatory;
+    data[MiscDataFields.group] = group;
+    data[MiscDataFields.sort] = sort;
+    data[MiscDataFields.sortType] = sortType;
     data[MiscDataFields.name] = name;
     data[MiscDataFields.type] = type;
     data[MiscDataFields.table] = table;
@@ -111,7 +131,7 @@ class MiscData {
 }
 
 mixin MiscDataHelper {
-  static List<MiscData> fromTask(PickingTask pickingTask) {
+  static List<MiscData> getDocumentExtraData(PickingTask pickingTask) {
     List<MiscData> miscDataList = [];
 
     final String customOptions = pickingTask.customOptions;
@@ -119,33 +139,60 @@ mixin MiscDataHelper {
       final Map<String, dynamic> customOptionsJSON =
           jsonDecode(customOptions) as Map<String, dynamic>;
 
-      if (customOptionsJSON.containsKey('DocumentExtraData')) {
-        final List<dynamic> miscDataJSON =
-            customOptionsJSON['DocumentExtraData'] as List<dynamic>;
-        miscDataList = miscDataJSON
-            .map(
-              (dynamic miscData) => MiscData.fromJson(
-                miscData as Map<String, dynamic>,
-              ),
-            )
-            .toList();
+      if (customOptionsJSON.containsKey('ExtraFields')) {
+        final Map<String, dynamic> extraFieldsJSON =
+            customOptionsJSON['ExtraFields'] as Map<String, dynamic>;
+
+        if (extraFieldsJSON.containsKey('Document')) {
+          final List<dynamic> miscDataJSON =
+              extraFieldsJSON['Document'] as List<dynamic>;
+          miscDataList = miscDataJSON
+              .map(
+                (dynamic miscData) => MiscData.fromJson(
+                  miscData as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+        }
       }
     }
 
     return miscDataList;
   }
 
-  static void toTask(PickingTask pickingTask, List<MiscData> miscDataList) {
+  static void setDocumentExtraData(
+    PickingTask pickingTask,
+    List<MiscData> miscDataList,
+  ) {
+    pickingTask.document!.extraFields = jsonEncode(miscDataList);
+  }
+
+  static List<MiscData> getSourceDocumentsExtraData(PickingTask pickingTask) {
+    List<MiscData> miscDataList = [];
+
     final String customOptions = pickingTask.customOptions;
     if (customOptions.isNotEmpty) {
       final Map<String, dynamic> customOptionsJSON =
           jsonDecode(customOptions) as Map<String, dynamic>;
 
-      if (customOptionsJSON.containsKey('DocumentExtraData')) {
-        customOptionsJSON['DocumentExtraData'] = miscDataList;
+      if (customOptionsJSON.containsKey('ExtraFields')) {
+        final Map<String, dynamic> extraFieldsJSON =
+            customOptionsJSON['ExtraFields'] as Map<String, dynamic>;
 
-        pickingTask.customOptions = json.encode(customOptionsJSON);
+        if (extraFieldsJSON.containsKey('SourceDocuments')) {
+          final List<dynamic> miscDataJSON =
+              extraFieldsJSON['SourceDocuments'] as List<dynamic>;
+          miscDataList = miscDataJSON
+              .map(
+                (dynamic miscData) => MiscData.fromJson(
+                  miscData as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+        }
       }
     }
+
+    return miscDataList;
   }
 }

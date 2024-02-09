@@ -42,13 +42,16 @@ enum BarCodeType {
 enum ErrorCode {
   none,
   quantityBelowZero,
+  quantityZero,
   quantityAboveMax,
   insuficientStock,
   invalidBarcode,
   barcodeNotFound,
   documentNotFound,
   documentNotSuitable,
+  productNotLoaded,
   locationNotFound,
+  locationNotSet,
   cannotChangeLocation,
   errorSavingDocument,
   productNotFound,
@@ -71,10 +74,10 @@ const kErrorColor = Color.fromRGBO(244, 67, 54, 1);
 const kWhiteBackground = Color.fromRGBO(255, 255, 255, 1);
 const kGreyBackground = Color.fromRGBO(230, 230, 230, 1);
 const kInactiveColor = Color.fromRGBO(240, 240, 240, 1);
-const kDocumentLineSatisfied = Color.fromRGBO(151, 231, 207, 1);
+const kDocumentLineSatisfied = Color.fromRGBO(205, 206, 233, 1);
 const kDocumentLinePartial = Color.fromRGBO(253, 204, 111, 1);
 const kDocumentLineOverPicked = Color.fromRGBO(255, 169, 163, 1);
-const kInboundStockMovement = Color.fromRGBO(151, 231, 207, 1);
+const kInboundStockMovement = Color.fromRGBO(126, 184, 166, 1);
 const kOutboundStockMovement = Color.fromRGBO(255, 169, 163, 1);
 
 //Themes

@@ -249,8 +249,24 @@ class PickingTask extends ChangeNotifier {
     }
 
     //Remove from Document if it has no quantity and no linkedLineErpId
-    if (documentLine.quantity == 0 && documentLine.linkedLineErpId == null) {
-      document!.lines.remove(documentLine);
+    if (documentLine.quantity == 0) {
+      if (documentLine.linkedLineErpId == null) {
+        document!.lines.remove(documentLine);
+      } else {
+        //Remove from Document if there are more lines with the same linkedLineErpId
+        final DocumentLine? lineWithSameErpId =
+            document!.lines.firstWhereOrNull(
+          (element) =>
+              element.linkedLineErpId != null &&
+              element.id != documentLine.id &&
+              element.linkedLineErpId!.trim() ==
+                  documentLine.linkedLineErpId!.trim(),
+        );
+
+        if (lineWithSameErpId != null) {
+          document!.lines.remove(documentLine);
+        }
+      }
     }
 
     notifyListeners();
@@ -445,7 +461,7 @@ class PickingTask extends ChangeNotifier {
       );
       productPost.barcode.add(barcode);
 
-      final Map<String, dynamic> documentLineJsonBody = productPost.toJsonAPI();
+      final Map<String, dynamic> documentLineJsonBody = productPost.toJson();
       String postPutUrl = '';
       http.Response response;
       final String jsonBody = json.encode(documentLineJsonBody);
@@ -496,15 +512,26 @@ class PickingTask extends ChangeNotifier {
         message: '',
       );
 
+      final List<DocumentLine> originalDocumentLines = document!.lines.toList();
+      final List<DocumentLine> documentLines = document!.lines.toList();
+
       //Remove extra lines
       if (stockMovement == StockMovement.inventory) {
-        document!.lines.removeWhere(
+        documentLines.removeWhere(
           (element) => element.quantity == element.totalQuantity,
         );
       }
 
+      if (stockMovement == StockMovement.transfer) {
+        documentLines.removeWhere(
+          (element) =>
+              element.originLocation == null ||
+              element.destinationLocation == null,
+        );
+      }
+
       //Check if lines that need a batch have a batch
-      for (final DocumentLine documentLine in document!.lines) {
+      for (final DocumentLine documentLine in documentLines) {
         if (documentLine.product.isBatchTracked &&
             documentLine.batch == null &&
             documentLine.quantity > 0) {
@@ -517,7 +544,7 @@ class PickingTask extends ChangeNotifier {
 
       int lineOrder = 0;
       if (stockMovement == StockMovement.inventory) {
-        for (final DocumentLine documentLine in document!.lines) {
+        for (final DocumentLine documentLine in documentLines) {
           if (documentLine.erpId != null) {
             lineOrder = documentLine.order ?? lineOrder;
           } else {
@@ -526,7 +553,7 @@ class PickingTask extends ChangeNotifier {
           documentLine.order = lineOrder;
         }
       } else {
-        for (final DocumentLine documentLine in document!.lines) {
+        for (final DocumentLine documentLine in documentLines) {
           if (documentLine.quantity > 0) {
             lineOrder += 1000;
             documentLine.order = lineOrder;
@@ -536,9 +563,17 @@ class PickingTask extends ChangeNotifier {
 
       //Delete all documentLines with quantity = 0
       if (stockMovement != StockMovement.inventory) {
-        document!.lines.removeWhere(
+        documentLines.removeWhere(
           (element) => element.quantity <= 0,
         );
+      }
+
+      //Don't save if there are no lines
+      if (documentLines.isEmpty) {
+        taskOperation.success = false;
+        taskOperation.errorCode = ErrorCode.errorSavingDocument;
+        taskOperation.message = 'Não encontrei linhas com quantidade.';
+        return taskOperation;
       }
 
       //Clean not needed fields
@@ -546,13 +581,21 @@ class PickingTask extends ChangeNotifier {
       document!.number = 0;
       document!.entity!.addresses = [];
 
+      //Set the new documentLines to the document
+      document!.lines = documentLines;
+
       final Map<String, dynamic> documentJsonBody = toJson();
       String postPutUrl = '';
       http.Response response;
       final String jsonBody = json.encode(documentJsonBody);
 
+      //Reset the old documentLines to the document
+      document!.lines = originalDocumentLines;
+
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
+
+      // Helper.printDebug(jsonBody);
 
       response = await networkHelper.postData(
         json: jsonBody,
@@ -609,6 +652,8 @@ mixin PickingTaskApi {
         );
       }
     }
+
+    pickingTasksList.sort((a, b) => a.group.compareTo(b.group));
 
     return pickingTasksList;
   }

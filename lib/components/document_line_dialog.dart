@@ -22,9 +22,11 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
   late bool _isValid;
   late bool _isQuantityValid;
   late bool _isBatchValid;
+  Batch? _batch;
   bool alreadyValidated = false;
   bool setupDone = false;
   bool isExiting = false;
+  bool showSpinner = false;
 
   @override
   void initState() {
@@ -50,9 +52,13 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
   }
 
   Future<void> isDataValid() async {
+    setState(() {
+      showSpinner = true;
+    });
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
+    Batch? batch;
     bool isBatchValid = true;
     bool isQuantityValid = true;
     bool isValid = true;
@@ -82,7 +88,7 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
       if (widget.documentLine.product.isBatchTracked &&
           (pickingTask.stockMovement == StockMovement.outbound ||
               pickingTask.stockMovement == StockMovement.transfer)) {
-        final Batch? batch = await BatchApi.getByReferenceAndBatchNumber(
+        batch = await BatchApi.getByReferenceAndBatchNumber(
           widget.documentLine.product.reference,
           batchController.text.trim(),
         );
@@ -98,8 +104,16 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
     isValid = isBatchValid && isQuantityValid;
 
     setState(() {
+      showSpinner = false;
+    });
+
+    if (isExiting) {
+      return;
+    }
+    setState(() {
       _isBatchValid = isBatchValid;
       _isValid = isValid;
+      _batch = batch;
       _isQuantityValid = isQuantityValid;
       if (setupDone) {
         alreadyValidated = true;
@@ -110,12 +124,16 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
   Future<TaskOperation> submit() async {
     //Create the batch
     if (widget.documentLine.product.isBatchTracked) {
-      final Batch batch = Batch(
-        id: Guid.newGuid,
-        batchNumber: batchController.text.trim(),
-        expirationDate: DateTime(1900),
-      );
-      widget.documentLine.batch = batch;
+      if (_batch != null) {
+        widget.documentLine.batch = _batch;
+      } else {
+        final Batch newBatch = Batch(
+          id: Guid.newGuid,
+          batchNumber: batchController.text.trim(),
+          expirationDate: DateTime(1900),
+        );
+        widget.documentLine.batch = newBatch;
+      }
     }
 
     widget.documentLine.quantity = double.parse(quantityController.text.trim());
@@ -186,9 +204,6 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
                               borderRadius: BorderRadius.circular(10.0),
                             ),
                           ),
-                          onSubmitted: (value) async {
-                            await isDataValid();
-                          },
                         ),
                         if (alreadyValidated && !_isBatchValid)
                           Align(
@@ -233,9 +248,6 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
                             style: Theme.of(context).textTheme.labelMedium,
                           ),
                         ),
-                        onSubmitted: (value) async {
-                          await isDataValid();
-                        },
                       ),
                       if (alreadyValidated && !_isQuantityValid)
                         Align(
@@ -284,13 +296,21 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
               exit();
             }
           },
-          child: Text(
-            'Submeter',
-            style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.bold,
+          child: showSpinner
+              ? const SizedBox(
+                  width: 20.0,
+                  height: 20.0,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(kPrimaryColor),
+                  ),
+                )
+              : Text(
+                  'Submeter',
+                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                        color: kPrimaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-          ),
         ),
       ],
     );

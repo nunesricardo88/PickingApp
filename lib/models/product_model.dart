@@ -10,7 +10,6 @@ const String tableProduct = 'product';
 mixin ProductFields {
   static final List<String> allValues = [
     id,
-    appId,
     erpId,
     reference,
     designation,
@@ -24,7 +23,6 @@ mixin ProductFields {
   ];
 
   static const String id = 'id';
-  static const String appId = '_appId';
   static const String erpId = 'erpId';
   static const String reference = 'reference';
   static const String designation = 'designation';
@@ -39,7 +37,6 @@ mixin ProductFields {
 
 class Product {
   Guid id;
-  int? appId;
   String erpId;
   String reference;
   String designation;
@@ -53,7 +50,6 @@ class Product {
 
   Product({
     required this.id,
-    this.appId,
     required this.erpId,
     required this.reference,
     required this.designation,
@@ -68,7 +64,6 @@ class Product {
 
   factory Product.fromJsonAPI(Map<String, dynamic> json) => Product(
         id: Guid(json[ProductFields.id] as String),
-        appId: json[ProductFields.appId] as int?,
         erpId: json[ProductFields.erpId] as String,
         reference: json[ProductFields.reference] as String,
         designation: json[ProductFields.designation] as String,
@@ -82,39 +77,8 @@ class Product {
         usaMolho: json[ProductFields.usaMolho] as bool,
       );
 
-  factory Product.fromJsonDatabase(Map<String, dynamic> json) => Product(
-        id: Guid(json[ProductFields.id] as String),
-        appId: json[ProductFields.appId] as int?,
-        erpId: json[ProductFields.erpId] as String,
-        reference: json[ProductFields.reference] as String,
-        designation: json[ProductFields.designation] as String,
-        barcode: (json[ProductFields.barcode] as String).split(','),
-        unit: json[ProductFields.unit] as String,
-        alternativeUnit: json[ProductFields.alternativeUnit] as String,
-        conversionFactor: json[ProductFields.conversionFactor] as double,
-        isBatchTracked: json[ProductFields.isBatchTracked] == 1,
-        isSerialNumberTracked: json[ProductFields.isSerialNumberTracked] == 1,
-        usaMolho: json[ProductFields.usaMolho] == 1,
-      );
-
   Map<String, Object?> toJson() => {
         ProductFields.id: id.toString(),
-        ProductFields.appId: appId,
-        ProductFields.erpId: erpId,
-        ProductFields.reference: reference,
-        ProductFields.designation: designation,
-        ProductFields.barcode: barcode.join(','),
-        ProductFields.unit: unit,
-        ProductFields.alternativeUnit: alternativeUnit,
-        ProductFields.conversionFactor: conversionFactor,
-        ProductFields.isBatchTracked: isBatchTracked ? 1 : 0,
-        ProductFields.isSerialNumberTracked: isSerialNumberTracked ? 1 : 0,
-        ProductFields.usaMolho: usaMolho ? 1 : 0,
-      };
-
-  Map<String, Object?> toJsonAPI() => {
-        ProductFields.id: id.toString(),
-        ProductFields.appId: appId,
         ProductFields.erpId: erpId,
         ProductFields.reference: reference,
         ProductFields.designation: designation,
@@ -143,7 +107,6 @@ class Product {
   }) =>
       Product(
         id: id ?? this.id,
-        appId: appId ?? this.appId,
         erpId: erpId ?? this.erpId,
         reference: reference ?? this.reference,
         designation: designation ?? this.designation,

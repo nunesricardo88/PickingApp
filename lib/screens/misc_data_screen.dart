@@ -70,7 +70,7 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
         break;
     }
 
-    if (item.isMandatory) {
+    if (item.isMandatory != null && item.isMandatory!) {
       return TextField(
         controller: _textEditingControllerList[index],
         keyboardType: textInputType,
@@ -198,7 +198,9 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
             miscData.value = valueString;
             switch (miscData.type) {
               case 'String':
-                if (miscData.isMandatory && valueString.isEmpty) {
+                if (miscData.isMandatory != null &&
+                    miscData.isMandatory! &&
+                    valueString.isEmpty) {
                   canSave = false;
                 } else {
                   miscData.valueString = valueString;

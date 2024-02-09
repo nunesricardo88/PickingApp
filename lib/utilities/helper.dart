@@ -69,7 +69,13 @@ mixin Helper {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Ok'),
+              child: Text(
+                'Ok',
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
           ],
         );
@@ -96,14 +102,25 @@ mixin Helper {
                 result = false;
                 Navigator.of(context).pop();
               },
-              child: const Text('Não'),
+              child: Text(
+                'Não',
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: kPrimaryColor.withOpacity(0.8),
+                    ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 result = true;
                 Navigator.of(context).pop();
               },
-              child: const Text('Sim'),
+              child: Text(
+                'Sim',
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
             ),
           ],
         );

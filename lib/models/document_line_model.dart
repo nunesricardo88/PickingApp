@@ -31,6 +31,7 @@ mixin DocumentLineFields {
     alternativeUnit,
     originLocation,
     destinationLocation,
+    extraFields,
   ];
 
   static const String id = 'id';
@@ -53,6 +54,7 @@ mixin DocumentLineFields {
   static const String alternativeUnit = 'alternativeUnit';
   static const String originLocation = 'originLocation';
   static const String destinationLocation = 'destinationLocation';
+  static const String extraFields = 'extraFields';
 }
 
 class DocumentLine {
@@ -76,6 +78,7 @@ class DocumentLine {
   String alternativeUnit;
   Location? originLocation;
   Location? destinationLocation;
+  String? extraFields;
 
   DocumentLine({
     required this.id,
@@ -98,6 +101,7 @@ class DocumentLine {
     required this.alternativeUnit,
     this.originLocation,
     this.destinationLocation,
+    this.extraFields,
   });
 
   factory DocumentLine.fromJson(Map<String, dynamic> json) => DocumentLine(
@@ -141,6 +145,7 @@ class DocumentLine {
                     json[DocumentLineFields.destinationLocation]
                         as Map<String, dynamic>,
                   ),
+        extraFields: json[DocumentLineFields.extraFields] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -150,7 +155,7 @@ class DocumentLine {
         DocumentLineFields.documentErpId: documentErpId,
         DocumentLineFields.linkedLineErpId: linkedLineErpId,
         DocumentLineFields.order: order,
-        DocumentLineFields.product: product.toJsonAPI(),
+        DocumentLineFields.product: product.toJson(),
         DocumentLineFields.batch: batch?.toJson(),
         DocumentLineFields.quantity: quantity,
         DocumentLineFields.quantityPicked: quantityPicked,
@@ -164,6 +169,7 @@ class DocumentLine {
         DocumentLineFields.alternativeUnit: alternativeUnit,
         DocumentLineFields.originLocation: originLocation?.toJson(),
         DocumentLineFields.destinationLocation: destinationLocation?.toJson(),
+        DocumentLineFields.extraFields: extraFields,
       };
 
   DocumentLine copyWith({
@@ -187,6 +193,7 @@ class DocumentLine {
     String? alternativeUnit,
     Location? originLocation,
     Location? destinationLocation,
+    String? extraFields,
   }) {
     return DocumentLine(
       id: id ?? this.id,
@@ -212,6 +219,7 @@ class DocumentLine {
       alternativeUnit: alternativeUnit ?? this.alternativeUnit,
       originLocation: originLocation ?? this.originLocation,
       destinationLocation: destinationLocation ?? this.destinationLocation,
+      extraFields: extraFields ?? this.extraFields,
     );
   }
 }

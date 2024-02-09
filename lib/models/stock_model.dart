@@ -39,7 +39,7 @@ class Stock {
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        StockFields.product: product.toJsonAPI(),
+        StockFields.product: product.toJson(),
         StockFields.batch: batch.toJson(),
         StockFields.locationId: locationId.toString(),
         StockFields.quantity: quantity,

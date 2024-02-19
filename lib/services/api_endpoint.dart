@@ -40,10 +40,9 @@ mixin ApiEndPoint {
   }
 
   //Products
-  static String getAllProducts(DateTime lastSyncDate) {
+  static String getAllProducts() {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    final String lastSyncDateStr = lastSyncDate.toIso8601String();
-    return '$baseUrlPath/Product/getAll/lastSyncDate=$lastSyncDateStr';
+    return '$baseUrlPath/Product/getAll';
   }
 
   //Batches

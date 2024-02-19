@@ -4,7 +4,6 @@ import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
-import 'package:n6picking_flutterapp/utilities/system.dart';
 
 const String tableProduct = 'product';
 mixin ProductFields {
@@ -145,13 +144,12 @@ class ProductApi {
 
   static Future<List<Product>> fetchFromApi() async {
     List<Product> productList = [];
-    final DateTime lastSyncDate =
-        System.instance.apiConnection!.lastConnection ?? DateTime(1900);
-    final String getUrl = ApiEndPoint.getAllProducts(lastSyncDate);
+
+    final String getUrl = ApiEndPoint.getAllProducts();
 
     final NetworkHelper networkHelper = NetworkHelper(getUrl);
     final http.Response response =
-        await networkHelper.getData(seconds: 120) as http.Response;
+        await networkHelper.getData(seconds: 300) as http.Response;
 
     if (response.statusCode == 200) {
       final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;

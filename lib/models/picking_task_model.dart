@@ -595,7 +595,7 @@ class PickingTask extends ChangeNotifier {
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
 
-      // Helper.printDebug(jsonBody);
+      //Helper.printDebug(jsonBody);
 
       response = await networkHelper.postData(
         json: jsonBody,

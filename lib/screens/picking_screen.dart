@@ -561,24 +561,20 @@ class _PickingScreenState extends State<PickingScreen> {
 
     final DocumentLine oldDocumentLine = line.copyWith();
 
-    //If the original line has no batch or quantity, remove it
-    pickingTask.document!.lines.removeWhere(
-      (element) =>
-          element.id == line.id &&
-          (element.batch == null || element.quantity == 0),
-    );
-
     for (final Batch batch in newLines) {
       final double quantity = double.tryParse(batch.erpId!.trim()) ?? 0;
 
-      await addProduct(
+      final TaskOperation taskOperation = await addProduct(
         product: oldDocumentLine.product,
         batch: batch,
         quantity: quantity,
       );
-
-      final DocumentLine documentLine = pickingTask.document!.lines.last;
-      documentLine.linkedLineErpId = oldDocumentLine.linkedLineErpId;
+      if (taskOperation.success) {
+        final Guid id = Guid(taskOperation.message);
+        final DocumentLine newDocumentLine = pickingTask.document!.lines
+            .firstWhere((element) => element.id == id);
+        newDocumentLine.linkedLineErpId = oldDocumentLine.linkedLineErpId;
+      }
     }
 
     setState(() {});
@@ -847,6 +843,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
   Future<TaskOperation> addProduct({
     required Product product,
+    DocumentLine? documentLine,
     Batch? batch,
     double quantity = 0,
   }) async {
@@ -977,7 +974,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
     //====GET THE FITTING DOCUMENT LINE====
     final DocumentLine? fittingDocumentLine =
-        getFittingDocumentLine(documentLineToAdd);
+        getFittingDocumentLine(documentLine, documentLineToAdd);
 
     //If there is no fittingDocumentLine, search for a SourceDocumentLine with the same product
     //and set the linkedLineErpId
@@ -1079,17 +1076,37 @@ class _PickingScreenState extends State<PickingScreen> {
         }
       } else {
         finalDocumentLine = fittingDocumentLine;
+        finalDocumentLine.originLocation = documentLineToAdd.originLocation;
+        finalDocumentLine.destinationLocation =
+            documentLineToAdd.destinationLocation;
         finalDocumentLine.batch = documentLineToAdd.batch;
-        quantityToAdd = documentLineToAdd.quantity;
+        quantityToAdd = quantity;
+      }
+
+      if (pickingTask.document!.lines.isEmpty) {
+        setState(() {
+          _isPickingUp = true;
+          _isDroppingOff = false;
+        });
       }
 
       //Prepare the scroll to the document line
       documentLineToScroll = finalDocumentLine;
 
-      return pickingTask.addToDocumentLineQuantity(
+      final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
         finalDocumentLine,
         quantityToAdd,
       );
+
+      if (taskOperation.success) {
+        return TaskOperation(
+          success: true,
+          errorCode: ErrorCode.none,
+          message: finalDocumentLine.id.toString(),
+        );
+      } else {
+        return taskOperation;
+      }
     }
   }
 
@@ -1113,7 +1130,10 @@ class _PickingScreenState extends State<PickingScreen> {
     return hasStock;
   }
 
-  DocumentLine? getFittingDocumentLine(DocumentLine documentLine) {
+  DocumentLine? getFittingDocumentLine(
+    DocumentLine? originalDocumentLine,
+    DocumentLine documentLine,
+  ) {
     final PickingTask pickingTask = Provider.of<PickingTask>(
       context,
       listen: false,
@@ -1220,7 +1240,16 @@ class _PickingScreenState extends State<PickingScreen> {
     }
 
     finalFittingDocumentLines = documentLinesWithFittingLocation;
-    return finalFittingDocumentLines.firstOrNull;
+
+    //Check if originalDocumentLine is in the list
+    DocumentLine? finalFittingDocumentLine;
+    if (originalDocumentLine != null) {
+      finalFittingDocumentLine = finalFittingDocumentLines.firstWhereOrNull(
+        (element) => element.id == originalDocumentLine.id,
+      );
+    }
+
+    return finalFittingDocumentLine ??= finalFittingDocumentLines.firstOrNull;
   }
 
   Future<TaskOperation> removeFromDocument(DocumentLine documentLine) async {

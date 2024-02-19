@@ -566,6 +566,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
       final TaskOperation taskOperation = await addProduct(
         product: oldDocumentLine.product,
+        documentLine: oldDocumentLine,
         batch: batch,
         quantity: quantity,
       );

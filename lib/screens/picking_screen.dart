@@ -853,8 +853,9 @@ class _PickingScreenState extends State<PickingScreen> {
       listen: false,
     );
 
+    //Control Objects
     DocumentLine? sameProductSourceDocumentLine;
-    bool gotQuantityFromDialog = false;
+    double quantityToAdd = quantity;
 
     //====CREATE A NEW DOCUMENT LINE====
     final DocumentLine documentLineToAdd =
@@ -914,7 +915,7 @@ class _PickingScreenState extends State<PickingScreen> {
     documentLineToAdd.destinationLocation = destinationLocation;
 
     //====GET THE BATCH AND QUANTITY====
-    if (quantity == 0 || (batch == null && product.isBatchTracked)) {
+    if (quantityToAdd == 0 || (batch == null && product.isBatchTracked)) {
       setState(() {
         showSpinner = false;
       });
@@ -927,9 +928,9 @@ class _PickingScreenState extends State<PickingScreen> {
           );
         },
       );
-      gotQuantityFromDialog = true;
       batch = documentLineToAdd.batch;
-      if (documentLineToAdd.quantity == 0) {
+      quantityToAdd = documentLineToAdd.quantity;
+      if (quantityToAdd == 0) {
         return TaskOperation(
           success: true,
           errorCode: ErrorCode.quantityZero,
@@ -961,7 +962,7 @@ class _PickingScreenState extends State<PickingScreen> {
           location,
           product,
           batch,
-          documentLineToAdd.quantity,
+          quantityToAdd,
         );
         if (!hasStock) {
           return TaskOperation(
@@ -1006,8 +1007,6 @@ class _PickingScreenState extends State<PickingScreen> {
       }
 
       //Check loaded quantity
-      double quantityToAdd;
-      quantityToAdd = documentLineToAdd.quantity;
       if (fittingDocumentLine.quantity < quantityToAdd) {
         return TaskOperation(
           success: false,
@@ -1046,7 +1045,6 @@ class _PickingScreenState extends State<PickingScreen> {
           destinationLocation: _currentLocation,
         );
         pickingTask.document!.lines.add(finalDocumentLine);
-        quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
         if (sameProductSourceDocumentLine != null) {
           finalDocumentLine.linkedLineErpId =
               sameProductSourceDocumentLine.erpId;
@@ -1066,11 +1064,9 @@ class _PickingScreenState extends State<PickingScreen> {
 
       // Add new documentLine or change existent documentLine
       DocumentLine finalDocumentLine;
-      double quantityToAdd;
       if (fittingDocumentLine == null) {
         finalDocumentLine = documentLineToAdd;
         pickingTask.document!.lines.add(finalDocumentLine);
-        quantityToAdd = gotQuantityFromDialog ? 0.0 : quantity;
         if (sameProductSourceDocumentLine != null) {
           finalDocumentLine.linkedLineErpId =
               sameProductSourceDocumentLine.erpId;
@@ -1081,7 +1077,6 @@ class _PickingScreenState extends State<PickingScreen> {
         finalDocumentLine.destinationLocation =
             documentLineToAdd.destinationLocation;
         finalDocumentLine.batch = documentLineToAdd.batch;
-        quantityToAdd = quantity;
       }
 
       if (pickingTask.document!.lines.isEmpty) {

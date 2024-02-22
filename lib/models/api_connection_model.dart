@@ -41,7 +41,7 @@ class ApiConnection {
         port: json[ApiConnectionFields.port] as String,
         connectionString: json[ApiConnectionFields.connectionString] as String,
         lastConnection: json[ApiConnectionFields.lastConnection] == null
-            ? null
+            ? DateTime.now()
             : DateTime.parse(
                 json[ApiConnectionFields.lastConnection] as String,
               ),

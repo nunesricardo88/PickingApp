@@ -930,6 +930,7 @@ class _PickingScreenState extends State<PickingScreen> {
       );
       batch = documentLineToAdd.batch;
       quantityToAdd = documentLineToAdd.quantity;
+      documentLineToAdd.quantity = 0.0;
       if (quantityToAdd == 0) {
         return TaskOperation(
           success: true,

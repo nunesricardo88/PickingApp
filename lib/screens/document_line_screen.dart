@@ -234,7 +234,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      widget.documentLine.product.designation,
+                                      widget.documentLine.designation,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelMedium,
@@ -339,7 +339,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      widget.documentLine.product.designation,
+                                      widget.documentLine.designation,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelMedium,
@@ -448,7 +448,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                           ),
                           DocumentLinePropertyTile(
                             title: 'Designação',
-                            value: widget.documentLine.product.designation,
+                            value: widget.documentLine.designation,
                           ),
                           DocumentLinePropertyTile(
                             title: 'Quantidade',

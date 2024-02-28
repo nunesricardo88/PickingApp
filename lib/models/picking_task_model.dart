@@ -202,6 +202,7 @@ class PickingTask extends ChangeNotifier {
       documentId: document!.id,
       documentErpId: document!.erpId,
       product: product,
+      designation: product.designation,
       quantity: 0,
       quantityPicked: 0,
       quantityToPick: 0,

@@ -18,6 +18,7 @@ mixin DocumentLineFields {
     linkedLineErpId,
     order,
     product,
+    designation,
     batch,
     quantity,
     quantityPicked,
@@ -41,6 +42,7 @@ mixin DocumentLineFields {
   static const String linkedLineErpId = 'linkedLineErpId';
   static const String order = 'order';
   static const String product = 'product';
+  static const String designation = 'designation';
   static const String batch = 'batch';
   static const String quantity = 'quantity';
   static const String quantityPicked = 'quantityPicked';
@@ -65,6 +67,7 @@ class DocumentLine {
   String? linkedLineErpId;
   int? order;
   Product product;
+  String designation;
   Batch? batch;
   double quantity;
   double quantityPicked;
@@ -88,6 +91,7 @@ class DocumentLine {
     this.linkedLineErpId,
     this.order,
     required this.product,
+    required this.designation,
     this.batch,
     required this.quantity,
     required this.quantityPicked,
@@ -114,6 +118,7 @@ class DocumentLine {
         product: Product.fromJsonAPI(
           json[DocumentLineFields.product] as Map<String, dynamic>,
         ),
+        designation: json[DocumentLineFields.designation] as String,
         batch: json[DocumentLineFields.batch] == null
             ? null
             : Batch.fromJson(
@@ -156,6 +161,7 @@ class DocumentLine {
         DocumentLineFields.linkedLineErpId: linkedLineErpId,
         DocumentLineFields.order: order,
         DocumentLineFields.product: product.toJson(),
+        DocumentLineFields.designation: designation,
         DocumentLineFields.batch: batch?.toJson(),
         DocumentLineFields.quantity: quantity,
         DocumentLineFields.quantityPicked: quantityPicked,
@@ -180,6 +186,7 @@ class DocumentLine {
     String? linkedLineErpId,
     int? order,
     Product? product,
+    String? designation,
     Batch? batch,
     double? quantity,
     double? quantityPicked,
@@ -203,6 +210,7 @@ class DocumentLine {
       linkedLineErpId: linkedLineErpId ?? this.linkedLineErpId,
       order: order ?? this.order,
       product: product ?? this.product,
+      designation: designation ?? this.designation,
       batch: batch ?? this.batch,
       quantity: quantity ?? this.quantity,
       quantityPicked: quantityPicked ?? this.quantityPicked,

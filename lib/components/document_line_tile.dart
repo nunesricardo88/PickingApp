@@ -180,7 +180,7 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          widget.documentLine.product.designation,
+                          widget.documentLine.designation,
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.bodyMedium!.copyWith(

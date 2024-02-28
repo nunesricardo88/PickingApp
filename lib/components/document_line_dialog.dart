@@ -186,7 +186,7 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    widget.documentLine.product.designation,
+                    widget.documentLine.designation,
                     style: Theme.of(context).textTheme.labelMedium,
                     overflow: TextOverflow.ellipsis,
                   ),

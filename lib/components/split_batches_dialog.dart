@@ -78,7 +78,7 @@ class _SplitBatchesDialogState extends State<SplitBatchesDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            widget.documentLine.product.designation,
+            widget.documentLine.designation,
             style: Theme.of(context).textTheme.labelMedium,
             overflow: TextOverflow.ellipsis,
           ),

@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter_guid/flutter_guid.dart';
+import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/batch_model.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
+import 'package:n6picking_flutterapp/services/api_endpoint.dart';
+import 'package:n6picking_flutterapp/services/networking.dart';
 
 mixin StockFields {
   static final List<String> allValues = [
@@ -18,30 +24,60 @@ mixin StockFields {
 
 class Stock {
   Product product;
-  Batch batch;
+  Batch? batch;
   Guid locationId;
   double quantity;
 
   Stock({
     required this.product,
-    required this.batch,
+    this.batch,
     required this.locationId,
     required this.quantity,
   });
 
   factory Stock.fromJson(Map<String, dynamic> json) => Stock(
-        product: Product.fromJsonAPI(
+        product: Product.fromJson(
           json[StockFields.product] as Map<String, dynamic>,
         ),
-        batch: Batch.fromJson(json[StockFields.batch] as Map<String, dynamic>),
+        batch: json[StockFields.batch] != null
+            ? Batch.fromJson(json[StockFields.batch] as Map<String, dynamic>)
+            : null,
         locationId: Guid(json[StockFields.locationId] as String),
         quantity: json[StockFields.quantity] as double,
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         StockFields.product: product.toJson(),
-        StockFields.batch: batch.toJson(),
+        StockFields.batch: batch?.toJson(),
         StockFields.locationId: locationId.toString(),
         StockFields.quantity: quantity,
       };
+}
+
+mixin StockApi {
+  static Future<List<Stock>> getByLocation(Location location) async {
+    List<Stock> stockList = [];
+    final String url = ApiEndPoint.getStockByLocation(location.erpId);
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      if (jsonBody['result'] != null) {
+        final Iterable l = jsonBody['result'] as Iterable;
+
+        stockList = List<Stock>.from(
+          l.map((model) => Stock.fromJson(model as Map<String, dynamic>)),
+        );
+
+        //replace the stock locationId with the location Id
+        for (final Stock stock in stockList) {
+          stock.locationId = location.id;
+        }
+      }
+    }
+
+    return stockList;
+  }
 }

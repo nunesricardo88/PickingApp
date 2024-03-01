@@ -61,7 +61,7 @@ class Product {
     required this.usaMolho,
   });
 
-  factory Product.fromJsonAPI(Map<String, dynamic> json) => Product(
+  factory Product.fromJson(Map<String, dynamic> json) => Product(
         id: Guid(json[ProductFields.id] as String),
         erpId: json[ProductFields.erpId] as String,
         reference: json[ProductFields.reference] as String,
@@ -156,7 +156,7 @@ class ProductApi {
       final Iterable l = jsonBody['result'] as Iterable;
 
       productList = List<Product>.from(
-        l.map((model) => Product.fromJsonAPI(model as Map<String, dynamic>)),
+        l.map((model) => Product.fromJson(model as Map<String, dynamic>)),
       );
     }
     return productList;

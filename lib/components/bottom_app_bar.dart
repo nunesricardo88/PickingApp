@@ -1,11 +1,17 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/manual_barcode_box.dart';
+import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/misc_data_model.dart';
+import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
+import 'package:n6picking_flutterapp/models/stock_model.dart';
 import 'package:n6picking_flutterapp/screens/camera_screen.dart';
 import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/helper.dart';
+import 'package:provider/provider.dart';
 
 class AppBottomBar extends StatefulWidget {
   const AppBottomBar({
@@ -13,7 +19,10 @@ class AppBottomBar extends StatefulWidget {
     this.shape = const CircularNotchedRectangle(),
     required this.onBarcodeScan,
     required this.onProductSelected,
+    required this.onStockSelected,
+    required this.onStockListCallBack,
     required this.onMiscDataChanged,
+    required this.onGetCurrentOriginLocation,
     required this.miscDataList,
   });
 
@@ -21,7 +30,10 @@ class AppBottomBar extends StatefulWidget {
   final NotchedShape? shape;
   final Future<void> Function(String) onBarcodeScan;
   final Future<void> Function(Product) onProductSelected;
+  final Future<void> Function(Stock) onStockSelected;
+  final List<Stock> Function() onStockListCallBack;
   final Future<void> Function(List<MiscData>) onMiscDataChanged;
+  final Location? Function() onGetCurrentOriginLocation;
   final List<MiscData> miscDataList;
   @override
   _AppBottomBarState createState() => _AppBottomBarState();
@@ -30,6 +42,10 @@ class AppBottomBar extends StatefulWidget {
 class _AppBottomBarState extends State<AppBottomBar> {
   TextEditingController searchProductController = TextEditingController();
   List<Product> productList = [];
+  bool showAllProducts = true;
+  bool isLoadingProducts = false;
+  bool isLoadingStock = false;
+  bool isStockLoaded = false;
 
   @override
   void initState() {
@@ -46,7 +62,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
     super.dispose();
   }
 
-  void initializeProductList() {
+  Future<void> initializeProductList() async {
     productList = ProductApi.instance.allProducts;
   }
 
@@ -60,6 +76,8 @@ class _AppBottomBarState extends State<AppBottomBar> {
                 product.designation.toLowerCase().contains(query.toLowerCase()),
           )
           .toList();
+    } else if (showAllProducts) {
+      filteredList = productList;
     }
     return filteredList;
   }
@@ -128,6 +146,8 @@ class _AppBottomBarState extends State<AppBottomBar> {
   }
 
   Widget getRightButton() {
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
     return Material(
       color: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -217,7 +237,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
                     color: Theme.of(context).colorScheme.onPrimary,
                   ),
             ),
-            onPressed: () {
+            onPressed: () async {
               showModalBottomSheet(
                 shape: const RoundedRectangleBorder(),
                 isScrollControlled: true,
@@ -234,6 +254,8 @@ class _AppBottomBarState extends State<AppBottomBar> {
                               filterProductList(
                             searchProductController.text,
                           );
+                          final List<Stock> stockList =
+                              widget.onStockListCallBack();
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -256,75 +278,214 @@ class _AppBottomBarState extends State<AppBottomBar> {
                               Expanded(
                                 child: filteredProductList.isEmpty
                                     ? Center(
-                                        child: Text(
-                                          searchProductController
-                                                  .text.isNotEmpty
-                                              ? 'Sem resultados'
-                                              : 'Pesquise por um artigo',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                color: kPrimaryColor,
-                                              ),
-                                        ),
-                                      )
-                                    : ListView.builder(
-                                        itemCount: filteredProductList.length,
-                                        itemBuilder: (context, index) {
-                                          final Product product =
-                                              filteredProductList[index];
-                                          return GestureDetector(
-                                            onTap: () {
-                                              Navigator.pop(
-                                                context,
-                                              );
-                                              widget.onProductSelected(product);
-                                            },
-                                            child: Card(
-                                              color: kWhiteBackground,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .stretch,
-                                                        children: [
-                                                          Text(
-                                                            product.designation,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 5.0,
-                                                          ),
-                                                          Opacity(
-                                                            opacity: 0.6,
-                                                            child: Text(
-                                                              product.reference,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              searchProductController
+                                                      .text.isNotEmpty
+                                                  ? 'Sem resultados'
+                                                  : 'Pesquise por um artigo',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium!
+                                                  .copyWith(
+                                                    color: kPrimaryColor,
+                                                  ),
+                                            ),
+                                            const SizedBox(
+                                              height: 10.0,
+                                            ),
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  showAllProducts = true;
+                                                });
+                                              },
+                                              child: Text(
+                                                'Ver todos',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium!
+                                                    .copyWith(
+                                                      color: kPrimaryColor,
+                                                      decoration: TextDecoration
+                                                          .underline,
                                                     ),
-                                                  ],
-                                                ),
                                               ),
                                             ),
-                                          );
-                                        },
-                                      ),
+                                          ],
+                                        ),
+                                      )
+                                    : pickingTask.stockMovement ==
+                                            StockMovement.inbound
+                                        ? ListView.builder(
+                                            itemCount:
+                                                filteredProductList.length,
+                                            itemBuilder: (context, index) {
+                                              final Product product =
+                                                  filteredProductList[index];
+                                              return GestureDetector(
+                                                onTap: () {
+                                                  widget.onProductSelected(
+                                                    product,
+                                                  );
+                                                  Navigator.pop(
+                                                    context,
+                                                  );
+                                                },
+                                                child: Card(
+                                                  color: kWhiteBackground,
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                      8.0,
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .stretch,
+                                                            children: [
+                                                              Text(
+                                                                product
+                                                                    .designation,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 5.0,
+                                                              ),
+                                                              Opacity(
+                                                                opacity: 0.6,
+                                                                child: Text(
+                                                                  product
+                                                                      .reference,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : ListView.builder(
+                                            itemCount: stockList.length,
+                                            itemBuilder: (context, index) {
+                                              final Stock stock =
+                                                  stockList[index];
+                                              return Card(
+                                                color: kWhiteBackground,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    8.0,
+                                                  ),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      widget.onStockSelected(
+                                                        stock,
+                                                      );
+                                                      Navigator.pop(
+                                                        context,
+                                                      );
+                                                    },
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Expanded(
+                                                                child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .stretch,
+                                                                  children: [
+                                                                    Text(
+                                                                      stock
+                                                                          .product
+                                                                          .designation,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          5.0,
+                                                                    ),
+                                                                    Opacity(
+                                                                      opacity:
+                                                                          0.6,
+                                                                      child:
+                                                                          Text(
+                                                                        stock
+                                                                            .product
+                                                                            .reference,
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    if (stock
+                                                                            .batch !=
+                                                                        null)
+                                                                      Text(
+                                                                        'Lote: ${stock.batch!.batchNumber}',
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .end,
+                                                                children: [
+                                                                  Text(
+                                                                    Helper
+                                                                        .removeDecimalZeroFormat(
+                                                                      stock
+                                                                          .quantity,
+                                                                    ),
+                                                                    style: Theme
+                                                                            .of(
+                                                                      context,
+                                                                    )
+                                                                        .textTheme
+                                                                        .bodyLarge!
+                                                                        .copyWith(
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
                               ),
                             ],
                           );

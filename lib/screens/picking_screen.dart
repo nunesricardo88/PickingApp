@@ -18,6 +18,7 @@ import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/misc_data_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
+import 'package:n6picking_flutterapp/models/stock_model.dart';
 import 'package:n6picking_flutterapp/screens/document_line_screen.dart';
 import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_documents_screen.dart';
@@ -56,6 +57,7 @@ class _PickingScreenState extends State<PickingScreen> {
   Location? _defaultOriginLocation;
   Location? _defaultDestinationLocation;
   Location? _currentLocation;
+  List<Stock> stockList = [];
 
   //Save variables
   bool _ignoreNotUnloadedProducts = false;
@@ -97,11 +99,11 @@ class _PickingScreenState extends State<PickingScreen> {
     _sourceDocumentsController = TextEditingController();
     _listScrollController = ItemScrollController();
 
-    loadDefaultLocations();
-
     loadDocumentExtraFields();
 
     await getDocumentLinesList();
+
+    await loadDefaultLocations();
 
     //Set default entity if EntityType is internal
     if (pickingTask.destinationDocumentType.entityType == EntityType.interno) {
@@ -142,7 +144,7 @@ class _PickingScreenState extends State<PickingScreen> {
     allowPicking();
   }
 
-  void loadDefaultLocations() {
+  Future<void> loadDefaultLocations() async {
     final PickingTask pickingTask = Provider.of<PickingTask>(
       context,
       listen: false,
@@ -248,16 +250,40 @@ class _PickingScreenState extends State<PickingScreen> {
       }
     }
 
+    setDefaultFromLocation(defaultFromLocation);
+    setDefaultToLocation(defaultToLocation);
+
     setState(() {
       _useLocations = useLocations;
       _canChangeOriginLocation = canChangeOriginLocation;
       _canChangeDestinationLocation = canChangeDestinationLocation;
-      _defaultOriginLocation = defaultFromLocation;
-      _defaultDestinationLocation = defaultToLocation;
-      _currentLocation = currentLocation;
       _isPickingUp = isPickingUp;
       _isDroppingOff = isDroppingOff;
     });
+
+    await setLocation(currentLocation);
+  }
+
+  Location? _onGetCurrentOriginLocation() {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+    if (_useLocations) {
+      if (_canChangeOriginLocation) {
+        if ((pickingTask.stockMovement == StockMovement.transfer &&
+                _isPickingUp) ||
+            pickingTask.stockMovement == StockMovement.outbound) {
+          return _currentLocation;
+        } else {
+          return _defaultOriginLocation;
+        }
+      } else {
+        return _defaultOriginLocation;
+      }
+    } else {
+      return null;
+    }
   }
 
   void loadDocumentExtraFields() {
@@ -298,15 +324,47 @@ class _PickingScreenState extends State<PickingScreen> {
     });
   }
 
-  void setDefaultFromLocation(Location location) {
+  void setDefaultFromLocation(Location? location) {
     setState(() {
       _defaultOriginLocation = location;
     });
+
+    updateStockList(location);
   }
 
-  void setLocation(Location? location) {
+  Future<void> setLocation(Location? location) async {
+    await updateStockList(location);
+
     setState(() {
       _currentLocation = location;
+    });
+  }
+
+  Future<void> updateStockList(Location? location) async {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    setState(() {
+      showSpinner = true;
+    });
+
+    //Set the stockList according to the location
+    List<Stock> listStock = [];
+    if (pickingTask.stockMovement == StockMovement.outbound ||
+        (pickingTask.stockMovement == StockMovement.transfer && _isPickingUp) ||
+        (pickingTask.stockMovement == StockMovement.transfer &&
+            _isDroppingOff &&
+            !_canChangeDestinationLocation)) {
+      listStock = await getStockList(location);
+    } else {
+      listStock = [];
+    }
+
+    setState(() {
+      stockList = listStock;
+      showSpinner = false;
     });
   }
 
@@ -349,6 +407,46 @@ class _PickingScreenState extends State<PickingScreen> {
       default:
         return StockMovement.inbound;
     }
+  }
+
+  Future<List<Stock>> getStockList(Location? location) async {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    List<Stock> listStock = [];
+
+    if (location == null) {
+      listStock = [];
+    } else {
+      listStock = await StockApi.getByLocation(location);
+
+      //remove quantities from stock list that are with the same origin location in documentLines
+      if (pickingTask.document != null) {
+        for (final DocumentLine documentLine in pickingTask.document!.lines) {
+          final Product product = documentLine.product;
+          final Stock? stock = listStock.firstWhereOrNull(
+            (stock) =>
+                stock.product.reference == product.reference &&
+                stock.batch == documentLine.batch &&
+                stock.locationId == location.id,
+          );
+          if (stock != null) {
+            if (stock.quantity > documentLine.quantity) {
+              stock.quantity -= documentLine.quantity;
+            } else {
+              listStock.remove(stock);
+            }
+          }
+        }
+      }
+    }
+    return listStock;
+  }
+
+  List<Stock> _onStockListCallBack() {
+    return stockList;
   }
 
   Future<void> getDocumentLinesList() async {
@@ -640,6 +738,37 @@ class _PickingScreenState extends State<PickingScreen> {
     _scrollToDocumentLine();
   }
 
+  Future<void> _onStockSelectedBottomBar(Stock stock) async {
+    setState(() {
+      showSpinner = true;
+      canPick = false;
+    });
+
+    documentLineToScroll = null;
+
+    final TaskOperation taskOperation = await addProduct(
+      product: stock.product,
+      batch: stock.batch,
+      quantity: stock.quantity,
+    );
+
+    if (!taskOperation.success) {
+      Helper.showMsg(
+        'Atenção',
+        taskOperation.message,
+        context,
+      );
+    } else {
+      await getDocumentLinesList();
+    }
+
+    setState(() {
+      showSpinner = false;
+      canPick = true;
+    });
+    _scrollToDocumentLine();
+  }
+
   Future<void> _onMiscDataChanged(List<MiscData> miscDataIncomingList) async {
     for (final MiscData miscData in miscDataIncomingList) {
       final int index = documentExtraFieldsList.indexWhere(
@@ -797,7 +926,7 @@ class _PickingScreenState extends State<PickingScreen> {
             message: 'Localização não encontrada',
           );
         } else {
-          setLocation(location);
+          await setLocation(location);
         }
         break;
       case BarCodeType.document:
@@ -909,6 +1038,17 @@ class _PickingScreenState extends State<PickingScreen> {
     } else {
       originLocation = null;
       destinationLocation = null;
+    }
+
+    //Check if it has a location before adding the product
+    if (_useLocations) {
+      if (_currentLocation == null) {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.locationNotSet,
+          message: 'Defina primeiro uma localização',
+        );
+      }
     }
 
     documentLineToAdd.originLocation = originLocation;
@@ -1881,7 +2021,10 @@ class _PickingScreenState extends State<PickingScreen> {
         bottomNavigationBar: AppBottomBar(
           onBarcodeScan: _onBarcodeScanned,
           onProductSelected: _onProductSelectedBottomBar,
+          onStockSelected: _onStockSelectedBottomBar,
+          onStockListCallBack: _onStockListCallBack,
           onMiscDataChanged: _onMiscDataChanged,
+          onGetCurrentOriginLocation: _onGetCurrentOriginLocation,
           miscDataList: documentExtraFieldsList,
         ),
       ),

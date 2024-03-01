@@ -115,7 +115,7 @@ class DocumentLine {
         documentErpId: json[DocumentLineFields.documentErpId] as String?,
         linkedLineErpId: json[DocumentLineFields.linkedLineErpId] as String?,
         order: json[DocumentLineFields.order] as int?,
-        product: Product.fromJsonAPI(
+        product: Product.fromJson(
           json[DocumentLineFields.product] as Map<String, dynamic>,
         ),
         designation: json[DocumentLineFields.designation] as String,

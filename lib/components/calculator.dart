@@ -1,5 +1,4 @@
 // ignore_for_file: avoid_dynamic_calls
-
 import 'package:flutter/material.dart';
 import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
 
@@ -35,9 +34,13 @@ class _CalculatorState extends State<Calculator> {
     final SimpleCalculator calc = SimpleCalculator(
       value: _currentValue,
       onChanged: (key, value, expression) {
-        //print('$key\t$value\t$expression');
+        if (expression == null) return;
 
-        if (RegExp(r'^[0-9,]+$').hasMatch(expression!) || key == '=') {
+        //Remove BlankSpaces (CodeUnit 160)
+        final String expressionParsed =
+            expression.replaceAll(String.fromCharCode(160), '');
+
+        if (RegExp(r'^[0-9,]+$').hasMatch(expressionParsed) || key == '=') {
           widget.callBackValue(value);
         }
       },

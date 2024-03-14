@@ -246,6 +246,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
                   heightFactor: 0.8,
                   widthFactor: 1,
                   child: Drawer(
+                    backgroundColor: Colors.white,
                     child: Padding(
                       padding: const EdgeInsets.all(15.0),
                       child: StatefulBuilder(
@@ -267,9 +268,6 @@ class _AppBottomBarState extends State<AppBottomBar> {
                                 },
                                 decoration: const InputDecoration(
                                   labelText: 'Procurar artigo',
-                                  suffixIcon: FaIcon(
-                                    FontAwesomeIcons.magnifyingGlass,
-                                  ),
                                 ),
                               ),
                               const SizedBox(
@@ -336,7 +334,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
                                                   );
                                                 },
                                                 child: Card(
-                                                  color: kWhiteBackground,
+                                                  color: kPrimaryColorLight,
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.all(
@@ -389,7 +387,10 @@ class _AppBottomBarState extends State<AppBottomBar> {
                                               final Stock stock =
                                                   stockList[index];
                                               return Card(
-                                                color: kWhiteBackground,
+                                                color: kPrimaryColorLight,
+                                                margin: const EdgeInsets.only(
+                                                  bottom: 15.0,
+                                                ),
                                                 child: Padding(
                                                   padding: const EdgeInsets.all(
                                                     8.0,

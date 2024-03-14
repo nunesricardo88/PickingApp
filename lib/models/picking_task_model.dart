@@ -600,7 +600,7 @@ class PickingTask extends ChangeNotifier {
 
       response = await networkHelper.postData(
         json: jsonBody,
-        seconds: 30,
+        seconds: 60,
       ) as http.Response;
 
       final Map<String, dynamic> responseBody =
@@ -623,7 +623,7 @@ class PickingTask extends ChangeNotifier {
       return TaskOperation(
         success: false,
         errorCode: ErrorCode.errorSavingDocument,
-        message: 'Erro ao salvar o documento',
+        message: 'Erro ao salvar o documento\n\n - $e',
       );
     }
   }

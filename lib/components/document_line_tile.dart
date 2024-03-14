@@ -175,7 +175,7 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
+                  Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -332,38 +332,46 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                       ],
                     ),
                   ),
-                  Row(
+                  Column(
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      Row(
                         children: [
-                          Text(
-                            '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity)} ${widget.documentLine.product.unit}',
-                            style:
-                                Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${Helper.removeDecimalZeroFormat(widget.documentLine.quantity)} ${widget.documentLine.product.unit}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge!
+                                    .copyWith(
                                       fontWeight: FontWeight.w700,
                                     ),
+                              ),
+                              if (pickingTask.stockMovement !=
+                                      StockMovement.inventory &&
+                                  widget.documentLine.linkedLineErpId != null &&
+                                  widget.documentLine.linkedLineErpId!
+                                      .trim()
+                                      .isNotEmpty)
+                                Row(
+                                  children: [
+                                    Text(
+                                      Helper.removeDecimalZeroFormat(
+                                        widget.documentLine.quantityPicked,
+                                      ),
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                    Text(
+                                      ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.totalQuantity)}',
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                            ],
                           ),
-                          if (pickingTask.stockMovement !=
-                                  StockMovement.inventory &&
-                              widget.documentLine.linkedLineErpId != null &&
-                              widget.documentLine.linkedLineErpId!
-                                  .trim()
-                                  .isNotEmpty)
-                            Row(
-                              children: [
-                                Text(
-                                  Helper.removeDecimalZeroFormat(
-                                    widget.documentLine.quantityPicked,
-                                  ),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Text(
-                                  ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.totalQuantity)}',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
                         ],
                       ),
                     ],

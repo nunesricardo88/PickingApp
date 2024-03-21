@@ -136,8 +136,12 @@ mixin MiscDataHelper {
 
     final String customOptions = pickingTask.customOptions;
     if (customOptions.isNotEmpty) {
-      final Map<String, dynamic> customOptionsJSON =
-          jsonDecode(customOptions) as Map<String, dynamic>;
+      Map<String, dynamic> customOptionsJSON;
+      try {
+        customOptionsJSON = jsonDecode(customOptions) as Map<String, dynamic>;
+      } catch (e) {
+        return miscDataList;
+      }
 
       if (customOptionsJSON.containsKey('ExtraFields')) {
         final Map<String, dynamic> extraFieldsJSON =

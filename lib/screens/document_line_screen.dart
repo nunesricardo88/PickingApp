@@ -15,12 +15,15 @@ import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 import 'package:provider/provider.dart';
 
 class DocumentLineScreen extends StatefulWidget {
-  final DocumentLine documentLine;
-  final Location? location;
   const DocumentLineScreen({
     required this.documentLine,
-    this.location,
+    required this.onGetOriginLocation,
+    required this.onGetDestinationLocation,
   });
+
+  final DocumentLine documentLine;
+  final Location? Function() onGetOriginLocation;
+  final Location? Function() onGetDestinationLocation;
 
   @override
   _DocumentLineScreenState createState() => _DocumentLineScreenState();
@@ -49,10 +52,11 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
-    if (widget.location != null &&
-        widget.documentLine.destinationLocation == null) {
-      widget.documentLine.destinationLocation = widget.location;
-    }
+    final Location? originLocation = widget.onGetOriginLocation();
+    final Location? destinationLocation = widget.onGetDestinationLocation();
+
+    widget.documentLine.originLocation ??= originLocation;
+    widget.documentLine.destinationLocation ??= destinationLocation;
 
     final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       widget.documentLine,

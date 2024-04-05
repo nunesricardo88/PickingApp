@@ -83,6 +83,21 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
         }
         return kWhiteBackground;
       case StockMovement.transfer:
+        if (!hasOrigin) {
+          return kWhiteBackground;
+        }
+        if (isSatisfied) {
+          return kDocumentLineSatisfied;
+        }
+        if (isEmpty) {
+          return kWhiteBackground;
+        }
+        if (isPartial) {
+          return kDocumentLinePartial;
+        }
+        if (isOverPicked) {
+          return kDocumentLineOverPicked;
+        }
         return kWhiteBackground;
       case StockMovement.inventory:
         if (widget.documentLine.quantity == widget.documentLine.totalQuantity) {

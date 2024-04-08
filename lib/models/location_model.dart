@@ -7,6 +7,8 @@ import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/models/stock_model.dart';
 import 'package:n6picking_flutterapp/services/api_endpoint.dart';
 import 'package:n6picking_flutterapp/services/networking.dart';
+import 'package:n6picking_flutterapp/utilities/constants.dart';
+import 'package:n6picking_flutterapp/utilities/system.dart';
 
 mixin LocationFields {
   static final List<String> allValues = [
@@ -114,14 +116,32 @@ class LocationApi {
 
   static Location? getByErpId(String erpId, List<Location> locations) {
     Location? location;
+    String erpIdToCompare;
+    String locationErpId;
+
+    //Specification for RRMP
+    if (System.instance.activeLicense == License.rrmp) {
+      erpIdToCompare = erpId.trim().replaceAll(',', '').replaceAll('.', '');
+    } else {
+      erpIdToCompare = erpId.trim();
+    }
+
     for (final Location child in locations) {
-      if (location != null) {
-        break;
+      //Specification for RRMP
+      if (System.instance.activeLicense == License.rrmp) {
+        locationErpId =
+            child.erpId.trim().replaceAll(',', '').replaceAll('.', '');
+      } else {
+        locationErpId = child.erpId.trim();
       }
-      if (child.erpId.trim() == erpId.trim()) {
+
+      if (locationErpId == erpIdToCompare) {
         location = child;
       } else if (child.locations.isNotEmpty) {
         location = getByErpId(erpId, child.locations);
+      }
+      if (location != null) {
+        break;
       }
     }
     return location;
@@ -163,5 +183,33 @@ class LocationApi {
     }
 
     return stock;
+  }
+
+  static Future<Location?> getLocationByProductWithStock(
+    Product product,
+    Batch? batch,
+  ) async {
+    Location? location;
+
+    final String productErpId = product.erpId.trim();
+    final String batchErpId = batch?.erpId?.trim() ?? 'null';
+
+    final String url = ApiEndPoint.getLocationByProductWithStock(
+      productErpId,
+      batchErpId,
+    );
+    final NetworkHelper networkHelper = NetworkHelper(url);
+    final http.Response response =
+        await networkHelper.getData(seconds: 10) as http.Response;
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body) as Map<String, dynamic>;
+      if (jsonBody['result'] != null) {
+        location =
+            Location.fromJson(jsonBody['result'] as Map<String, dynamic>);
+      }
+    }
+
+    return location;
   }
 }

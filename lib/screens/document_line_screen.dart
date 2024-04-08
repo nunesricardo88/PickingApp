@@ -58,6 +58,16 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     widget.documentLine.originLocation ??= originLocation;
     widget.documentLine.destinationLocation ??= destinationLocation;
 
+    if (pickingTask.stockMovement == StockMovement.transfer) {
+      if (widget.documentLine.originLocation == null) {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.locationNotSet,
+          message: 'Localização não definida',
+        );
+      }
+    }
+
     final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       widget.documentLine,
       calculatedValue - widget.documentLine.quantity,

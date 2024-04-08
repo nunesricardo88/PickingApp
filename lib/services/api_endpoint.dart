@@ -152,6 +152,14 @@ mixin ApiEndPoint {
     return '$baseUrlPath/Location/getProductStock/locationErpId=$locationErpId&productErpId=$productErpId&batchErpId=$batchErpId';
   }
 
+  static String getLocationByProductWithStock(
+    String productErpId,
+    String batchErpId,
+  ) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Location/getByProductWithStock/productErpId=$productErpId&batchErpId=$batchErpId';
+  }
+
   //Stock
   static String getStockByLocation(String locationErpId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;

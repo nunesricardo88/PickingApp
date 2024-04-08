@@ -26,6 +26,7 @@ class DocumentLineTile extends StatefulWidget {
 }
 
 class _DocumentLineTileState extends State<DocumentLineTile> {
+  Location? stockLocation;
   @override
   void initState() {
     super.initState();
@@ -109,7 +110,7 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
     }
   }
 
-  void fetchData() {
+  Future<void> fetchData() async {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
@@ -150,6 +151,23 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
         widget.documentLine.quantityToPick = quantityToPick;
       }
     }
+
+    //Get Stock Location
+    Location? newStockLocation;
+    if (pickingTask.stockMovement == StockMovement.transfer) {
+      if (widget.documentLine.originLocation == null) {
+        newStockLocation = await LocationApi.getLocationByProductWithStock(
+          widget.documentLine.product,
+          widget.documentLine.batch,
+        );
+      } else {
+        newStockLocation = null;
+      }
+    }
+
+    setState(() {
+      stockLocation = newStockLocation;
+    });
   }
 
   @override
@@ -235,18 +253,42 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                                   ),
                             ),
                           ),
-                        if (widget.documentLine.destinationLocation != null ||
-                            isTransfer)
+                        if (isTransfer)
                           const SizedBox(
                             height: 5.0,
                           ),
-                        if (widget.documentLine.destinationLocation != null ||
-                            isTransfer)
+                        if (isTransfer)
                           Opacity(
                             opacity: 0.5,
                             child: Column(
                               children: [
-                                if (isTransfer)
+                                if (widget.documentLine.originLocation == null)
+                                  Row(
+                                    children: [
+                                      const FaIcon(
+                                        FontAwesomeIcons.warehouse,
+                                        size: 10.0,
+                                        color: kPrimaryColor,
+                                      ),
+                                      const SizedBox(
+                                        width: 5.0,
+                                      ),
+                                      Text(
+                                        stockLocation != null
+                                            ? 'Sugestão: ${stockLocation?.name}'
+                                            : '(Sem stock)',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: kPrimaryColorDark,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                if (widget.documentLine.originLocation != null)
                                   Row(
                                     children: [
                                       const Stack(
@@ -286,7 +328,7 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                                   ),
                                 if (widget.documentLine.destinationLocation !=
                                         null ||
-                                    isTransfer)
+                                    widget.documentLine.originLocation != null)
                                   Row(
                                     children: [
                                       Stack(

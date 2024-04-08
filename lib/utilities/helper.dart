@@ -7,8 +7,12 @@ import 'package:n6picking_flutterapp/utilities/constants.dart';
 mixin Helper {
   static String removeDecimalZeroFormat(double n, {int decimalPlaces = 2}) {
     final RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
-    final String nString = n.toStringAsFixed(decimalPlaces);
-    return nString.replaceAll(regex, '');
+    if (n % 1 == 0) {
+      return n.toStringAsFixed(0);
+    } else {
+      final String nString = n.toStringAsFixed(decimalPlaces);
+      return nString.replaceAll(regex, '');
+    }
   }
 
   static String getWordFromPosition(int position, String expression) {

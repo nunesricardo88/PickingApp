@@ -1377,7 +1377,7 @@ class _PickingScreenState extends State<PickingScreen> {
                     ((element.originLocation == null &&
                             element.destinationLocation == null &&
                             documentLine.originLocation != null &&
-                            documentLine.destinationLocation != null) ||
+                            documentLine.destinationLocation == null) ||
 
                         //Load more Product
                         //Element with only Origin Location and line with the same Origin Location
@@ -1952,30 +1952,26 @@ class _PickingScreenState extends State<PickingScreen> {
             }
 
             //Check if it's a transfer and there are lines with no destinationLocation
-            // if (pickingTask.stockMovement == StockMovement.transfer &&
-            //     pickingTask.document!.lines
-            //         .any((element) => element.destinationLocation == null)) {
-            //   if (pickingTask.document!.lines.any(
-            //     (element) =>
-            //         element.originLocation != null && element.quantity > 0,
-            //   )) {
-            //     _ignoreNotUnloadedProducts = await Helper.askQuestion(
-            //       'Atenção',
-            //       'Existem linhas ainda por descarregar.\n\nDeseja guardar apenas as linhas descarregadas e continuar o processo?',
-            //       context,
-            //     );
-            //     if (!_ignoreNotUnloadedProducts) {
-            //       return;
-            //     }
-            //   } else {
-            //     await Helper.showMsg(
-            //       'Atenção',
-            //       'Não encontrei nenhuma linha com localização de destino',
-            //       context,
-            //     );
-            //     return;
-            //   }
-            // }
+            final List<DocumentLine> linesWithoutDestinationLocation =
+                pickingTask.document!.lines
+                    .where(
+                      (element) =>
+                          element.destinationLocation == null &&
+                          element.quantity > 0,
+                    )
+                    .toList();
+
+            if (pickingTask.stockMovement == StockMovement.transfer &&
+                linesWithoutDestinationLocation.isNotEmpty) {
+              _ignoreNotUnloadedProducts = await Helper.askQuestion(
+                'Atenção',
+                'Existem linhas ainda por descarregar.\n\nDeseja guardar apenas as linhas descarregadas e continuar o processo?',
+                context,
+              );
+              if (!_ignoreNotUnloadedProducts) {
+                return;
+              }
+            }
 
             //Check if there are any MiscData that are not filled
             final List<MiscData> miscDataNotFilled =

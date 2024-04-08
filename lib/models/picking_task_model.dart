@@ -227,12 +227,6 @@ class PickingTask extends ChangeNotifier {
       message: '',
     );
 
-    //TODO - Check if the quantity is valid
-
-    //TODO - Check if the quantity is valid for the stock movement
-
-    //TODO - Check if the quantity is valid for the document line
-
     documentLine.quantity += quantity;
 
     //Change all quantityFields of the documentLine

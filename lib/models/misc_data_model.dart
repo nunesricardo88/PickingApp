@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:intl/intl.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 
 mixin MiscDataFields {
@@ -19,6 +19,8 @@ mixin MiscDataFields {
     valueInt,
     valueDouble,
     valueString,
+    valueDate,
+    valueTime,
     valueDatetime,
   ];
 
@@ -37,6 +39,8 @@ mixin MiscDataFields {
   static const String valueInt = 'ValueInt';
   static const String valueDouble = 'ValueDouble';
   static const String valueString = 'ValueString';
+  static const String valueDate = 'ValueDate';
+  static const String valueTime = 'ValueTime';
   static const String valueDatetime = 'ValueDatetime';
 }
 
@@ -56,6 +60,8 @@ class MiscData {
   int? valueInt;
   double? valueDouble;
   String? valueString;
+  DateTime? valueDate;
+  DateTime? valueTime;
   DateTime? valueDatetime;
 
   MiscData({
@@ -74,6 +80,8 @@ class MiscData {
     this.valueInt,
     this.valueDouble,
     this.valueString,
+    this.valueDate,
+    this.valueTime,
     this.valueDatetime,
   });
 
@@ -120,9 +128,20 @@ class MiscData {
         data[MiscDataFields.valueString] = valueString;
         data[MiscDataFields.value] = valueString;
         break;
+      case 'Date':
+        final DateTime? date = DateTime.tryParse(value);
+        final DateFormat formatter = DateFormat('yyyy-MM-dd');
+        data[MiscDataFields.value] = formatter.format(date!);
+        break;
+      case 'Time':
+        final DateTime? time = DateTime.tryParse(value);
+        final DateFormat formatter = DateFormat('HH:mm');
+        data[MiscDataFields.value] = formatter.format(time!);
+        break;
       case 'Datetime':
-        data[MiscDataFields.valueDatetime] = valueDatetime;
-        data[MiscDataFields.value] = valueDatetime.toString();
+        final DateTime? datetime = DateTime.tryParse(value);
+        final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+        data[MiscDataFields.value] = formatter.format(datetime!);
         break;
     }
 
@@ -168,7 +187,13 @@ mixin MiscDataHelper {
     PickingTask pickingTask,
     List<MiscData> miscDataList,
   ) {
-    pickingTask.document!.extraFields = jsonEncode(miscDataList);
+    pickingTask.document!.extraFields = '';
+    final List<Map<String, dynamic>> miscDataJSONList = miscDataList
+        .map(
+          (MiscData miscData) => miscData.toJson(),
+        )
+        .toList();
+    pickingTask.document!.extraFields = jsonEncode(miscDataJSONList);
   }
 
   static List<MiscData> getSourceDocumentsExtraData(PickingTask pickingTask) {

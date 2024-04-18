@@ -1,5 +1,7 @@
+import 'package:date_field/date_field.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:n6picking_flutterapp/models/misc_data_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
@@ -34,7 +36,7 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
 
   Widget buildTextField(int index) {
     final MiscData item = widget.miscDataList[index];
-    final InputDecoration inputDecoration = InputDecoration(
+    InputDecoration inputDecoration = InputDecoration(
       labelText: item.name,
       labelStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
             color: kPrimaryColor,
@@ -50,6 +52,14 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
       ),
     );
 
+    if (item.isMandatory != null && item.isMandatory!) {
+      inputDecoration = inputDecoration.copyWith(
+        errorText: widget.miscDataList[index].value.isEmpty
+            ? 'Campo obrigatório'
+            : null,
+      );
+    }
+
     TextInputType textInputType;
 
     switch (item.type) {
@@ -62,6 +72,12 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
       case 'Double':
         textInputType = TextInputType.number;
         break;
+      case 'Date':
+        textInputType = TextInputType.datetime;
+        break;
+      case 'Time':
+        textInputType = TextInputType.datetime;
+        break;
       case 'Datetime':
         textInputType = TextInputType.datetime;
         break;
@@ -70,23 +86,41 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
         break;
     }
 
-    if (item.isMandatory != null && item.isMandatory!) {
-      return TextField(
-        controller: _textEditingControllerList[index],
-        keyboardType: textInputType,
-        decoration: inputDecoration.copyWith(
-          errorText: widget.miscDataList[index].value.isEmpty
-              ? 'Campo obrigatório'
-              : null,
-        ),
+    Widget inputField;
+
+    if (textInputType == TextInputType.datetime) {
+      DateTimeFieldPickerMode mode;
+      if (item.type == 'Date') {
+        mode = DateTimeFieldPickerMode.date;
+      } else if (item.type == 'Time') {
+        mode = DateTimeFieldPickerMode.time;
+      } else {
+        mode = DateTimeFieldPickerMode.dateAndTime;
+      }
+
+      DateFormat dateFormat;
+      if (item.type == 'Date') {
+        dateFormat = DateFormat('dd.MM.yyyy');
+      } else if (item.type == 'Time') {
+        dateFormat = DateFormat('HH:mm');
+      } else {
+        dateFormat = DateFormat('dd.MM.yyyy HH:mm');
+      }
+
+      inputField = DateTimeField(
+        decoration: inputDecoration,
+        mode: mode,
+        dateFormat: dateFormat,
+        value: DateTime.tryParse(widget.miscDataList[index].value),
         onChanged: (value) {
           setState(() {
-            widget.miscDataList[index].value = value;
+            widget.miscDataList[index].value = value!.toIso8601String();
+            _textEditingControllerList[index].text = value.toIso8601String();
           });
         },
       );
     } else {
-      return TextField(
+      inputField = TextField(
         controller: _textEditingControllerList[index],
         keyboardType: textInputType,
         decoration: inputDecoration,
@@ -97,6 +131,8 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
         },
       );
     }
+
+    return inputField;
   }
 
   @override
@@ -123,6 +159,7 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
             child: FaIcon(
               FontAwesomeIcons.angleLeft,
               color: kPrimaryColorLight,
+              size: 30.0,
             ),
           ),
         ),
@@ -211,6 +248,12 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
                 break;
               case 'Double':
                 miscData.valueDouble = double.tryParse(valueString);
+                break;
+              case 'Date':
+                miscData.valueDate = DateTime.tryParse(valueString);
+                break;
+              case 'Time':
+                miscData.valueTime = DateTime.tryParse(valueString);
                 break;
               case 'Datetime':
                 miscData.valueDatetime = DateTime.tryParse(valueString);

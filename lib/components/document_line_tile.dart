@@ -27,9 +27,16 @@ class DocumentLineTile extends StatefulWidget {
 
 class _DocumentLineTileState extends State<DocumentLineTile> {
   Location? stockLocation;
+  bool isExiting = false;
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    isExiting = true;
+    super.dispose();
   }
 
   Color getTileBackgroundColor() {
@@ -165,9 +172,11 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
       }
     }
 
-    setState(() {
-      stockLocation = newStockLocation;
-    });
+    if (!isExiting) {
+      setState(() {
+        stockLocation = newStockLocation;
+      });
+    }
   }
 
   @override
@@ -214,9 +223,8 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                       children: [
                         Text(
                           widget.documentLine.designation,
-                          overflow: TextOverflow.ellipsis,
                           style:
-                              Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              Theme.of(context).textTheme.bodySmall!.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
                         ),

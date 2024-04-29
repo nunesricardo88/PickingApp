@@ -339,7 +339,6 @@ class PickingTask extends ChangeNotifier {
       }
       sourceDocument.lines = sourceDocumentLines;
     }
-    sourceDocuments.clear();
     sourceDocuments = List.from(sourceDocumentsList);
 
     //Set the DocumentLines to the Document for picking

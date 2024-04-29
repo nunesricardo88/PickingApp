@@ -2194,8 +2194,30 @@ class _PickingScreenState extends State<PickingScreen> {
               showSpinner = false;
             });
 
+            bool keepPicking = false;
             if (taskOperation.success) {
-              exitPickingScreen();
+              //Check if there are documentLines to pick (quantityToPick > 0)
+              if (pickingTask.document!.lines
+                  .any((element) => element.quantityToPick > 0)) {
+                keepPicking = await Helper.askQuestion(
+                  'Continuar?',
+                  'O documento ainda não está totalmente satisfeito.\n\nDeseja continuar?',
+                  context,
+                );
+              }
+              if (keepPicking) {
+                setState(() {
+                  showSpinner = true;
+                });
+                await pickingTask
+                    .setSourceDocumentsFromList(pickingTask.sourceDocuments);
+                await getDocumentLinesList();
+                setState(() {
+                  showSpinner = false;
+                });
+              } else {
+                exitPickingScreen();
+              }
             }
           },
           backgroundColor: kPrimaryColor,

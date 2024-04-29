@@ -195,7 +195,6 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
                   Text(
                     widget.documentLine.designation,
                     style: Theme.of(context).textTheme.labelMedium,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20.0),
                   if (widget.documentLine.product.isBatchTracked)

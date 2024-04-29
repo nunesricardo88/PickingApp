@@ -1131,6 +1131,13 @@ class _PickingScreenState extends State<PickingScreen> {
       }
     }
 
+    //TODO - TechsysFlui Default QTT
+    if (license == License.techsysflui &&
+        pickingTask.stockMovement == StockMovement.inbound &&
+        fittingDocumentLine != null) {
+      defaultQuantity = fittingDocumentLine.quantityToPick;
+    }
+
     if (pickingTask.stockMovement == StockMovement.transfer &&
         _isDroppingOff &&
         fittingDocumentLine != null) {

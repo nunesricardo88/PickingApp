@@ -908,6 +908,7 @@ class _PickingScreenState extends State<PickingScreen> {
               expirationDate: DateTime(1900),
               usaMolho: product.usaMolho,
             );
+
             taskOperation = await addProduct(product: product, batch: batch);
           }
         }
@@ -1019,6 +1020,7 @@ class _PickingScreenState extends State<PickingScreen> {
     //Control Objects
     DocumentLine? sameProductSourceDocumentLine;
     double quantityToAdd = quantity;
+    double defaultQuantity = 0.0;
 
     //====CREATE A NEW DOCUMENT LINE====
     final DocumentLine documentLineToAdd =
@@ -1088,6 +1090,53 @@ class _PickingScreenState extends State<PickingScreen> {
     documentLineToAdd.originLocation = originLocation;
     documentLineToAdd.destinationLocation = destinationLocation;
 
+    //====GET THE FITTING DOCUMENT LINE====
+    DocumentLine? fittingDocumentLine =
+        getFittingDocumentLine(documentLine, documentLineToAdd);
+
+    //If there is no fittingDocumentLine, search for a SourceDocumentLine with the same product
+    //and set the linkedLineErpId
+    if (pickingTask.sourceDocuments.isNotEmpty) {
+      for (final Document sourceDocument in pickingTask.sourceDocuments) {
+        sameProductSourceDocumentLine = sourceDocument.lines.firstWhereOrNull(
+          (element) =>
+              element.product.reference.trim() ==
+              documentLineToAdd.product.reference.trim(),
+        );
+        if (sameProductSourceDocumentLine != null) {
+          break;
+        }
+      }
+    }
+
+    //Default Quantity (RRMP)
+    final License license = System.instance.activeLicense;
+    if (license == License.rrmp) {
+      if (product.usaMolho && batch != null) {
+        if (pickingTask.stockMovement == StockMovement.outbound ||
+            (pickingTask.stockMovement == StockMovement.transfer &&
+                _isPickingUp)) {
+          Location location;
+          if (pickingTask.stockMovement == StockMovement.outbound) {
+            location = _currentLocation!;
+          } else {
+            if (_canChangeOriginLocation && _isPickingUp) {
+              location = _currentLocation!;
+            } else {
+              location = _defaultOriginLocation!;
+            }
+          }
+          defaultQuantity = await getStockInLocation(location, product, batch);
+        }
+      }
+    }
+
+    if (pickingTask.stockMovement == StockMovement.transfer &&
+        _isDroppingOff &&
+        fittingDocumentLine != null) {
+      defaultQuantity = fittingDocumentLine.quantity;
+    }
+
     //====GET THE BATCH AND QUANTITY====
     if (quantityToAdd == 0 || (batch == null && product.isBatchTracked)) {
       setState(() {
@@ -1099,6 +1148,7 @@ class _PickingScreenState extends State<PickingScreen> {
         builder: (BuildContext context) {
           return DocumentLineDialog(
             documentLine: documentLineToAdd,
+            defaultQuantity: defaultQuantity,
           );
         },
       );
@@ -1149,8 +1199,7 @@ class _PickingScreenState extends State<PickingScreen> {
       }
     }
 
-    //====GET THE FITTING DOCUMENT LINE====
-    final DocumentLine? fittingDocumentLine =
+    fittingDocumentLine =
         getFittingDocumentLine(documentLine, documentLineToAdd);
 
     //If there is no fittingDocumentLine, search for a SourceDocumentLine with the same product
@@ -1299,6 +1348,20 @@ class _PickingScreenState extends State<PickingScreen> {
     }
 
     return hasStock;
+  }
+
+  Future<double> getStockInLocation(
+    Location location,
+    Product product,
+    Batch? batch,
+  ) async {
+    double stock = 0;
+    if (_useLocations) {
+      stock =
+          await LocationApi.getProductStockByLocation(location, product, batch);
+    }
+
+    return stock;
   }
 
   DocumentLine? getFittingDocumentLine(

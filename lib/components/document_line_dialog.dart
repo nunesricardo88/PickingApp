@@ -9,8 +9,12 @@ import 'package:provider/provider.dart';
 
 class DocumentLineDialog extends StatefulWidget {
   final DocumentLine documentLine;
+  final double defaultQuantity;
 
-  const DocumentLineDialog({required this.documentLine});
+  const DocumentLineDialog({
+    required this.documentLine,
+    this.defaultQuantity = 0.0,
+  });
 
   @override
   _DocumentLineDialogState createState() => _DocumentLineDialogState();
@@ -42,6 +46,9 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
         baseOffset: 0,
         extentOffset: quantityController.text.length,
       );
+    }
+    if (widget.defaultQuantity != 0.0) {
+      quantityController.text = widget.defaultQuantity.toString();
     }
     await isDataValid();
     setupDone = true;

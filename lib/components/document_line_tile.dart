@@ -397,6 +397,9 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                       ],
                     ),
                   ),
+                  const SizedBox(
+                    width: 5.0,
+                  ),
                   Column(
                     children: [
                       Row(

@@ -12,6 +12,9 @@ import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_tile.dart';
 import 'package:n6picking_flutterapp/models/batch_model.dart';
+import 'package:n6picking_flutterapp/models/container_model.dart'
+    as container_model;
+import 'package:n6picking_flutterapp/models/container_product_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
@@ -915,6 +918,47 @@ class _PickingScreenState extends State<PickingScreen> {
 
         break;
       case BarCodeType.container:
+        //Check if has location
+        if (_useLocations) {
+          if (_currentLocation == null) {
+            taskOperation = TaskOperation(
+              success: false,
+              errorCode: ErrorCode.locationNotSet,
+              message: 'Defina primeiro uma localização',
+            );
+            break;
+          }
+        }
+
+        final String containerBarcode = barcode.substring(2);
+        final container_model.Container? container =
+            await container_model.ContainerApi.getByBarcode(
+          containerBarcode,
+        );
+
+        if (container == null) {
+          taskOperation = TaskOperation(
+            success: false,
+            errorCode: ErrorCode.containerNotFound,
+            message: 'Contentor não encontrado',
+          );
+          break;
+        } else {
+          List<ContainerProduct> containerProducts = [];
+          containerProducts =
+              await ContainerProductApi.getByContainerErpId(container.erpId!);
+
+          for (final ContainerProduct containerProduct in containerProducts) {
+            final Product product = containerProduct.product;
+            final double quantity = containerProduct.quantity.toDouble();
+
+            taskOperation = await addProduct(
+              product: product,
+              quantity: quantity,
+            );
+          }
+        }
+
         break;
       case BarCodeType.location:
         if (!_useLocations) {
@@ -1011,6 +1055,7 @@ class _PickingScreenState extends State<PickingScreen> {
     DocumentLine? documentLine,
     Batch? batch,
     double quantity = 0,
+    container_model.Container? container,
   }) async {
     final PickingTask pickingTask = Provider.of<PickingTask>(
       context,
@@ -1028,6 +1073,7 @@ class _PickingScreenState extends State<PickingScreen> {
       product: product,
       batch: batch,
     );
+    documentLineToAdd.container = container;
 
     //====SET THE LOCATIONS====
     Location? originLocation;
@@ -2159,6 +2205,19 @@ class _PickingScreenState extends State<PickingScreen> {
 
             if (!canSave) {
               return;
+            }
+
+            //Container Creation
+            final bool canCreateContainer = pickingTask.canCreateContainer();
+            if (canCreateContainer) {
+              final bool createContainer = await Helper.askQuestion(
+                'Criar contentor?',
+                'Deseja criar um contentor para as linhas?',
+                context,
+              );
+              if (!createContainer) {
+                pickingTask.setOffCanCreateContainer();
+              }
             }
 
             //Replace task customOptions with miscDataList JSON

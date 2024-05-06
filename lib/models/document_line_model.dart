@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/batch_model.dart';
+import 'package:n6picking_flutterapp/models/container_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
@@ -32,6 +33,7 @@ mixin DocumentLineFields {
     alternativeUnit,
     originLocation,
     destinationLocation,
+    container,
     extraFields,
   ];
 
@@ -56,6 +58,7 @@ mixin DocumentLineFields {
   static const String alternativeUnit = 'alternativeUnit';
   static const String originLocation = 'originLocation';
   static const String destinationLocation = 'destinationLocation';
+  static const String container = 'container';
   static const String extraFields = 'extraFields';
 }
 
@@ -81,6 +84,7 @@ class DocumentLine {
   String alternativeUnit;
   Location? originLocation;
   Location? destinationLocation;
+  Container? container;
   String? extraFields;
 
   DocumentLine({
@@ -105,6 +109,7 @@ class DocumentLine {
     required this.alternativeUnit,
     this.originLocation,
     this.destinationLocation,
+    this.container,
     this.extraFields,
   });
 
@@ -150,6 +155,11 @@ class DocumentLine {
                     json[DocumentLineFields.destinationLocation]
                         as Map<String, dynamic>,
                   ),
+        container: json[DocumentLineFields.container] == null
+            ? null
+            : Container.fromJson(
+                json[DocumentLineFields.container] as Map<String, dynamic>,
+              ),
         extraFields: json[DocumentLineFields.extraFields] as String?,
       );
 
@@ -175,6 +185,7 @@ class DocumentLine {
         DocumentLineFields.alternativeUnit: alternativeUnit,
         DocumentLineFields.originLocation: originLocation?.toJson(),
         DocumentLineFields.destinationLocation: destinationLocation?.toJson(),
+        DocumentLineFields.container: container?.toJson(),
         DocumentLineFields.extraFields: extraFields,
       };
 
@@ -200,6 +211,7 @@ class DocumentLine {
     String? alternativeUnit,
     Location? originLocation,
     Location? destinationLocation,
+    Container? container,
     String? extraFields,
   }) {
     return DocumentLine(
@@ -227,6 +239,7 @@ class DocumentLine {
       alternativeUnit: alternativeUnit ?? this.alternativeUnit,
       originLocation: originLocation ?? this.originLocation,
       destinationLocation: destinationLocation ?? this.destinationLocation,
+      container: container ?? this.container,
       extraFields: extraFields ?? this.extraFields,
     );
   }

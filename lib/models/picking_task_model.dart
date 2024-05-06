@@ -283,6 +283,18 @@ class PickingTask extends ChangeNotifier {
     notifyListeners();
   }
 
+  //CustomOptions
+  bool canCreateContainer() {
+    return customOptions.contains('"CreateContainer": true');
+  }
+
+  void setOffCanCreateContainer() {
+    if (customOptions.contains('"CreateContainer": true')) {
+      customOptions = customOptions.replaceAll(
+          '"CreateContainer": true', '"CreateContainer": false');
+    }
+  }
+
   //Addresses
   void setDefaultAddresses() {
     if (document == null || document!.entity == null) {
@@ -589,7 +601,7 @@ class PickingTask extends ChangeNotifier {
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
 
-      // Helper.printDebug(jsonBody);
+      Helper.printDebug(jsonBody);
 
       response = await networkHelper.postData(
         json: jsonBody,

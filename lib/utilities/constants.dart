@@ -47,6 +47,7 @@ enum ErrorCode {
   insuficientStock,
   invalidBarcode,
   barcodeNotFound,
+  containerNotFound,
   documentNotFound,
   documentNotSuitable,
   productNotLoaded,

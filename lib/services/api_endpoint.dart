@@ -165,4 +165,15 @@ mixin ApiEndPoint {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
     return '$baseUrlPath/Stock/getByLocation/locationErpId=$locationErpId';
   }
+
+  //Containers
+  static String getContainerByBarcode(String barcode) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/Container/getByBarcode/barcode=$barcode';
+  }
+
+  static String getContainerProductsByContainerErpId(String containerErpId) {
+    final String baseUrlPath = System.instance.apiConnection!.connectionString;
+    return '$baseUrlPath/ContainerProduct/getByContainerErpId/containerErpId=$containerErpId';
+  }
 }

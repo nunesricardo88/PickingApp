@@ -37,7 +37,7 @@ mixin Helper {
       barCodeType = BarCodeType.unknown;
     } else if (barcode.startsWith('{')) {
       barCodeType = BarCodeType.batch;
-    } else if (barcode.startsWith('C_')) {
+    } else if (barcode.length == 20 && barcode.startsWith('00')) {
       barCodeType = BarCodeType.container;
     } else if (barcode.startsWith('D_')) {
       barCodeType = BarCodeType.document;

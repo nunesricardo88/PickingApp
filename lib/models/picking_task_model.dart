@@ -180,6 +180,7 @@ class PickingTask extends ChangeNotifier {
     document = Document(
       id: Guid.newGuid,
       documentType: destinationDocumentType,
+      name: destinationDocumentType.name,
       lines: [],
     );
     notifyListeners();
@@ -379,8 +380,8 @@ class PickingTask extends ChangeNotifier {
           );
         }
       }
-      document!.name = sourceDocument.name;
-      document!.erpId = sourceDocument.erpId;
+      sourceDocument.name = sourceDocument.name;
+      sourceDocument.erpId = sourceDocument.erpId;
     }
     document!.lines = documentLines;
   }

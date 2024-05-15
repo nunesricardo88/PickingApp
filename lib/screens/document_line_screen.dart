@@ -6,11 +6,13 @@ import 'package:n6picking_flutterapp/components/calculator.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_property_tile.dart';
 import 'package:n6picking_flutterapp/components/split_batches_dialog.dart';
+import 'package:n6picking_flutterapp/components/split_container_dialog.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
+import 'package:n6picking_flutterapp/utilities/system.dart';
 import 'package:n6picking_flutterapp/utilities/task_operation.dart';
 import 'package:provider/provider.dart';
 
@@ -165,6 +167,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final PickingTask pickingTask = Provider.of<PickingTask>(context);
     return PopScope(
       canPop: false,
       child: LoadingOverlay(
@@ -217,6 +220,32 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                   },
                   icon: const FaIcon(
                     FontAwesomeIcons.layerGroup,
+                    color: kPrimaryColorLight,
+                  ),
+                ),
+              if (System.instance.activeLicense == License.techsysflui &&
+                  pickingTask.stockMovement == StockMovement.inbound &&
+                  widget.documentLine.container == null)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () async {
+                    await changeQuantity();
+                    // ignore: use_build_context_synchronously
+                    await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return SplitContainerDialog(
+                          documentLine: widget.documentLine,
+                        );
+                      },
+                    ).then(
+                      (value) {
+                        exit(value as List<double>?);
+                      },
+                    );
+                  },
+                  icon: const FaIcon(
+                    FontAwesomeIcons.boxesPacking,
                     color: kPrimaryColorLight,
                   ),
                 ),

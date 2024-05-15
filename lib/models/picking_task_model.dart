@@ -292,7 +292,9 @@ class PickingTask extends ChangeNotifier {
   void setOffCanCreateContainer() {
     if (customOptions.contains('"CreateContainer": true')) {
       customOptions = customOptions.replaceAll(
-          '"CreateContainer": true', '"CreateContainer": false');
+        '"CreateContainer": true',
+        '"CreateContainer": false',
+      );
     }
   }
 

@@ -52,7 +52,8 @@ class Container {
         depth: json[ContainerFields.depth] as double,
         barcode: json[ContainerFields.barcode] as String,
         location: Location.fromJson(
-            json[ContainerFields.location] as Map<String, dynamic>),
+          json[ContainerFields.location] as Map<String, dynamic>,
+        ),
       );
 
   Map<String, dynamic> toJson() => {

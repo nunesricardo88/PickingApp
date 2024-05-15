@@ -564,11 +564,20 @@ class _PickingScreenState extends State<PickingScreen> {
       ),
     ).then((value) async {
       if (value != null) {
-        final List<double> batchData = value as List<double>;
-        await _onSplitBatches(
-          documentLine,
-          batchData,
-        );
+        final List<double> returnData = value as List<double>;
+        if (System.instance.activeLicense == License.rrmp) {
+          await _onSplitBatches(
+            documentLine,
+            returnData,
+          );
+        }
+
+        if (System.instance.activeLicense == License.techsysflui) {
+          await _onSplitContainer(
+            documentLine,
+            returnData,
+          );
+        }
       }
     });
     await getDocumentLinesList();
@@ -591,6 +600,14 @@ class _PickingScreenState extends State<PickingScreen> {
     await getDocumentLinesList();
     _scrollToBottom();
     setState(() {});
+  }
+
+  Future<void> _onSplitContainer(
+    DocumentLine documentLine,
+    List<double> containerData,
+  ) async {
+    final double containersCount = containerData[0];
+    final double productCount = containerData[1];
   }
 
   void _scrollToBottom() {
@@ -950,7 +967,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
           for (final ContainerProduct containerProduct in containerProducts) {
             final Product product = containerProduct.product;
-            final double quantity = containerProduct.quantity.toDouble();
+            final double quantity = containerProduct.quantity;
 
             taskOperation = await addProduct(
               product: product,

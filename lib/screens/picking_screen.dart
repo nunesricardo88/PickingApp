@@ -608,6 +608,30 @@ class _PickingScreenState extends State<PickingScreen> {
   ) async {
     final double containersCount = containerData[0];
     final double productCount = containerData[1];
+    final double lineQuantity = documentLine.quantity;
+    final double remainingQuantity =
+        lineQuantity - productCount * containersCount;
+
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    //Create a DocumentLine for each container
+    for (int i = 0; i < containersCount; i++) {
+      final DocumentLine newDocumentLine = documentLine.copyWith(
+        id: Guid.newGuid,
+        quantity: productCount,
+      );
+      pickingTask.document!.lines.add(newDocumentLine);
+    }
+
+    if (remainingQuantity > 0) {
+      pickingTask.addToDocumentLineQuantity(
+        documentLine,
+        remainingQuantity - lineQuantity,
+      );
+    } else {
+      await removeFromDocument(documentLine);
+    }
   }
 
   void _scrollToBottom() {

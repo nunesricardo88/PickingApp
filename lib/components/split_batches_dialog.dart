@@ -182,7 +182,6 @@ class _SplitBatchesDialogState extends State<SplitBatchesDialog> {
             if (taskOperation.success) {
               exit();
             } else {
-              // ignore: use_build_context_synchronously
               Helper.showMsg(
                 'Atenção',
                 taskOperation.message,

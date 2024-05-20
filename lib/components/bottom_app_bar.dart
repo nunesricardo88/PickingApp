@@ -88,7 +88,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
       surfaceTintColor: Colors.transparent,
       child: MenuAnchor(
         style: MenuStyle(
-          backgroundColor: MaterialStateColor.resolveWith(
+          backgroundColor: WidgetStateColor.resolveWith(
             (states) => kPrimaryColor,
           ),
         ),
@@ -153,7 +153,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
       surfaceTintColor: Colors.transparent,
       child: MenuAnchor(
         style: MenuStyle(
-          backgroundColor: MaterialStateColor.resolveWith(
+          backgroundColor: WidgetStateColor.resolveWith(
             (states) => kPrimaryColor,
           ),
         ),

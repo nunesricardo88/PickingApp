@@ -230,7 +230,6 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                   padding: EdgeInsets.zero,
                   onPressed: () async {
                     await changeQuantity();
-                    // ignore: use_build_context_synchronously
                     await showDialog(
                       context: context,
                       builder: (BuildContext context) {

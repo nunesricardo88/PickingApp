@@ -453,12 +453,19 @@ class _LoginScreenState extends State<LoginScreen> {
             contentPadding: const EdgeInsets.only(left: 5.0, right: 5.0),
             title: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
             content: !_isOnline
-                ? const Text(
-                    'Não foi possível encontrar utilizadores. Por favor, verifique a ligação à internet ou ao servidor.',
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    child: Text(
+                      'Não foi possível encontrar utilizadores. Por favor, verifique a ligação à internet ou ao servidor.',
+                    ),
                   )
                 : _usersList.isEmpty
-                    ? const Text(
-                        'Não foram encontrados utilizadores. Por favor, verifique se algum utilizador tem acesso à aplicação.',
+                    ? const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        child: Text(
+                          'Não foram encontrados utilizadores. Por favor, verifique se algum utilizador tem acesso à aplicação.',
+                        ),
                       )
                     : SingleChildScrollView(
                         child: Column(

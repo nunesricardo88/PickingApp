@@ -54,21 +54,19 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
+    if (needsLocation()) {
+      return TaskOperation(
+        success: false,
+        errorCode: ErrorCode.locationNotSet,
+        message: 'Defina primeiro uma localização',
+      );
+    }
+
     final Location? originLocation = widget.onGetOriginLocation();
     final Location? destinationLocation = widget.onGetDestinationLocation();
 
     widget.documentLine.originLocation ??= originLocation;
     widget.documentLine.destinationLocation ??= destinationLocation;
-
-    if (pickingTask.stockMovement == StockMovement.transfer) {
-      if (widget.documentLine.originLocation == null) {
-        return TaskOperation(
-          success: false,
-          errorCode: ErrorCode.locationNotSet,
-          message: 'Localização não definida',
-        );
-      }
-    }
 
     final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       widget.documentLine,
@@ -91,6 +89,29 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
 
     setState(() {});
     return taskOperation;
+  }
+
+  bool needsLocation() {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    final Location? originLocation = widget.onGetOriginLocation();
+    final Location? destinationLocation = widget.onGetDestinationLocation();
+
+    switch (pickingTask.stockMovement) {
+      case StockMovement.none:
+        return false;
+      case StockMovement.inbound:
+        return destinationLocation == null;
+      case StockMovement.outbound:
+        return originLocation == null;
+      case StockMovement.inventory:
+        return destinationLocation == null;
+      case StockMovement.transfer:
+        return originLocation == null;
+    }
   }
 
   Future<void> submitLabelPrint() async {
@@ -229,6 +250,14 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                 IconButton(
                   padding: EdgeInsets.zero,
                   onPressed: () async {
+                    if (needsLocation()) {
+                      await Helper.showMsg(
+                        'Atenção',
+                        'Defina primeiro uma localização',
+                        context,
+                      );
+                      return;
+                    }
                     await changeQuantity();
                     await showDialog(
                       context: context,
@@ -573,6 +602,12 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
 
                                   if (taskOperation.success) {
                                     exit(null);
+                                  } else {
+                                    await Helper.showMsg(
+                                      'Atenção',
+                                      taskOperation.message,
+                                      context,
+                                    );
                                   }
                                 },
                                 child: Text(

@@ -1063,7 +1063,6 @@ class _PickingScreenState extends State<PickingScreen> {
     //Control Vars
     DocumentLine? sameProductSourceDocumentLine;
     double quantityToAdd = quantity;
-    double defaultQuantity = 0.0;
 
     // Handler - Check Location
     if (needsLocation()) {
@@ -1110,7 +1109,6 @@ class _PickingScreenState extends State<PickingScreen> {
         builder: (BuildContext context) {
           return DocumentLineDialog(
             documentLine: documentLineToAdd,
-            defaultQuantity: defaultQuantity,
           );
         },
       );

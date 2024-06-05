@@ -3,10 +3,10 @@ import 'package:n6picking_flutterapp/utilities/constants.dart';
 
 class DocumentLinePropertyTile extends StatelessWidget {
   const DocumentLinePropertyTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
-  }) : super(key: key);
+  });
 
   final String title;
   final String value;

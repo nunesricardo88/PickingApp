@@ -311,19 +311,16 @@ class PickingTask extends ChangeNotifier {
       case StockMovement.none:
         document!.loadingAddress = null;
         document!.unloadingAddress = null;
-        break;
       case StockMovement.outbound:
         document!.loadingAddress =
             ownAddresses.firstWhereOrNull((element) => element.isDefault);
         document!.unloadingAddress =
             entityAddresses.firstWhereOrNull((element) => element.isDefault);
-        break;
       case StockMovement.inbound:
         document!.loadingAddress =
             entityAddresses.firstWhereOrNull((element) => element.isDefault);
         document!.unloadingAddress =
             ownAddresses.firstWhereOrNull((element) => element.isDefault);
-        break;
       case StockMovement.transfer:
       case StockMovement.inventory:
         document!.loadingAddress =

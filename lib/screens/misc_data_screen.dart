@@ -65,22 +65,16 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
     switch (item.type) {
       case 'String':
         textInputType = TextInputType.text;
-        break;
       case 'Int':
         textInputType = TextInputType.number;
-        break;
       case 'Double':
         textInputType = TextInputType.number;
-        break;
       case 'Date':
         textInputType = TextInputType.datetime;
-        break;
       case 'Time':
         textInputType = TextInputType.datetime;
-        break;
       case 'Datetime':
         textInputType = TextInputType.datetime;
-        break;
       default:
         textInputType = TextInputType.text;
         break;
@@ -242,22 +236,16 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
                 } else {
                   miscData.valueString = valueString;
                 }
-                break;
               case 'Int':
                 miscData.valueInt = int.tryParse(valueString);
-                break;
               case 'Double':
                 miscData.valueDouble = double.tryParse(valueString);
-                break;
               case 'Date':
                 miscData.valueDate = DateTime.tryParse(valueString);
-                break;
               case 'Time':
                 miscData.valueTime = DateTime.tryParse(valueString);
-                break;
               case 'Datetime':
                 miscData.valueDatetime = DateTime.tryParse(valueString);
-                break;
               default:
                 miscData.valueString = valueString;
                 break;

@@ -9,8 +9,8 @@ class Calculator extends StatefulWidget {
   const Calculator({
     required this.calculatedValue,
     required this.callBackValue,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _CalculatorState createState() => _CalculatorState();

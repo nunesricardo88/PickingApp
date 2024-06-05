@@ -195,12 +195,10 @@ class _PickingScreenState extends State<PickingScreen> {
                   defaultFromLocation = location;
                   canChangeOriginLocation = canBeChanged;
                   mustPickOriginLocation = mustBePicked;
-                  break;
                 case 'Destination':
                   defaultToLocation = location;
                   canChangeDestinationLocation = canBeChanged;
                   mustPickDestinationLocation = mustBePicked;
-                  break;
                 default:
                   break;
               }
@@ -233,27 +231,22 @@ class _PickingScreenState extends State<PickingScreen> {
       case StockMovement.none:
         originLocation = null;
         destinationLocation = null;
-        break;
       case StockMovement.inbound:
         originLocation = null;
         destinationLocation =
             _mustPickDestinationLocation ? null : _defaultDestinationLocation;
-        break;
       case StockMovement.outbound:
         originLocation =
             _mustPickOriginLocation ? null : _defaultOriginLocation;
-        break;
       case StockMovement.inventory:
         originLocation = null;
         destinationLocation =
             _mustPickDestinationLocation ? null : _defaultDestinationLocation;
-        break;
       case StockMovement.transfer:
         originLocation =
             _mustPickOriginLocation ? null : _defaultOriginLocation;
         destinationLocation =
             _mustPickDestinationLocation ? null : _defaultDestinationLocation;
-        break;
     }
 
     setState(() {
@@ -344,19 +337,14 @@ class _PickingScreenState extends State<PickingScreen> {
     switch (pickingTask.stockMovement) {
       case StockMovement.none:
         showStockLocation = false;
-        break;
       case StockMovement.inbound:
         showStockLocation = false;
-        break;
       case StockMovement.outbound:
         showStockLocation = true;
-        break;
       case StockMovement.inventory:
         showStockLocation = false;
-        break;
       case StockMovement.transfer:
         showStockLocation = true;
-        break;
     }
 
     setState(() {
@@ -839,7 +827,6 @@ class _PickingScreenState extends State<PickingScreen> {
           errorCode: ErrorCode.invalidBarcode,
           message: 'Código de barras não é válido',
         );
-        break;
       case BarCodeType.product:
 
         //Check if has location
@@ -865,7 +852,6 @@ class _PickingScreenState extends State<PickingScreen> {
         } else {
           taskOperation = await addProduct(product: product);
         }
-        break;
       case BarCodeType.batch:
         final Map<String, dynamic> json =
             jsonDecode(barcode) as Map<String, dynamic>;
@@ -907,7 +893,6 @@ class _PickingScreenState extends State<PickingScreen> {
           }
         }
 
-        break;
       case BarCodeType.container:
         //Check if has location
         if (needsLocation()) {
@@ -948,7 +933,6 @@ class _PickingScreenState extends State<PickingScreen> {
           }
         }
 
-        break;
       case BarCodeType.location:
         switch (pickingTask.stockMovement) {
           case StockMovement.none:
@@ -966,7 +950,6 @@ class _PickingScreenState extends State<PickingScreen> {
                 message: 'A localização de destino não pode ser alterada',
               );
             }
-            break;
           case StockMovement.inventory:
             break;
           case StockMovement.transfer:
@@ -978,7 +961,6 @@ class _PickingScreenState extends State<PickingScreen> {
                 message: 'A localização de origem não pode ser alterada',
               );
             }
-            break;
         }
 
         final Location? location = LocationApi.getByErpId(
@@ -998,14 +980,11 @@ class _PickingScreenState extends State<PickingScreen> {
             case StockMovement.inventory:
             case StockMovement.inbound:
               await setDestinationLocation(location);
-              break;
             case StockMovement.outbound:
             case StockMovement.transfer:
               await setOriginLocation(location);
-              break;
           }
         }
-        break;
       case BarCodeType.document:
         //delete the first two characters
         final String parsedBarcode = barcode.substring(2);
@@ -1042,7 +1021,6 @@ class _PickingScreenState extends State<PickingScreen> {
             });
           }
         }
-        break;
     }
 
     return taskOperation;
@@ -1189,19 +1167,14 @@ class _PickingScreenState extends State<PickingScreen> {
     switch (pickingTask.stockMovement) {
       case StockMovement.none:
         location = null;
-        break;
       case StockMovement.inbound:
         location = _destinationLocation;
-        break;
       case StockMovement.outbound:
         location = _originLocation;
-        break;
       case StockMovement.inventory:
         location = _destinationLocation;
-        break;
       case StockMovement.transfer:
         location = _originLocation;
-        break;
     }
 
     final Widget row = Row(

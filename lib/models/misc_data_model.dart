@@ -119,30 +119,24 @@ class MiscData {
       case 'Int':
         data[MiscDataFields.valueInt] = valueInt;
         data[MiscDataFields.value] = valueInt.toString();
-        break;
       case 'Double':
         data[MiscDataFields.valueDouble] = valueDouble;
         data[MiscDataFields.value] = valueDouble.toString();
-        break;
       case 'String':
         data[MiscDataFields.valueString] = valueString;
         data[MiscDataFields.value] = valueString;
-        break;
       case 'Date':
         final DateTime? date = DateTime.tryParse(value);
         final DateFormat formatter = DateFormat('yyyy-MM-dd');
         data[MiscDataFields.value] = formatter.format(date!);
-        break;
       case 'Time':
         final DateTime? time = DateTime.tryParse(value);
         final DateFormat formatter = DateFormat('HH:mm');
         data[MiscDataFields.value] = formatter.format(time!);
-        break;
       case 'Datetime':
         final DateTime? datetime = DateTime.tryParse(value);
         final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
         data[MiscDataFields.value] = formatter.format(datetime!);
-        break;
     }
 
     return data;

@@ -523,7 +523,7 @@ class PickingTask extends ChangeNotifier {
 
       //Remove extra lines
       if (stockMovement == StockMovement.inventory) {
-        documentLines.removeWhere(
+        documentLines.removeWhere( 
           (element) => element.quantity == element.totalQuantity,
         );
       }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
@@ -123,6 +124,59 @@ mixin Helper {
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
                       color: kPrimaryColor,
                       fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result;
+  }
+
+  static Future<Location?> askLocation(
+    String title,
+    String question,
+    BuildContext context,
+  ) async {
+    Location? result;
+
+    Future<void> onBarcodeScanned(String barcode) async {
+      // Get barcode bype
+      final BarCodeType barCodeType = Helper.getBarCodeType(barcode);
+
+      switch (barCodeType) {
+        case BarCodeType.location:
+          result = LocationApi.getByErpId(
+            barcode,
+            LocationApi.instance.allLocations,
+          );
+        default:
+          result = null;
+      }
+      Navigator.of(context).pop();
+    }
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          surfaceTintColor: kWhiteBackground,
+          title: Text(title),
+          content: BarcodeKeyboardListener(
+            onBarcodeScanned: onBarcodeScanned,
+            child: Text(question),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                result = null;
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancelar',
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: kPrimaryColor.withOpacity(0.8),
                     ),
               ),
             ),

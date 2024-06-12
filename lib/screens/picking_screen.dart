@@ -1587,6 +1587,153 @@ class _PickingScreenState extends State<PickingScreen> {
     Navigator.pop(context);
   }
 
+  Future<void> submitPicking(PickingTask pickingTask, bool canSave) async {
+    if (!canSave) {
+      return;
+    }
+
+    // Set destination location for all products
+    if (pickingTask.stockMovement == StockMovement.transfer ||
+        pickingTask.stockMovement == StockMovement.outbound) {
+      bool isLinesDestinationLocationMissing = false;
+
+      // Check if destination location is missing for at least one document line
+      for (final DocumentLine line in pickingTask.document!.lines) {
+        if (line.destinationLocation == null) {
+          isLinesDestinationLocationMissing = true;
+          break;
+        }
+      }
+
+      if (isLinesDestinationLocationMissing) {
+        final Location? location = await Helper.askLocation(
+          'Selecione a localização',
+          'Selecione a localização de destino',
+          context,
+        );
+
+        if (location == null) {
+          return;
+        }
+
+        for (final DocumentLine line in pickingTask.document!.lines) {
+          line.destinationLocation = location;
+        }
+      }
+    }
+
+    //Check if there are any MiscData that are not filled
+    final List<MiscData> miscDataNotFilled = alreadyShowedPostOperationInput
+        ? documentExtraFieldsList
+            .where(
+              (element) =>
+                  element.isMandatory != null &&
+                  element.isMandatory! &&
+                  element.value.isEmpty,
+            )
+            .toList()
+        : documentExtraFieldsList
+            .where(
+              (element) =>
+                  (element.postOperationInput != null &&
+                      element.postOperationInput!) ||
+                  (element.preOperationInput != null &&
+                      element.preOperationInput! &&
+                      element.isMandatory != null &&
+                      element.isMandatory! &&
+                      element.value.isEmpty),
+            )
+            .toList();
+    if (miscDataNotFilled.isNotEmpty) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MiscDataScreen(
+            miscDataList: miscDataNotFilled,
+          ),
+        ),
+      ).then((value) async {
+        alreadyShowedPostOperationInput = true;
+        if (value != null) {
+          final List<MiscData> miscDataIncomingList = value as List<MiscData>;
+          await _onMiscDataChanged(miscDataIncomingList);
+        }
+      });
+      return;
+    }
+
+    //Container Creation
+    final bool canCreateContainer = pickingTask.canCreateContainer();
+    if (canCreateContainer) {
+      final bool createContainer = await Helper.askQuestion(
+        'Criar contentor?',
+        'Deseja criar um contentor para as linhas?',
+        context,
+      );
+      if (!createContainer) {
+        pickingTask.setOffCanCreateContainer();
+      }
+    }
+
+    //Replace task customOptions with miscDataList JSON
+    MiscDataHelper.setDocumentExtraData(
+      pickingTask,
+      documentExtraFieldsList,
+    );
+
+    setState(() {
+      isSavingToServer = true;
+      showSpinner = true;
+    });
+
+    final TaskOperation taskOperation = await pickingTask.saveToServer();
+
+    if (!taskOperation.success) {
+      await Helper.showMsg(
+        'Atenção',
+        taskOperation.message,
+        context,
+      );
+    } else {
+      await Helper.showMsg(
+        'Operação concluída',
+        'Documento guardado com sucesso',
+        context,
+      );
+    }
+
+    setState(() {
+      isSavingToServer = false;
+      showSpinner = false;
+    });
+
+    bool keepPicking = false;
+    if (taskOperation.success) {
+      //Check if there are documentLines to pick (quantityToPick > 0)
+      if (pickingTask.document!.lines
+          .any((element) => element.quantityToPick > 0)) {
+        keepPicking = await Helper.askQuestion(
+          'Continuar?',
+          'O documento ainda não está totalmente satisfeito.\n\nDeseja continuar?',
+          context,
+        );
+      }
+      if (keepPicking) {
+        setState(() {
+          showSpinner = true;
+        });
+        await pickingTask
+            .setSourceDocumentsFromList(pickingTask.sourceDocuments);
+        await getDocumentLinesList();
+        setState(() {
+          showSpinner = false;
+        });
+      } else {
+        exitPickingScreen();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final PickingTask pickingTask = context.watch<PickingTask>();
@@ -1812,125 +1959,7 @@ class _PickingScreenState extends State<PickingScreen> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
           shape: const CircleBorder(),
-          onPressed: () async {
-            if (!canSave) {
-              return;
-            }
-
-            //Check if there are any MiscData that are not filled
-            final List<MiscData> miscDataNotFilled =
-                alreadyShowedPostOperationInput
-                    ? documentExtraFieldsList
-                        .where(
-                          (element) =>
-                              element.isMandatory != null &&
-                              element.isMandatory! &&
-                              element.value.isEmpty,
-                        )
-                        .toList()
-                    : documentExtraFieldsList
-                        .where(
-                          (element) =>
-                              (element.postOperationInput != null &&
-                                  element.postOperationInput!) ||
-                              (element.preOperationInput != null &&
-                                  element.preOperationInput! &&
-                                  element.isMandatory != null &&
-                                  element.isMandatory! &&
-                                  element.value.isEmpty),
-                        )
-                        .toList();
-            if (miscDataNotFilled.isNotEmpty) {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => MiscDataScreen(
-                    miscDataList: miscDataNotFilled,
-                  ),
-                ),
-              ).then((value) async {
-                alreadyShowedPostOperationInput = true;
-                if (value != null) {
-                  final List<MiscData> miscDataIncomingList =
-                      value as List<MiscData>;
-                  await _onMiscDataChanged(miscDataIncomingList);
-                }
-              });
-              return;
-            }
-
-            //Container Creation
-            final bool canCreateContainer = pickingTask.canCreateContainer();
-            if (canCreateContainer) {
-              final bool createContainer = await Helper.askQuestion(
-                'Criar contentor?',
-                'Deseja criar um contentor para as linhas?',
-                context,
-              );
-              if (!createContainer) {
-                pickingTask.setOffCanCreateContainer();
-              }
-            }
-
-            //Replace task customOptions with miscDataList JSON
-            MiscDataHelper.setDocumentExtraData(
-              pickingTask,
-              documentExtraFieldsList,
-            );
-
-            setState(() {
-              isSavingToServer = true;
-              showSpinner = true;
-            });
-
-            final TaskOperation taskOperation =
-                await pickingTask.saveToServer();
-
-            if (!taskOperation.success) {
-              await Helper.showMsg(
-                'Atenção',
-                taskOperation.message,
-                context,
-              );
-            } else {
-              await Helper.showMsg(
-                'Operação concluída',
-                'Documento guardado com sucesso',
-                context,
-              );
-            }
-
-            setState(() {
-              isSavingToServer = false;
-              showSpinner = false;
-            });
-
-            bool keepPicking = false;
-            if (taskOperation.success) {
-              //Check if there are documentLines to pick (quantityToPick > 0)
-              if (pickingTask.document!.lines
-                  .any((element) => element.quantityToPick > 0)) {
-                keepPicking = await Helper.askQuestion(
-                  'Continuar?',
-                  'O documento ainda não está totalmente satisfeito.\n\nDeseja continuar?',
-                  context,
-                );
-              }
-              if (keepPicking) {
-                setState(() {
-                  showSpinner = true;
-                });
-                await pickingTask
-                    .setSourceDocumentsFromList(pickingTask.sourceDocuments);
-                await getDocumentLinesList();
-                setState(() {
-                  showSpinner = false;
-                });
-              } else {
-                exitPickingScreen();
-              }
-            }
-          },
+          onPressed: () async => await submitPicking(pickingTask, canSave),
           backgroundColor:
               canSave ? kPrimaryColor : kPrimaryColor.withOpacity(0.3),
           child: FaIcon(

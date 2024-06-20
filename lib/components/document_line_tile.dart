@@ -334,63 +334,6 @@ class _DocumentLineTileState extends State<DocumentLineTile> {
                                       ),
                                     ],
                                   ),
-                                if (widget.documentLine.destinationLocation !=
-                                        null ||
-                                    widget.documentLine.originLocation != null)
-                                  Row(
-                                    children: [
-                                      Stack(
-                                        children: [
-                                          FaIcon(
-                                            FontAwesomeIcons.warehouse,
-                                            size: 10.0,
-                                            color: isTransfer
-                                                ? kInboundStockMovement
-                                                : pickingTask.stockMovement ==
-                                                        StockMovement.outbound
-                                                    ? kOutboundStockMovement
-                                                    : kInboundStockMovement,
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 15.0,
-                                            ),
-                                            child: FaIcon(
-                                              isTransfer
-                                                  ? FontAwesomeIcons.arrowLeft
-                                                  : pickingTask.stockMovement ==
-                                                          StockMovement.outbound
-                                                      ? FontAwesomeIcons
-                                                          .arrowRight
-                                                      : FontAwesomeIcons
-                                                          .arrowLeft,
-                                              size: 10.0,
-                                              color: isTransfer
-                                                  ? kInboundStockMovement
-                                                  : pickingTask.stockMovement ==
-                                                          StockMovement.outbound
-                                                      ? kOutboundStockMovement
-                                                      : kInboundStockMovement,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(
-                                        width: 5.0,
-                                      ),
-                                      Text(
-                                        '${widget.documentLine.destinationLocation != null ? widget.documentLine.destinationLocation?.name : '(Sem destino)'}',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(
-                                              fontWeight: FontWeight.w400,
-                                              color: kPrimaryColorDark,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
                               ],
                             ),
                           ),

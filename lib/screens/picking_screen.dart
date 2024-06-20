@@ -63,6 +63,7 @@ class _PickingScreenState extends State<PickingScreen> {
 
   //Stock variables
   List<Stock> stockList = [];
+  List<Stock> stockListSelected = [];
 
   //Entity variables
   late bool _canChangeEntity;
@@ -260,8 +261,6 @@ class _PickingScreenState extends State<PickingScreen> {
     setState(() {
       _originLocation = location;
     });
-
-    await updateStockList();
   }
 
   Future<void> setDestinationLocation(Location? location) async {
@@ -756,7 +755,23 @@ class _PickingScreenState extends State<PickingScreen> {
     _scrollToDocumentLine();
   }
 
-  Future<void> _onStockSelectedBottomBar(Stock stock) async {
+  Future<void> _onStockChanged(Stock stock, double quantity) async {
+    //Check if stock is in the list
+    final int index = stockListSelected.indexWhere(
+      (element) =>
+          element.product.reference == stock.product.reference &&
+          element.batch == stock.batch,
+    );
+
+    if (index != -1) {
+      stockListSelected[index].quantity = quantity;
+    } else {
+      final Stock stockSelected = stock.copy(quantity: quantity);
+      stockListSelected.add(stockSelected);
+    }
+  }
+
+  Future<void> _onStockSubmitted() async {
     setState(() {
       showSpinner = true;
       canPick = false;
@@ -764,27 +779,29 @@ class _PickingScreenState extends State<PickingScreen> {
 
     documentLineToScroll = null;
 
-    final TaskOperation taskOperation = await addProduct(
-      product: stock.product,
-      batch: stock.batch,
-      quantity: stock.quantity,
-    );
-
-    if (!taskOperation.success) {
-      Helper.showMsg(
-        'Atenção',
-        taskOperation.message,
-        context,
+    for (final Stock stock in stockListSelected) {
+      final TaskOperation taskOperation = await addProduct(
+        product: stock.product,
+        batch: stock.batch,
+        quantity: stock.quantity,
       );
-    } else {
-      await getDocumentLinesList();
+      if (!taskOperation.success) {
+        Helper.showMsg(
+          'Atenção',
+          taskOperation.message,
+          context,
+        );
+      }
     }
+
+    stockListSelected.clear();
+
+    await getDocumentLinesList();
 
     setState(() {
       showSpinner = false;
       canPick = true;
     });
-    _scrollToDocumentLine();
   }
 
   Future<void> _onMiscDataChanged(List<MiscData> miscDataIncomingList) async {
@@ -1090,12 +1107,14 @@ class _PickingScreenState extends State<PickingScreen> {
           );
         },
       );
+
       batch = documentLineToAdd.batch;
       quantityToAdd = documentLineToAdd.quantity;
       documentLineToAdd.quantity = 0.0;
+
       if (quantityToAdd == 0) {
         return TaskOperation(
-          success: true,
+          success: false,
           errorCode: ErrorCode.quantityZero,
           message: 'A quantidade não pode ser zero',
         );
@@ -1204,6 +1223,10 @@ class _PickingScreenState extends State<PickingScreen> {
       return row;
     }
 
+    final bool canSeeStock =
+        pickingTask.stockMovement == StockMovement.outbound ||
+            pickingTask.stockMovement == StockMovement.transfer;
+
     return Material(
       color: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -1227,22 +1250,23 @@ class _PickingScreenState extends State<PickingScreen> {
           );
         },
         menuChildren: [
-          MenuItemButton(
-            leadingIcon: FaIcon(
-              FontAwesomeIcons.boxOpen,
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 20.0,
+          if (canSeeStock)
+            MenuItemButton(
+              leadingIcon: FaIcon(
+                FontAwesomeIcons.boxOpen,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 20.0,
+              ),
+              child: Text(
+                'Ver stock',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
+              onPressed: () async {
+                await showStockList();
+              },
             ),
-            child: Text(
-              'Ver stock',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-            ),
-            onPressed: () async {
-              await showStockList();
-            },
-          ),
           MenuItemButton(
             leadingIcon: FaIcon(
               FontAwesomeIcons.eraser,
@@ -1292,74 +1316,189 @@ class _PickingScreenState extends State<PickingScreen> {
       canPick = false;
     });
 
+    await updateStockList();
+
+    stockListSelected.clear();
+
     await showModalBottomSheet(
       shape: const RoundedRectangleBorder(),
       isScrollControlled: true,
       context: context,
       builder: (BuildContext context) => FractionallySizedBox(
-        heightFactor: 0.9,
+        heightFactor: 1,
         widthFactor: 1,
         child: Drawer(
-          backgroundColor: Colors.white,
+          backgroundColor: kGreyBackground,
           child: Padding(
             padding: const EdgeInsets.all(15.0),
-            child: Column(
-              children: [
-                Row(
+            child: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return Column(
                   children: [
-                    const FaIcon(
-                      FontAwesomeIcons.warehouse,
-                      size: 13.0,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const FaIcon(
+                              FontAwesomeIcons.warehouse,
+                              size: 13.0,
+                              color: kSecondaryTextColor,
+                            ),
+                            const SizedBox(
+                              width: 10.0,
+                            ),
+                            Text(
+                              getCurrentLocationName(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: kSecondaryTextColor,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        //Select All Button
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              if (stockListSelected.length ==
+                                  stockList.length) {
+                                stockListSelected.clear();
+                              } else {
+                                stockListSelected = List.from(stockList);
+                              }
+                            });
+                          },
+                          child: Text(
+                            stockListSelected.length == stockList.length
+                                ? 'Limpar seleção'
+                                : 'Selecionar tudo',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall!
+                                .copyWith(
+                                  color: kPrimaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10.0,
+                    ),
+                    const Divider(
                       color: kSecondaryTextColor,
                     ),
                     const SizedBox(
-                      width: 10.0,
+                      height: 10.0,
                     ),
-                    Text(
-                      getCurrentLocationName(),
-                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                            color: kSecondaryTextColor,
-                          ),
+                    Expanded(
+                      child: stockList.isEmpty
+                          ? Column(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Center(
+                                        child: Icon(
+                                          FontAwesomeIcons.folderOpen,
+                                          color:
+                                              kPrimaryColor.withOpacity(0.15),
+                                          size: 150,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 20.0,
+                                      ),
+                                      Center(
+                                        child: Text(
+                                          'Localização Vazia',
+                                          style: TextStyle(
+                                            color:
+                                                kPrimaryColor.withOpacity(0.4),
+                                            fontSize: 20.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              key: ValueKey(stockListSelected.length),
+                              itemCount: stockList.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final Stock stock = stockList[index];
+                                final bool isSelected = stockListSelected.any(
+                                  (element) =>
+                                      element.product.reference ==
+                                          stock.product.reference &&
+                                      element.batch == stock.batch,
+                                );
+                                return StockTile(
+                                  stock: stock,
+                                  onStockChanged: _onStockChanged,
+                                  startsSelected: isSelected,
+                                );
+                              },
+                            ),
                     ),
-                  ],
-                ),
-                const SizedBox(
-                  height: 10.0,
-                ),
-                const Divider(
-                  color: kSecondaryTextColor,
-                ),
-                const SizedBox(
-                  height: 10.0,
-                ),
-                Expanded(
-                  child: StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                      if (stockList.isEmpty) {
-                        return const Center(
+                    const Divider(
+                      color: kSecondaryTextColor,
+                    ),
+                    const SizedBox(
+                      height: 8.0,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            stockListSelected.clear();
+                            Navigator.of(context).pop();
+                          },
                           child: Text(
-                            'Localização Vazia',
-                            style: TextStyle(
-                              color: kSecondaryTextColor,
+                            'Cancelar',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall!
+                                .copyWith(
+                                  color: kPrimaryColor.withOpacity(0.8),
+                                ),
+                          ),
+                        ),
+                        if (stockList.isNotEmpty)
+                          TextButton(
+                            onPressed: () async {
+                              await _onStockSubmitted();
+                              stockListSelected.clear();
+                              Navigator.of(context).pop();
+                            },
+                            child: Text(
+                              'Confirmar seleção',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    color: stockList.isEmpty
+                                        ? kPrimaryColor.withOpacity(0.8)
+                                        : kPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ),
-                        );
-                      } else {
-                        return ListView.builder(
-                          itemCount: stockList.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            final Stock stock = stockList[index];
-                            return StockTile(
-                              stock: stock,
-                              onStockSelected: _onStockSelectedBottomBar,
-                            );
-                          },
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -1587,19 +1726,23 @@ class _PickingScreenState extends State<PickingScreen> {
     Navigator.pop(context);
   }
 
-  Future<void> submitPicking(PickingTask pickingTask, bool canSave) async {
+  Future<void> trySave(PickingTask pickingTask, bool canSave) async {
     if (!canSave) {
       return;
     }
 
+    setState(() {
+      canPick = false;
+    });
+
     // Set destination location for all products
     if (pickingTask.stockMovement == StockMovement.transfer ||
-        pickingTask.stockMovement == StockMovement.outbound) {
+        pickingTask.stockMovement == StockMovement.inbound) {
       bool isLinesDestinationLocationMissing = false;
 
       // Check if destination location is missing for at least one document line
       for (final DocumentLine line in pickingTask.document!.lines) {
-        if (line.destinationLocation == null) {
+        if (line.quantity > 0 && line.destinationLocation == null) {
           isLinesDestinationLocationMissing = true;
           break;
         }
@@ -1607,8 +1750,8 @@ class _PickingScreenState extends State<PickingScreen> {
 
       if (isLinesDestinationLocationMissing) {
         final Location? location = await Helper.askLocation(
-          'Selecione a localização',
-          'Selecione a localização de destino',
+          'Destino',
+          'Faça scan à localização de destino',
           context,
         );
 
@@ -1617,7 +1760,9 @@ class _PickingScreenState extends State<PickingScreen> {
         }
 
         for (final DocumentLine line in pickingTask.document!.lines) {
-          line.destinationLocation = location;
+          if (line.quantity > 0) {
+            line.destinationLocation ??= location;
+          }
         }
       }
     }
@@ -1734,44 +1879,54 @@ class _PickingScreenState extends State<PickingScreen> {
     }
   }
 
+  Future<void> submitPicking(PickingTask pickingTask, bool canSave) async {
+    setState(() {
+      canPick = false;
+    });
+    await trySave(pickingTask, canSave);
+    setState(() {
+      canPick = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final PickingTask pickingTask = context.watch<PickingTask>();
     final bool needsLocation = this.needsLocation();
     final bool canSave = documentHasData();
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: kGreyBackground,
-        appBar: AppBar(
-          backgroundColor: kPrimaryColor,
-          leading: GestureDetector(
-            onTap: () {
-              exitPickingScreen();
-            },
-            child: const Center(
-              child: FaIcon(
-                FontAwesomeIcons.angleLeft,
-                color: kPrimaryColorLight,
-                size: 30.0,
+    return LoadingOverlay(
+      color: Colors.black,
+      isLoading: showSpinner,
+      child: PopScope(
+        canPop: false,
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: kGreyBackground,
+          appBar: AppBar(
+            backgroundColor: kPrimaryColor,
+            leading: GestureDetector(
+              onTap: () {
+                exitPickingScreen();
+              },
+              child: const Center(
+                child: FaIcon(
+                  FontAwesomeIcons.angleLeft,
+                  color: kPrimaryColorLight,
+                  size: 30.0,
+                ),
               ),
             ),
+            title: Text(
+              pickingTask.name,
+              style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: kPrimaryColorLight,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            titleSpacing: 0.0,
+            elevation: 10.0,
           ),
-          title: Text(
-            pickingTask.name,
-            style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                  color: kPrimaryColorLight,
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
-          titleSpacing: 0.0,
-          elevation: 10.0,
-        ),
-        body: LoadingOverlay(
-          opacity: 0.0,
-          isLoading: showSpinner,
-          child: BarcodeKeyboardListener(
+          body: BarcodeKeyboardListener(
             onBarcodeScanned: _onBarcodeScanned,
             child: Column(
               children: [
@@ -1955,32 +2110,32 @@ class _PickingScreenState extends State<PickingScreen> {
               ],
             ),
           ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: FloatingActionButton(
-          shape: const CircleBorder(),
-          onPressed: () async => await submitPicking(pickingTask, canSave),
-          backgroundColor:
-              canSave ? kPrimaryColor : kPrimaryColor.withOpacity(0.3),
-          child: FaIcon(
-            isSavingToServer
-                ? FontAwesomeIcons.hourglass
-                : canSave
-                    ? FontAwesomeIcons.check
-                    : FontAwesomeIcons.ban,
-            color: canSave
-                ? kPrimaryColorLight
-                : kPrimaryColorLight.withOpacity(0.5),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: FloatingActionButton(
+            shape: const CircleBorder(),
+            onPressed: () async => submitPicking(pickingTask, canSave),
+            backgroundColor:
+                canSave ? kPrimaryColor : kPrimaryColor.withOpacity(0.3),
+            child: FaIcon(
+              isSavingToServer
+                  ? FontAwesomeIcons.hourglass
+                  : canSave
+                      ? FontAwesomeIcons.check
+                      : FontAwesomeIcons.ban,
+              color: canSave
+                  ? kPrimaryColorLight
+                  : kPrimaryColorLight.withOpacity(0.5),
+            ),
           ),
-        ),
-        bottomNavigationBar: AppBottomBar(
-          onBarcodeScan: _onBarcodeScanned,
-          onProductSelected: _onProductSelectedBottomBar,
-          onStockSelected: _onStockSelectedBottomBar,
-          onStockListCallBack: _onStockListCallBack,
-          onMiscDataChanged: _onMiscDataChanged,
-          onGetCurrentOriginLocation: _onGetCurrentOriginLocation,
-          miscDataList: documentExtraFieldsList,
+          bottomNavigationBar: AppBottomBar(
+            onBarcodeScan: _onBarcodeScanned,
+            onProductSelected: _onProductSelectedBottomBar,
+            onStockListCallBack: _onStockListCallBack,
+            onMiscDataChanged: _onMiscDataChanged,
+            onGetCurrentOriginLocation: _onGetCurrentOriginLocation,
+            miscDataList: documentExtraFieldsList,
+          ),
         ),
       ),
     );

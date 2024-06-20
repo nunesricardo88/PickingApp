@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
@@ -141,31 +142,78 @@ mixin Helper {
   ) async {
     Location? result;
 
-    Future<void> onBarcodeScanned(String barcode) async {
-      // Get barcode bype
-      final BarCodeType barCodeType = Helper.getBarCodeType(barcode);
-
-      switch (barCodeType) {
-        case BarCodeType.location:
-          result = LocationApi.getByErpId(
-            barcode,
-            LocationApi.instance.allLocations,
-          );
-        default:
-          result = null;
-      }
-      Navigator.of(context).pop();
-    }
-
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           surfaceTintColor: kWhiteBackground,
-          title: Text(title),
-          content: BarcodeKeyboardListener(
-            onBarcodeScanned: onBarcodeScanned,
-            child: Text(question),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title),
+              const FaIcon(
+                FontAwesomeIcons.magnifyingGlass,
+                size: 16.0,
+                color: kSecondaryTextColor,
+              ),
+            ],
+          ),
+          content: StatefulBuilder(
+            builder: (context, setState) => BarcodeKeyboardListener(
+              onBarcodeScanned: (barcode) {
+                final BarCodeType barCodeType = Helper.getBarCodeType(barcode);
+                Location? location;
+                switch (barCodeType) {
+                  case BarCodeType.location:
+                    location = LocationApi.getByErpId(
+                      barcode,
+                      LocationApi.instance.allLocations,
+                    );
+                  default:
+                    location = null;
+                }
+                setState(() {
+                  result = location;
+                });
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (result == null)
+                    Text(question)
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            const SizedBox(
+                              height: 10.0,
+                            ),
+                            const FaIcon(
+                              FontAwesomeIcons.warehouse,
+                              size: 18.0,
+                              color: kSecondaryTextColor,
+                            ),
+                            const SizedBox(
+                              height: 10.0,
+                            ),
+                            Text(
+                              result!.name,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium!
+                                  .copyWith(
+                                    color: kSecondaryTextColor,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -177,6 +225,20 @@ mixin Helper {
                 'Cancelar',
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
                       color: kPrimaryColor.withOpacity(0.8),
+                    ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (result != null) {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text(
+                'Confirmar',
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: kPrimaryColor,
+                      fontWeight: FontWeight.bold,
                     ),
               ),
             ),

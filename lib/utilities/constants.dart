@@ -23,13 +23,6 @@ enum EntityType {
   interno,
 }
 
-enum LocationKind {
-  none,
-  standard,
-  transferFrom,
-  transferTo,
-}
-
 enum BarCodeType {
   unknown,
   product,

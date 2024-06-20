@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<bool> checkIfIsOnline() async {
-    return System.instance.checkIfUpToDate();
+    return System.instance.isConnectedToServer();
   }
 
   Future<bool> checkIfIsUpToDate() async {

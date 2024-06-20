@@ -85,11 +85,6 @@ class _DocumentLineDialogState extends State<DocumentLineDialog> {
       isQuantityValid = true;
     }
 
-    // //Validate Quantity
-    // final double quantity = quantityController.text.isNotEmpty
-    //     ? double.parse(quantityController.text.trim())
-    //     : 0.0;
-
     //Validade the existence of the batch if the task is outbound or transfer
     if (isBatchValid) {
       if (widget.documentLine.product.isBatchTracked &&

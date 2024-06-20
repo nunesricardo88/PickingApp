@@ -52,6 +52,19 @@ class Stock {
         StockFields.locationId: locationId.toString(),
         StockFields.quantity: quantity,
       };
+
+  Stock copy({
+    Product? product,
+    Batch? batch,
+    Guid? locationId,
+    double? quantity,
+  }) =>
+      Stock(
+        product: product ?? this.product,
+        batch: batch ?? this.batch,
+        locationId: locationId ?? this.locationId,
+        quantity: quantity ?? this.quantity,
+      );
 }
 
 mixin StockApi {

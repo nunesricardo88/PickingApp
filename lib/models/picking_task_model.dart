@@ -379,8 +379,6 @@ class PickingTask extends ChangeNotifier {
           );
         }
       }
-      sourceDocument.name = sourceDocument.name;
-      sourceDocument.erpId = sourceDocument.erpId;
     }
     document!.lines = documentLines;
   }

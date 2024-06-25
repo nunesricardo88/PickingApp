@@ -36,7 +36,7 @@ mixin ApiEndPoint {
   //Tasks
   static String getTasksByAccessId(int accessId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/PickingTask/getByAccessId/accessId=$accessId';
+    return '$baseUrlPath/PickingTask/getByAccessId/$accessId';
   }
 
   //Products
@@ -51,7 +51,9 @@ mixin ApiEndPoint {
     String batchNumber,
   ) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Batch/getByReferenceAndBatchNumber/reference=$reference&batchNumber=$batchNumber';
+    final String encodedReference = Uri.encodeComponent(reference.trim());
+    final String encodedBatchNumber = Uri.encodeComponent(batchNumber.trim());
+    return '$baseUrlPath/Batch/getByReferenceAndBatchNumber/$encodedReference/$encodedBatchNumber';
   }
 
   static String getSplitBatches(
@@ -62,14 +64,15 @@ mixin ApiEndPoint {
     double compBarra,
   ) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Batch/getSplitBatches/noFl=$noFl&reference=${reference.trim()}&numMolhos=$numMolhos&numBarras=$numBarras&compBarra=$compBarra';
+    final String encodedReference = Uri.encodeComponent(reference.trim());
+    return '$baseUrlPath/Batch/getSplitBatches/$noFl/$encodedReference/$numMolhos/$numBarras/$compBarra';
   }
 
   //Entities
   static String getEntitiesByType(EntityType entityType) {
     final int entityTypeInt = entityType.index;
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Entity/getByType/entityType=$entityTypeInt';
+    return '$baseUrlPath/Entity/getByType/$entityTypeInt';
   }
 
   static String getSelfEntity() {
@@ -83,14 +86,16 @@ mixin ApiEndPoint {
     final String pickingTaskErpId = task.erpId.trim();
     final EntityType entityType = task.document!.documentType.entityType;
 
-    return '$baseUrlPath/Document/getPendingDocuments/taskErpId=$pickingTaskErpId&entityType=${entityType.index}';
+    return '$baseUrlPath/Document/getPendingDocuments/$pickingTaskErpId/${entityType.index}';
   }
 
   static String getPendingDocumentByBarcode(PickingTask task, String barcode) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    final String pickingTaskErpId = task.erpId.trim();
+    final String encodedTaskErpId = Uri.encodeComponent(task.erpId.trim());
+    final String encodedBarcode = Uri.encodeComponent(barcode.trim());
     final EntityType entityType = task.document!.documentType.entityType;
-    return '$baseUrlPath/Document/getPendingDocumentByBarcode/taskErpId=$pickingTaskErpId&entityType=${entityType.index}&barcode=$barcode';
+
+    return '$baseUrlPath/Document/getPendingDocumentByBarcode/$encodedTaskErpId/${entityType.index}/$encodedBarcode';
   }
 
   static String postPickingTask() {
@@ -117,7 +122,7 @@ mixin ApiEndPoint {
     final String pickingTaskErpId = task.erpId.trim();
     final StringBuffer sb = StringBuffer();
     sb.write(
-      '$baseUrlPath/DocumentLine/getFromDocuments/taskErpId=${Uri.encodeComponent(pickingTaskErpId.trim())}?',
+      '$baseUrlPath/DocumentLine/getFromDocuments?taskErpId=${Uri.encodeComponent(pickingTaskErpId.trim())}?',
     );
     for (int i = 0; i < documents.length; i++) {
       final Document document = documents[i];
@@ -135,12 +140,14 @@ mixin ApiEndPoint {
 
   static String getLocationByErpId(String erpId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Location/getByErpId/erpId=$erpId';
+    final String encodedErpId = Uri.encodeComponent(erpId.trim());
+    return '$baseUrlPath/Location/getByErpId/$encodedErpId';
   }
 
   static String getLocationByParentErpId(String parentErpId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Location/getByParentErpId/parentErpId=$parentErpId';
+    final String encodedParentErpId = Uri.encodeComponent(parentErpId.trim());
+    return '$baseUrlPath/Location/getByParentErpId/$encodedParentErpId';
   }
 
   static String getProductStockByLocation(
@@ -149,7 +156,11 @@ mixin ApiEndPoint {
     String batchErpId,
   ) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Location/getProductStock/locationErpId=$locationErpId&productErpId=$productErpId&batchErpId=$batchErpId';
+    final String encodedLocationErpId =
+        Uri.encodeComponent(locationErpId.trim());
+    final String encodedProductErpId = Uri.encodeComponent(productErpId.trim());
+    final String encodedBatchErpId = Uri.encodeComponent(batchErpId.trim());
+    return '$baseUrlPath/Location/getProductStock/$encodedLocationErpId/$encodedProductErpId/$encodedBatchErpId';
   }
 
   static String getLocationByProductWithStock(
@@ -157,23 +168,30 @@ mixin ApiEndPoint {
     String batchErpId,
   ) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Location/getByProductWithStock/productErpId=$productErpId&batchErpId=$batchErpId';
+    final String encodedProductErpId = Uri.encodeComponent(productErpId.trim());
+    final String encodedBatchErpId = Uri.encodeComponent(batchErpId.trim());
+    return '$baseUrlPath/Location/getByProductWithStock/$encodedProductErpId/$encodedBatchErpId';
   }
 
   //Stock
   static String getStockByLocation(String locationErpId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Stock/getByLocation/locationErpId=$locationErpId';
+    final String encodedLocationErpId =
+        Uri.encodeComponent(locationErpId.trim());
+    return '$baseUrlPath/Stock/getByLocation/$encodedLocationErpId';
   }
 
   //Containers
   static String getContainerByBarcode(String barcode) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/Container/getByBarcode/barcode=$barcode';
+    final String encodedBarcode = Uri.encodeComponent(barcode.trim());
+    return '$baseUrlPath/Container/getByBarcode/$encodedBarcode';
   }
 
   static String getContainerProductsByContainerErpId(String containerErpId) {
     final String baseUrlPath = System.instance.apiConnection!.connectionString;
-    return '$baseUrlPath/ContainerProduct/getByContainerErpId/containerErpId=$containerErpId';
+    final String encodedContainerErpId =
+        Uri.encodeComponent(containerErpId.trim());
+    return '$baseUrlPath/ContainerProduct/getByContainerErpId/$encodedContainerErpId';
   }
 }

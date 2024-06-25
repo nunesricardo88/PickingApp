@@ -6,10 +6,10 @@ import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_guid/flutter_guid.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_tile.dart';
+import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/stock_tile.dart';
 import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/container_model.dart'
@@ -42,6 +42,7 @@ class PickingScreen extends StatefulWidget {
 
 class _PickingScreenState extends State<PickingScreen> {
   bool showSpinner = false;
+  String spinnerMessage = 'Por favor, aguarde';
   bool isSavingToServer = false;
   bool canPick = false;
   bool alreadyShowedPostOperationInput = false;
@@ -325,6 +326,21 @@ class _PickingScreenState extends State<PickingScreen> {
     });
   }
 
+  void showLoadingDisplay(String message) {
+    setState(() {
+      canPick = false;
+      showSpinner = true;
+      spinnerMessage = message;
+    });
+  }
+
+  void hideLoadingDisplay() {
+    setState(() {
+      canPick = true;
+      showSpinner = false;
+    });
+  }
+
   Future<void> updateStockList() async {
     final PickingTask pickingTask = Provider.of<PickingTask>(
       context,
@@ -346,9 +362,7 @@ class _PickingScreenState extends State<PickingScreen> {
         showStockLocation = true;
     }
 
-    setState(() {
-      showSpinner = true;
-    });
+    showLoadingDisplay('A abrir localização');
 
     //Set the stockList according to the location
     List<Stock> listStock = [];
@@ -360,8 +374,9 @@ class _PickingScreenState extends State<PickingScreen> {
 
     setState(() {
       stockList = listStock;
-      showSpinner = false;
     });
+
+    hideLoadingDisplay();
   }
 
   String getCurrentLocationName() {
@@ -448,9 +463,7 @@ class _PickingScreenState extends State<PickingScreen> {
                 icon: FontAwesomeIcons.trashCan,
                 foregroundColor: kPrimaryColorDark,
                 onPressed: (BuildContext context) async {
-                  setState(() => showSpinner = true);
                   await removeFromDocument(documentLine);
-                  setState(() => showSpinner = false);
                 },
               ),
             ],
@@ -489,9 +502,9 @@ class _PickingScreenState extends State<PickingScreen> {
   ) async {
     setState(() {
       canPick = false;
-      showSpinner = true;
       documentLineToScroll = null;
     });
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -522,7 +535,6 @@ class _PickingScreenState extends State<PickingScreen> {
     await getDocumentLinesList();
     setState(() {
       canPick = true;
-      showSpinner = false;
     });
     _scrollToDocumentLine();
   }
@@ -700,14 +712,14 @@ class _PickingScreenState extends State<PickingScreen> {
     if (!canPick) {
       return;
     }
-    setState(() {
-      showSpinner = true;
-      canPick = false;
-    });
 
     documentLineToScroll = null;
 
+    showLoadingDisplay('');
+
     final TaskOperation taskOperation = await handleBarcode(barcode);
+
+    hideLoadingDisplay();
 
     if (!taskOperation.success) {
       Helper.showMsg(
@@ -719,25 +731,20 @@ class _PickingScreenState extends State<PickingScreen> {
       await getDocumentLinesList();
     }
 
-    setState(() {
-      showSpinner = false;
-      canPick = true;
-    });
     _scrollToDocumentLine();
   }
 
   Future<void> _onProductSelectedBottomBar(Product product) async {
-    setState(() {
-      showSpinner = true;
-      canPick = false;
-    });
-
     documentLineToScroll = null;
+
+    showLoadingDisplay('A adicionar artigo');
 
     final TaskOperation taskOperation = await addProduct(
       product: product,
     );
 
+    hideLoadingDisplay();
+
     if (!taskOperation.success) {
       Helper.showMsg(
         'Atenção',
@@ -747,11 +754,6 @@ class _PickingScreenState extends State<PickingScreen> {
     } else {
       await getDocumentLinesList();
     }
-
-    setState(() {
-      showSpinner = false;
-      canPick = true;
-    });
     _scrollToDocumentLine();
   }
 
@@ -772,20 +774,25 @@ class _PickingScreenState extends State<PickingScreen> {
   }
 
   Future<void> _onStockSubmitted() async {
-    setState(() {
-      showSpinner = true;
-      canPick = false;
-    });
+    final int selectedStockCount = stockListSelected.length;
+    int stockIndex = 0;
+
+    showLoadingDisplay('A adicionar artigo(s)');
 
     documentLineToScroll = null;
 
     for (final Stock stock in stockListSelected) {
+      stockIndex++;
+      showLoadingDisplay(
+        'A adicionar artigo(s)\n $stockIndex de $selectedStockCount',
+      );
       final TaskOperation taskOperation = await addProduct(
         product: stock.product,
         batch: stock.batch,
         quantity: stock.quantity,
       );
       if (!taskOperation.success) {
+        hideLoadingDisplay();
         Helper.showMsg(
           'Atenção',
           taskOperation.message,
@@ -796,12 +803,9 @@ class _PickingScreenState extends State<PickingScreen> {
 
     stockListSelected.clear();
 
-    await getDocumentLinesList();
+    hideLoadingDisplay();
 
-    setState(() {
-      showSpinner = false;
-      canPick = true;
-    });
+    await getDocumentLinesList();
   }
 
   Future<void> _onMiscDataChanged(List<MiscData> miscDataIncomingList) async {
@@ -1077,6 +1081,24 @@ class _PickingScreenState extends State<PickingScreen> {
     documentLineToAdd.container = container;
     documentLineToAdd.originLocation = _originLocation;
 
+    // If usaMolho - GetFull Location Stock
+    if (product.usaMolho && batch != null && _originLocation != null) {
+      final double stock = await LocationApi.getProductStockByLocation(
+        _originLocation!,
+        product,
+        batch,
+      );
+      if (stock == 0) {
+        return TaskOperation(
+          success: false,
+          errorCode: ErrorCode.insuficientStock,
+          message: 'Não há stock suficiente',
+        );
+      } else {
+        quantityToAdd = stock;
+      }
+    }
+
     // Get the fitting Document Line
     final DocumentLine? fittingDocumentLine =
         getFittingDocumentLine(documentLine, documentLineToAdd);
@@ -1095,9 +1117,6 @@ class _PickingScreenState extends State<PickingScreen> {
 
     // Get the Batch and Quantity
     if (quantityToAdd == 0 || (batch == null && product.isBatchTracked)) {
-      setState(() {
-        showSpinner = false;
-      });
       await showDialog(
         barrierDismissible: false,
         context: context,
@@ -1114,14 +1133,11 @@ class _PickingScreenState extends State<PickingScreen> {
 
       if (quantityToAdd == 0) {
         return TaskOperation(
-          success: false,
+          success: true,
           errorCode: ErrorCode.quantityZero,
           message: 'A quantidade não pode ser zero',
         );
       }
-      setState(() {
-        showSpinner = true;
-      });
     }
 
     //====CHECK THE STOCK====
@@ -1477,9 +1493,9 @@ class _PickingScreenState extends State<PickingScreen> {
                         if (stockList.isNotEmpty)
                           TextButton(
                             onPressed: () async {
+                              Navigator.of(context).pop();
                               await _onStockSubmitted();
                               stockListSelected.clear();
-                              Navigator.of(context).pop();
                             },
                             child: Text(
                               'Confirmar seleção',
@@ -1731,10 +1747,6 @@ class _PickingScreenState extends State<PickingScreen> {
       return;
     }
 
-    setState(() {
-      canPick = false;
-    });
-
     // Set destination location for all products
     if (pickingTask.stockMovement == StockMovement.transfer ||
         pickingTask.stockMovement == StockMovement.inbound) {
@@ -1828,10 +1840,17 @@ class _PickingScreenState extends State<PickingScreen> {
 
     setState(() {
       isSavingToServer = true;
-      showSpinner = true;
     });
 
+    showLoadingDisplay('A guardar documento');
+
     final TaskOperation taskOperation = await pickingTask.saveToServer();
+
+    hideLoadingDisplay();
+
+    setState(() {
+      isSavingToServer = false;
+    });
 
     if (!taskOperation.success) {
       await Helper.showMsg(
@@ -1847,14 +1866,8 @@ class _PickingScreenState extends State<PickingScreen> {
       );
     }
 
-    setState(() {
-      isSavingToServer = false;
-      showSpinner = false;
-    });
-
     bool keepPicking = false;
     if (taskOperation.success) {
-      //Check if there are documentLines to pick (quantityToPick > 0)
       if (pickingTask.document!.lines
           .any((element) => element.quantityToPick > 0)) {
         keepPicking = await Helper.askQuestion(
@@ -1864,15 +1877,11 @@ class _PickingScreenState extends State<PickingScreen> {
         );
       }
       if (keepPicking) {
-        setState(() {
-          showSpinner = true;
-        });
+        showLoadingDisplay('Por favor, aguarde');
         await pickingTask
             .setSourceDocumentsFromList(pickingTask.sourceDocuments);
         await getDocumentLinesList();
-        setState(() {
-          showSpinner = false;
-        });
+        hideLoadingDisplay();
       } else {
         exitPickingScreen();
       }
@@ -1894,9 +1903,9 @@ class _PickingScreenState extends State<PickingScreen> {
     final PickingTask pickingTask = context.watch<PickingTask>();
     final bool needsLocation = this.needsLocation();
     final bool canSave = documentHasData();
-    return LoadingOverlay(
-      color: Colors.black,
+    return LoadingDisplay(
       isLoading: showSpinner,
+      loadingText: spinnerMessage,
       child: PopScope(
         canPop: false,
         child: Scaffold(

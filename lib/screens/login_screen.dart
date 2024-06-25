@@ -1,8 +1,7 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:loading_overlay/loading_overlay.dart';
+import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/models/api_response.dart';
 import 'package:n6picking_flutterapp/models/user_model.dart';
 import 'package:n6picking_flutterapp/screens/configure_endpoint_screen.dart';
@@ -33,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isPinFull = false;
   bool isPinEmpty = true;
   bool showSpinner = false;
+  String spinnerMessage = 'Por favor, aguarde';
 
   @override
   void initState() {
@@ -47,8 +47,19 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void showLoadingDisplay(String message) {
+    setState(() {
+      showSpinner = true;
+      spinnerMessage = message;
+    });
+  }
+
+  void hideLoadingDisplay() {
+    setState(() => showSpinner = false);
+  }
+
   Future<void> checkIfCanLogin() async {
-    setState(() => showSpinner = true);
+    showLoadingDisplay('A verificar ligação');
 
     bool canLogin = false;
     bool isOnline = false;
@@ -69,8 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
       _isUpToDate = isUpToDate;
       _canLogin = canLogin;
       _firstSetup = false;
-      showSpinner = false;
     });
+
+    hideLoadingDisplay();
   }
 
   Future<bool> checkIfIsOnline() async {
@@ -87,8 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> callConfigureEndpointScreen() async {
-    setState(() => showSpinner = true);
-
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -99,17 +109,17 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
     ).whenComplete(() => checkIfCanLogin());
-
-    setState(() => showSpinner = false);
   }
 
   Future<bool> login() async {
     bool success = false;
     if (_canLogin) {
-      setState(() => showSpinner = true);
+      showLoadingDisplay('A iniciar sessão');
 
       final ApiResponse response =
           await System.instance.login(_selectedUser, _pinController.text);
+
+      hideLoadingDisplay();
 
       success = response.success;
 
@@ -126,8 +136,6 @@ class _LoginScreenState extends State<LoginScreen> {
         // ignore: use_build_context_synchronously
         await Helper.showMsg("Login falhou!", errorMessage, context);
       }
-
-      setState(() => showSpinner = false);
     }
     return success;
   }
@@ -140,9 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kGreyBackground,
-      body: LoadingOverlay(
-        color: Colors.black.withOpacity(0.7),
+      body: LoadingDisplay(
         isLoading: showSpinner,
+        loadingText: spinnerMessage,
         child: SafeArea(
           child: Column(
             children: [
@@ -261,7 +269,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 child: GestureDetector(
                                   onTap: () async {
-                                    setState(() => showSpinner = true);
                                     await _showListUsersDialog().then((value) {
                                       if (value != null) {
                                         final User user = value as User;
@@ -272,7 +279,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                         });
                                       }
                                     });
-                                    setState(() => showSpinner = false);
                                   },
                                   child: Row(
                                     children: [

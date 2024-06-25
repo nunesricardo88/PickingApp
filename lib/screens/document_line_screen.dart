@@ -1,10 +1,10 @@
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/components/calculator.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_property_tile.dart';
+import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/split_batches_dialog.dart';
 import 'package:n6picking_flutterapp/components/split_container_dialog.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
@@ -35,6 +35,8 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
   TextEditingController labelQuantityController = TextEditingController();
   TextEditingController newBarcodeController = TextEditingController();
   bool showSpinner = false;
+  String spinnerMessage = 'Por favor, aguarde';
+
   double calculatedValue = 0.0;
   bool isExiting = false;
 
@@ -114,18 +116,27 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     }
   }
 
+  void showLoadingDisplay(String message) {
+    setState(() {
+      showSpinner = true;
+      spinnerMessage = message;
+    });
+  }
+
+  void hideLoadingDisplay() {
+    setState(() {
+      showSpinner = false;
+    });
+  }
+
   Future<void> submitLabelPrint() async {
     final String value = labelQuantityController.text;
     final int valueInt = value.isEmpty ? 0 : int.parse(value);
 
     if (valueInt > 0) {
-      setState(() {
-        showSpinner = true;
-      });
+      showLoadingDisplay('A enviar para impressão');
       final TaskOperation taskOperation = await printLabel(valueInt);
-      setState(() {
-        showSpinner = false;
-      });
+      hideLoadingDisplay();
       // ignore: use_build_context_synchronously
       Flushbar(
         titleSize: 0,
@@ -160,13 +171,9 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     final String value = newBarcodeController.text;
 
     if (value.isNotEmpty) {
-      setState(() {
-        showSpinner = true;
-      });
+      showLoadingDisplay('A submeter código de barras');
       final TaskOperation taskOperation = await postNewBarcode(value);
-      setState(() {
-        showSpinner = false;
-      });
+      hideLoadingDisplay();
       // ignore: use_build_context_synchronously
       Flushbar(
         titleSize: 0,
@@ -191,8 +198,9 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     final PickingTask pickingTask = Provider.of<PickingTask>(context);
     return PopScope(
       canPop: false,
-      child: LoadingOverlay(
+      child: LoadingDisplay(
         isLoading: showSpinner,
+        loadingText: spinnerMessage,
         child: Scaffold(
           resizeToAvoidBottomInset: false,
           backgroundColor: kGreyBackground,

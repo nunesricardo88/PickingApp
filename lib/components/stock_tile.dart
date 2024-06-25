@@ -269,32 +269,28 @@ class _StockTileState extends State<StockTile> {
                                       fontWeight: FontWeight.w700,
                                     ),
                               ),
-                              const SizedBox(
-                                height: 5.0,
-                              ),
                               Text(
                                 widget.stock.product.reference,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
-                              Visibility(
-                                visible: widget.stock.product.isBatchTracked,
-                                child: Column(
-                                  children: [
-                                    const SizedBox(
-                                      height: 5.0,
-                                    ),
-                                    Text(
-                                      'Lote: ${widget.stock.batch}',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
+                              const SizedBox(
+                                height: 5.0,
                               ),
+                              if (widget.stock.product.isBatchTracked &&
+                                  widget.stock.batch != null)
+                                Text(
+                                  'Lote: ${widget.stock.batch!.batchNumber}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               Text(
                                 'Stock: ${Helper.removeDecimalZeroFormat(widget.stock.quantity)} ${widget.stock.product.unit}',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(
+                                      fontWeight: FontWeight.w400,
+                                    ),
                               ),
                             ],
                           ),

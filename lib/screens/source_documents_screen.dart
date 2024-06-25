@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_dynamic_calls, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:loading_overlay/loading_overlay.dart';
+import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/source_document_tile.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/entity_model.dart';
@@ -25,12 +25,26 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   Column documentTilesList = const Column();
   late Future listBuild;
   bool showSpinner = false;
+  String spinnerMessage = 'Por favor, aguarde';
   bool setupDone = false;
 
   @override
   void initState() {
     super.initState();
     setup();
+  }
+
+  void showLoadingDisplay(String message) {
+    setState(() {
+      showSpinner = true;
+      spinnerMessage = message;
+    });
+  }
+
+  void hideLoadingDisplay() {
+    setState(() {
+      showSpinner = false;
+    });
   }
 
   Future<void> setup() async {
@@ -55,10 +69,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   }
 
   Future<bool> toggleDocumentSelection(bool select, Document document) async {
-    setState(() {
-      showSpinner = true;
-    });
-
     if (select) {
       await addToSelectedDocuments(document);
     } else {
@@ -77,10 +87,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     });
 
     await filterSourceDocumentsByEntity();
-
-    setState(() {
-      showSpinner = false;
-    });
 
     return true;
   }
@@ -183,9 +189,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
           actions: [
             IconButton(
               onPressed: () async {
-                setState(() {
-                  showSpinner = true;
-                });
+                showLoadingDisplay('A carregar as linhas');
 
                 //Set Entity
                 if (selectedDocuments.isEmpty) {
@@ -200,9 +204,7 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
                 //Set Source Documents
                 await pickingTask.setSourceDocumentsFromList(selectedDocuments);
 
-                setState(() {
-                  showSpinner = false;
-                });
+                hideLoadingDisplay();
                 Navigator.pop(context, true);
               },
               icon: const FaIcon(
@@ -213,8 +215,9 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
             ),
           ],
         ),
-        body: LoadingOverlay(
+        body: LoadingDisplay(
           isLoading: showSpinner,
+          loadingText: spinnerMessage,
           child: Column(
             children: [
               Expanded(

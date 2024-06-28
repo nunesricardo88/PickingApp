@@ -580,13 +580,14 @@ class PickingTask extends ChangeNotifier {
         return taskOperation;
       }
 
+      //Set the new documentLines to the document
+      document!.lines = documentLines;
+
+      //Set final Data
       //Clean not needed fields
       userErpId = System.instance.activeUser!.erpId;
       document!.number = 0;
       document!.entity!.addresses = [];
-
-      //Set the new documentLines to the document
-      document!.lines = documentLines;
 
       final Map<String, dynamic> documentJsonBody = toJson();
       String postPutUrl = '';
@@ -599,7 +600,7 @@ class PickingTask extends ChangeNotifier {
       postPutUrl = ApiEndPoint.postPickingTask();
       final NetworkHelper networkHelper = NetworkHelper(postPutUrl);
 
-      //Helper.printDebug(jsonBody);
+      // Helper.printDebug(jsonBody);
 
       response = await networkHelper.postData(
         json: jsonBody,

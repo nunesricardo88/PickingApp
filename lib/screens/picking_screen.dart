@@ -568,9 +568,16 @@ class _PickingScreenState extends State<PickingScreen> {
 
     //Create a DocumentLine for each container
     for (int i = 0; i < containersCount; i++) {
+      final container_model.Container container = container_model.Container(
+        id: Guid.newGuid,
+        erpId: '',
+        barcode: 'NEW',
+        location: _originLocation ?? _destinationLocation!,
+      );
       final DocumentLine newDocumentLine = documentLine.copyWith(
         id: Guid.newGuid,
         quantity: productCount,
+        container: container,
       );
       pickingTask.document!.lines.add(newDocumentLine);
     }
@@ -1817,19 +1824,6 @@ class _PickingScreenState extends State<PickingScreen> {
         }
       });
       return;
-    }
-
-    //Container Creation
-    final bool canCreateContainer = pickingTask.canCreateContainer();
-    if (canCreateContainer) {
-      final bool createContainer = await Helper.askQuestion(
-        'Criar contentor?',
-        'Deseja criar um contentor para as linhas?',
-        context,
-      );
-      if (!createContainer) {
-        pickingTask.setOffCanCreateContainer();
-      }
     }
 
     //Replace task customOptions with miscDataList JSON

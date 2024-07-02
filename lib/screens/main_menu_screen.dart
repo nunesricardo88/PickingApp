@@ -174,7 +174,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   onPressed: () async {
                     System.instance.activeUser = null;
                     System.instance.token = null;
-                    Navigator.pushNamed(context, LoginScreen.id);
+                    Navigator.pop(context);
                   },
                   icon: const FaIcon(
                     FontAwesomeIcons.rightFromBracket,

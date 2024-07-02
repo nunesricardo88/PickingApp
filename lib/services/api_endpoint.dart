@@ -122,7 +122,7 @@ mixin ApiEndPoint {
     final String pickingTaskErpId = task.erpId.trim();
     final StringBuffer sb = StringBuffer();
     sb.write(
-      '$baseUrlPath/DocumentLine/getFromDocuments?taskErpId=${Uri.encodeComponent(pickingTaskErpId.trim())}?',
+      '$baseUrlPath/DocumentLine/getFromDocuments?taskErpId=${Uri.encodeComponent(pickingTaskErpId.trim())}',
     );
     for (int i = 0; i < documents.length; i++) {
       final Document document = documents[i];

@@ -349,6 +349,7 @@ class PickingTask extends ChangeNotifier {
           sourceDocumentLines.add(documentLine);
         }
       }
+      document!.erpId = sourceDocumentLines.last.documentErpId;
       sourceDocument.lines = sourceDocumentLines;
     }
     sourceDocuments = List.from(sourceDocumentsList);

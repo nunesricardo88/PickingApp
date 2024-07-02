@@ -1087,6 +1087,7 @@ class _PickingScreenState extends State<PickingScreen> {
     );
     documentLineToAdd.container = container;
     documentLineToAdd.originLocation = _originLocation;
+    documentLineToAdd.destinationLocation = _destinationLocation;
 
     // If usaMolho - GetFull Location Stock
     if (product.usaMolho && batch != null && _originLocation != null) {

@@ -26,7 +26,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
   late Future listBuild;
   bool showSpinner = false;
   String spinnerMessage = 'Por favor, aguarde';
-  bool setupDone = false;
 
   @override
   void initState() {
@@ -51,7 +50,6 @@ class _SourceDocumentsScreenState extends State<SourceDocumentsScreen> {
     final pickingTask = Provider.of<PickingTask>(context, listen: false);
     selectedEntity = pickingTask.document!.entity;
     await getDocumentsList();
-    setupDone = true;
   }
 
   Future<void> getDocumentsList() async {

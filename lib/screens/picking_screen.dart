@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_tile.dart';
+import 'package:n6picking_flutterapp/components/group_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/stock_tile.dart';
 import 'package:n6picking_flutterapp/models/batch_model.dart';
@@ -81,6 +82,9 @@ class _PickingScreenState extends State<PickingScreen> {
   Column documentTilesList = const Column();
   late Future<bool> listBuild;
   List<DocumentLine> documentLineList = [];
+
+  //Group by document lines
+  late GroupBy groupDocumentLinesBy = GroupBy.none;
 
   @override
   void initState() {
@@ -440,7 +444,62 @@ class _PickingScreenState extends State<PickingScreen> {
   }
 
   Future<void> getDocumentLinesList() async {
-    listBuild = getDocumentLines();
+    setState(() {
+      listBuild = getDocumentLines();
+    });
+  }
+
+  Map<String, List<DocumentLine>> groupByProductRef(
+    List<DocumentLine> documentLineList,
+  ) {
+    final Map<String, List<DocumentLine>> groupedDocumentLines = {};
+
+    for (final DocumentLine documentLine in documentLineList) {
+      final ref = documentLine.product.reference;
+
+      if (!groupedDocumentLines.containsKey(ref)) {
+        groupedDocumentLines[ref] = [];
+      }
+      groupedDocumentLines[ref]!.add(documentLine);
+    }
+
+    return groupedDocumentLines;
+  }
+
+  Map<String, List<DocumentLine>> groupByProductRefAndBatch(
+    List<DocumentLine> documentLineList,
+  ) {
+    final Map<String, List<DocumentLine>> groupedDocumentLines = {};
+
+    for (final DocumentLine documentLine in documentLineList) {
+      final ref = documentLine.product.reference.trim();
+      final batch = documentLine.batch?.batchNumber.trim()[0] ?? '';
+
+      if (!groupedDocumentLines.containsKey(ref + batch)) {
+        groupedDocumentLines[ref + batch] = [];
+      }
+      groupedDocumentLines[ref + batch]!.add(documentLine);
+    }
+
+    return groupedDocumentLines;
+  }
+
+  Map<String, List<DocumentLine>> groupByContainerBarcode(
+    List<DocumentLine> documentLineList,
+  ) {
+    final Map<String, List<DocumentLine>> groupedDocumentLines = {};
+
+    for (final DocumentLine documentLine in documentLineList) {
+      final containerBarcode =
+          documentLine.container?.barcode ?? 'Sem container';
+
+      if (!groupedDocumentLines.containsKey(containerBarcode)) {
+        groupedDocumentLines[containerBarcode] = [];
+      }
+      groupedDocumentLines[containerBarcode]!.add(documentLine);
+    }
+
+    return groupedDocumentLines;
   }
 
   Future<bool> getDocumentLines() async {
@@ -450,31 +509,54 @@ class _PickingScreenState extends State<PickingScreen> {
 
     documentLineList = pickingTask.document!.lines;
 
-    for (final DocumentLine documentLine in documentLineList) {
-      documentLineTiles.add(
-        Slidable(
-          endActionPane: ActionPane(
-            extentRatio: 0.15,
-            motion: const ScrollMotion(),
-            children: [
-              SlidableAction(
-                padding: const EdgeInsets.only(right: 10.0),
-                backgroundColor: kGreyBackground,
-                icon: FontAwesomeIcons.trashCan,
-                foregroundColor: kPrimaryColorDark,
-                onPressed: (BuildContext context) async {
-                  await removeFromDocument(documentLine);
-                },
-              ),
-            ],
+    if (groupDocumentLinesBy != GroupBy.none) {
+      // Agrupa as linhas de documentLineList (lista de listas)
+      Map<String, List<DocumentLine>> groupedDocumentLines = {};
+
+      if (groupDocumentLinesBy == GroupBy.productRef) {
+        groupedDocumentLines = groupByProductRef(documentLineList);
+      } else if (groupDocumentLinesBy == GroupBy.productRefAndBatch) {
+        groupedDocumentLines = groupByProductRefAndBatch(documentLineList);
+      } else if (groupDocumentLinesBy == GroupBy.containerBarcode) {
+        groupedDocumentLines = groupByContainerBarcode(documentLineList);
+      }
+
+      groupedDocumentLines.forEach((key, lines) {
+        documentLineTiles.add(
+          GroupDocumentLineTile(
+            groupName: key,
+            documentLines: lines,
+            groupedBy: groupDocumentLinesBy,
           ),
-          child: DocumentLineTile(
-            documentLine: documentLine,
-            location: _defaultDestinationLocation,
-            callDocumentLineScreen: _onCallDocumentLineScreen,
+        );
+      });
+    } else {
+      for (final DocumentLine documentLine in documentLineList) {
+        documentLineTiles.add(
+          Slidable(
+            endActionPane: ActionPane(
+              extentRatio: 0.15,
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  padding: const EdgeInsets.only(right: 10.0),
+                  backgroundColor: kGreyBackground,
+                  icon: FontAwesomeIcons.trashCan,
+                  foregroundColor: kPrimaryColorDark,
+                  onPressed: (BuildContext context) async {
+                    await removeFromDocument(documentLine);
+                  },
+                ),
+              ],
+            ),
+            child: DocumentLineTile(
+              documentLine: documentLine,
+              location: _defaultDestinationLocation,
+              callDocumentLineScreen: _onCallDocumentLineScreen,
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
 
     if (documentLineTiles.isNotEmpty) {
@@ -1893,6 +1975,26 @@ class _PickingScreenState extends State<PickingScreen> {
     });
   }
 
+  Future<void> _onGroupByNone() async {
+    groupDocumentLinesBy = GroupBy.none;
+    await getDocumentLinesList();
+  }
+
+  Future<void> _onGroupByProductRef() async {
+    groupDocumentLinesBy = GroupBy.productRef;
+    await getDocumentLinesList();
+  }
+
+  Future<void> _onGroupByProductRefAndBatch() async {
+    groupDocumentLinesBy = GroupBy.productRefAndBatch;
+    await getDocumentLinesList();
+  }
+
+  Future<void> _onGroupByContainerBarcode() async {
+    groupDocumentLinesBy = GroupBy.containerBarcode;
+    await getDocumentLinesList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final PickingTask pickingTask = context.watch<PickingTask>();
@@ -2133,11 +2235,16 @@ class _PickingScreenState extends State<PickingScreen> {
             ),
           ),
           bottomNavigationBar: AppBottomBar(
+            groupBy: groupDocumentLinesBy,
             onBarcodeScan: _onBarcodeScanned,
             onProductSelected: _onProductSelectedBottomBar,
             onStockListCallBack: _onStockListCallBack,
             onMiscDataChanged: _onMiscDataChanged,
             onGetCurrentOriginLocation: _onGetCurrentOriginLocation,
+            onGroupByNone: _onGroupByNone,
+            onGroupByProductRef: _onGroupByProductRef,
+            onGroupByProductRefAndBatch: _onGroupByProductRefAndBatch,
+            onGroupByContainerBarcode: _onGroupByContainerBarcode,
             miscDataList: documentExtraFieldsList,
           ),
         ),

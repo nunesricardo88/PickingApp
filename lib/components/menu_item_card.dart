@@ -18,8 +18,6 @@ class MenuItemCard extends StatefulWidget {
 }
 
 class _MenuItemCardState extends State<MenuItemCard> {
-  bool isDocUpdate = false;
-
   Future<bool> setupPickingTask() async {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
@@ -29,18 +27,18 @@ class _MenuItemCardState extends State<MenuItemCard> {
 
   String getPendingItemsText() {
     final String description = widget.pickingTask.description;
-    if (int.tryParse(description) != null) {
-      final int pendingItems = int.parse(description);
-      if (pendingItems == -1) {
-        return 'Interno';
-      }
-      if (pendingItems == 1) {
-        return '$pendingItems item pendente';
-      } else {
-        return '$pendingItems itens pendentes';
-      }
-    } else {
+    if (int.tryParse(description) == null) {
       return description;
+    }
+
+    final int pendingItems = int.parse(description);
+    if (pendingItems == -1) {
+      return 'Interno';
+    }
+    if (pendingItems == 1) {
+      return '$pendingItems item pendente';
+    } else {
+      return '$pendingItems itens pendentes';
     }
   }
 

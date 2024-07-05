@@ -126,7 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         _usernameController.clear();
         _pinController.clear();
-        gotoMainMenu();
+
+        Navigator.pushNamed(context, MainMenuScreen.id);
       } else {
         _pinController.clear();
         final Map<String, dynamic> errorMap =
@@ -138,10 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
     return success;
-  }
-
-  void gotoMainMenu() {
-    Navigator.pushNamed(context, MainMenuScreen.id);
   }
 
   @override

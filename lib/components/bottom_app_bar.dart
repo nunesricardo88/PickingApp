@@ -1,4 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/manual_barcode_box.dart';
@@ -14,21 +16,31 @@ class AppBottomBar extends StatefulWidget {
   const AppBottomBar({
     this.fabLocation = FloatingActionButtonLocation.centerDocked,
     this.shape = const CircularNotchedRectangle(),
+    this.groupBy = GroupBy.none,
     required this.onBarcodeScan,
     required this.onProductSelected,
     required this.onStockListCallBack,
     required this.onMiscDataChanged,
     required this.onGetCurrentOriginLocation,
+    required this.onGroupByNone,
+    required this.onGroupByProductRef,
+    required this.onGroupByProductRefAndBatch,
+    required this.onGroupByContainerBarcode,
     required this.miscDataList,
   });
 
   final FloatingActionButtonLocation fabLocation;
   final NotchedShape? shape;
+  final GroupBy groupBy;
   final Future<void> Function(String) onBarcodeScan;
   final Future<void> Function(Product) onProductSelected;
   final List<Stock> Function() onStockListCallBack;
   final Future<void> Function(List<MiscData>) onMiscDataChanged;
   final Location? Function() onGetCurrentOriginLocation;
+  final Future<void> Function() onGroupByNone;
+  final Future<void> Function() onGroupByProductRef;
+  final Future<void> Function() onGroupByProductRefAndBatch;
+  final Future<void> Function() onGroupByContainerBarcode;
   final List<MiscData> miscDataList;
   @override
   _AppBottomBarState createState() => _AppBottomBarState();
@@ -38,9 +50,6 @@ class _AppBottomBarState extends State<AppBottomBar> {
   TextEditingController searchProductController = TextEditingController();
   List<Product> productList = [];
   bool showAllProducts = true;
-  bool isLoadingProducts = false;
-  bool isLoadingStock = false;
-  bool isStockLoaded = false;
 
   @override
   void initState() {
@@ -77,6 +86,149 @@ class _AppBottomBarState extends State<AppBottomBar> {
     return filteredList;
   }
 
+  Widget getGroupByButton() {
+    final VisualDensity density = Theme.of(context).visualDensity;
+    final double horizontalPadding = math.max(
+      4,
+      12 + density.horizontal * 2,
+    );
+
+    return MenuAnchor(
+      style: MenuStyle(
+        backgroundColor: WidgetStateColor.resolveWith(
+          (states) => kPrimaryColor,
+        ),
+      ),
+      builder: (
+        BuildContext context,
+        MenuController controller,
+        Widget? child,
+      ) {
+        return TextButton(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  FaIcon(
+                    FontAwesomeIcons.filter,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 20.0,
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: horizontalPadding,
+                    ),
+                    child: Text(
+                      'Agrupar',
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+        );
+      },
+      menuChildren: [
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: widget.groupBy == GroupBy.productRef
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por referência',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            widget.onGroupByProductRef();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: widget.groupBy == GroupBy.productRefAndBatch
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por referência e lote',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            widget.onGroupByProductRefAndBatch();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: widget.groupBy == GroupBy.containerBarcode
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por container',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            widget.onGroupByContainerBarcode();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: widget.groupBy == GroupBy.none
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filterCircleXmark,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Desagrupar',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            widget.onGroupByNone();
+          },
+        ),
+      ],
+    );
+  }
+
   Widget getLeftButton() {
     return Material(
       color: Colors.transparent,
@@ -87,8 +239,11 @@ class _AppBottomBarState extends State<AppBottomBar> {
             (states) => kPrimaryColor,
           ),
         ),
-        builder:
-            (BuildContext context, MenuController controller, Widget? child) {
+        builder: (
+          BuildContext context,
+          MenuController controller,
+          Widget? child,
+        ) {
           return IconButton(
             icon: FaIcon(
               FontAwesomeIcons.bars,
@@ -135,6 +290,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
                 );
               },
             ),
+          getGroupByButton(),
         ],
       ),
     );

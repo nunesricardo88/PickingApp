@@ -55,6 +55,13 @@ enum ErrorCode {
   unknownError,
 }
 
+enum GroupBy {
+  none,
+  productRef,
+  productRefAndBatch,
+  containerBarcode,
+}
+
 //Colors
 const kPrimaryColor = Color.fromRGBO(96, 125, 139, 1);
 const kPrimaryColorDark = Color.fromRGBO(69, 90, 100, 1);

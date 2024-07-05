@@ -119,14 +119,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
   }
 
   Future<bool> forceRebuild() async {
-    await _pullRefresh();
-    return true;
-  }
-
-  Future<void> _pullRefresh() async {
     await getPickingTasks();
     await getMenuItemCards();
     setState(() {});
+    return true;
   }
 
   @override

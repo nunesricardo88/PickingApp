@@ -3,7 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:loading_overlay/loading_overlay.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
-class LoadingDisplay extends StatefulWidget {
+class LoadingDisplay extends StatelessWidget {
   final bool isLoading;
   final String loadingText;
   final Widget child;
@@ -15,16 +15,11 @@ class LoadingDisplay extends StatefulWidget {
   });
 
   @override
-  _LoadingDisplayState createState() => _LoadingDisplayState();
-}
-
-class _LoadingDisplayState extends State<LoadingDisplay> {
-  @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
       color: Colors.black,
       opacity: 0.4,
-      isLoading: widget.isLoading,
+      isLoading: isLoading,
       progressIndicator: Card(
         color: kWhiteBackground,
         child: Padding(
@@ -48,9 +43,7 @@ class _LoadingDisplayState extends State<LoadingDisplay> {
               Container(
                 constraints: const BoxConstraints(maxWidth: 200.0),
                 child: Text(
-                  widget.loadingText.isEmpty
-                      ? 'Por favor, aguarde'
-                      : widget.loadingText,
+                  loadingText.isEmpty ? 'Por favor, aguarde' : loadingText,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelMedium!.copyWith(
                         color: kPrimaryColor,
@@ -62,7 +55,7 @@ class _LoadingDisplayState extends State<LoadingDisplay> {
           ),
         ),
       ),
-      child: widget.child,
+      child: child,
     );
   }
 }

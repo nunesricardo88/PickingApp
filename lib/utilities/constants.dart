@@ -37,7 +37,7 @@ enum ErrorCode {
   quantityBelowZero,
   quantityZero,
   quantityAboveMax,
-  insuficientStock,
+  insufficientStock,
   invalidBarcode,
   barcodeNotFound,
   containerNotFound,
@@ -55,11 +55,11 @@ enum ErrorCode {
   unknownError,
 }
 
-enum GroupBy {
+enum LineGroupType {
   none,
-  productRef,
-  productRefAndBatch,
-  containerBarcode,
+  product,
+  productBatch,
+  container,
 }
 
 //Colors

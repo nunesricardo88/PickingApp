@@ -8,12 +8,12 @@ import 'package:provider/provider.dart';
 class GroupDocumentLineTile extends StatefulWidget {
   final String groupName;
   final List<DocumentLine> documentLines;
-  final GroupBy groupedBy;
+  final LineGroupType lineGroupType;
 
   const GroupDocumentLineTile({
     required this.groupName,
     required this.documentLines,
-    required this.groupedBy,
+    required this.lineGroupType,
   });
 
   @override
@@ -39,7 +39,7 @@ class _GroupDocumentLineTileState extends State<GroupDocumentLineTile> {
   @override
   void didUpdateWidget(covariant GroupDocumentLineTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.groupedBy != oldWidget.groupedBy ||
+    if (widget.lineGroupType != oldWidget.lineGroupType ||
         widget.documentLines != oldWidget.documentLines) {
       _setup();
     }
@@ -59,7 +59,7 @@ class _GroupDocumentLineTileState extends State<GroupDocumentLineTile> {
           line.linkedLineErpId!.trim().isNotEmpty;
     }
 
-    if (widget.groupedBy == GroupBy.productRefAndBatch) {
+    if (widget.lineGroupType == LineGroupType.productBatch) {
       setState(() {
         batchNumber = widget.documentLines.first.batch?.batchNumber;
       });

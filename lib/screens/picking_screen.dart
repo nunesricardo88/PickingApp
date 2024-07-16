@@ -84,7 +84,7 @@ class _PickingScreenState extends State<PickingScreen> {
   List<DocumentLine> documentLineList = [];
 
   //Group by document lines
-  late GroupBy groupDocumentLinesBy = GroupBy.none;
+  late LineGroupType groupDocumentLinesBy = LineGroupType.none;
 
   @override
   void initState() {
@@ -509,15 +509,15 @@ class _PickingScreenState extends State<PickingScreen> {
 
     documentLineList = pickingTask.document!.lines;
 
-    if (groupDocumentLinesBy != GroupBy.none) {
+    if (groupDocumentLinesBy != LineGroupType.none) {
       // Agrupa as linhas de documentLineList (lista de listas)
       Map<String, List<DocumentLine>> groupedDocumentLines = {};
 
-      if (groupDocumentLinesBy == GroupBy.productRef) {
+      if (groupDocumentLinesBy == LineGroupType.product) {
         groupedDocumentLines = groupByProductRef(documentLineList);
-      } else if (groupDocumentLinesBy == GroupBy.productRefAndBatch) {
+      } else if (groupDocumentLinesBy == LineGroupType.productBatch) {
         groupedDocumentLines = groupByProductRefAndBatch(documentLineList);
-      } else if (groupDocumentLinesBy == GroupBy.containerBarcode) {
+      } else if (groupDocumentLinesBy == LineGroupType.container) {
         groupedDocumentLines = groupByContainerBarcode(documentLineList);
       }
 
@@ -526,7 +526,7 @@ class _PickingScreenState extends State<PickingScreen> {
           GroupDocumentLineTile(
             groupName: key,
             documentLines: lines,
-            groupedBy: groupDocumentLinesBy,
+            lineGroupType: groupDocumentLinesBy,
           ),
         );
       });
@@ -1181,7 +1181,7 @@ class _PickingScreenState extends State<PickingScreen> {
       if (stock == 0) {
         return TaskOperation(
           success: false,
-          errorCode: ErrorCode.insuficientStock,
+          errorCode: ErrorCode.insufficientStock,
           message: 'Não há stock suficiente',
         );
       } else {
@@ -1242,7 +1242,7 @@ class _PickingScreenState extends State<PickingScreen> {
       if (!hasStock) {
         return TaskOperation(
           success: false,
-          errorCode: ErrorCode.insuficientStock,
+          errorCode: ErrorCode.insufficientStock,
           message: 'Não há stock suficiente',
         );
       }
@@ -1976,22 +1976,22 @@ class _PickingScreenState extends State<PickingScreen> {
   }
 
   Future<void> _onGroupByNone() async {
-    groupDocumentLinesBy = GroupBy.none;
+    groupDocumentLinesBy = LineGroupType.none;
     await getDocumentLinesList();
   }
 
   Future<void> _onGroupByProductRef() async {
-    groupDocumentLinesBy = GroupBy.productRef;
+    groupDocumentLinesBy = LineGroupType.product;
     await getDocumentLinesList();
   }
 
   Future<void> _onGroupByProductRefAndBatch() async {
-    groupDocumentLinesBy = GroupBy.productRefAndBatch;
+    groupDocumentLinesBy = LineGroupType.productBatch;
     await getDocumentLinesList();
   }
 
   Future<void> _onGroupByContainerBarcode() async {
-    groupDocumentLinesBy = GroupBy.containerBarcode;
+    groupDocumentLinesBy = LineGroupType.container;
     await getDocumentLinesList();
   }
 
@@ -2235,7 +2235,7 @@ class _PickingScreenState extends State<PickingScreen> {
             ),
           ),
           bottomNavigationBar: AppBottomBar(
-            groupBy: groupDocumentLinesBy,
+            lineGroupType: groupDocumentLinesBy,
             onBarcodeScan: _onBarcodeScanned,
             onProductSelected: _onProductSelectedBottomBar,
             onStockListCallBack: _onStockListCallBack,

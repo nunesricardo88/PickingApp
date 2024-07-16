@@ -16,7 +16,7 @@ class AppBottomBar extends StatefulWidget {
   const AppBottomBar({
     this.fabLocation = FloatingActionButtonLocation.centerDocked,
     this.shape = const CircularNotchedRectangle(),
-    this.groupBy = GroupBy.none,
+    this.lineGroupType = LineGroupType.none,
     required this.onBarcodeScan,
     required this.onProductSelected,
     required this.onStockListCallBack,
@@ -31,7 +31,7 @@ class AppBottomBar extends StatefulWidget {
 
   final FloatingActionButtonLocation fabLocation;
   final NotchedShape? shape;
-  final GroupBy groupBy;
+  final LineGroupType lineGroupType;
   final Future<void> Function(String) onBarcodeScan;
   final Future<void> Function(Product) onProductSelected;
   final List<Stock> Function() onStockListCallBack;
@@ -143,7 +143,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
       menuChildren: [
         MenuItemButton(
           style: MenuItemButton.styleFrom(
-            backgroundColor: widget.groupBy == GroupBy.productRef
+            backgroundColor: widget.lineGroupType == LineGroupType.product
                 ? kPrimaryColorDark
                 : kPrimaryColor,
           ),
@@ -164,7 +164,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
         ),
         MenuItemButton(
           style: MenuItemButton.styleFrom(
-            backgroundColor: widget.groupBy == GroupBy.productRefAndBatch
+            backgroundColor: widget.lineGroupType == LineGroupType.productBatch
                 ? kPrimaryColorDark
                 : kPrimaryColor,
           ),
@@ -185,7 +185,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
         ),
         MenuItemButton(
           style: MenuItemButton.styleFrom(
-            backgroundColor: widget.groupBy == GroupBy.containerBarcode
+            backgroundColor: widget.lineGroupType == LineGroupType.container
                 ? kPrimaryColorDark
                 : kPrimaryColor,
           ),
@@ -206,7 +206,7 @@ class _AppBottomBarState extends State<AppBottomBar> {
         ),
         MenuItemButton(
           style: MenuItemButton.styleFrom(
-            backgroundColor: widget.groupBy == GroupBy.none
+            backgroundColor: widget.lineGroupType == LineGroupType.none
                 ? kPrimaryColorDark
                 : kPrimaryColor,
           ),

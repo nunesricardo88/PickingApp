@@ -8,7 +8,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
-import 'package:n6picking_flutterapp/components/document_line_tile.dart';
+import 'package:n6picking_flutterapp/components/single_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/group_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/stock_tile.dart';
@@ -490,8 +490,7 @@ class _PickingScreenState extends State<PickingScreen> {
     final Map<String, List<DocumentLine>> groupedDocumentLines = {};
 
     for (final DocumentLine documentLine in documentLineList) {
-      final containerBarcode =
-          documentLine.container?.barcode ?? 'Sem container';
+      final containerBarcode = documentLine.container?.barcode ?? '';
 
       if (!groupedDocumentLines.containsKey(containerBarcode)) {
         groupedDocumentLines[containerBarcode] = [];
@@ -549,7 +548,7 @@ class _PickingScreenState extends State<PickingScreen> {
                 ),
               ],
             ),
-            child: DocumentLineTile(
+            child: SingleDocumentLineTile(
               documentLine: documentLine,
               location: _defaultDestinationLocation,
               callDocumentLineScreen: _onCallDocumentLineScreen,
@@ -691,8 +690,9 @@ class _PickingScreenState extends State<PickingScreen> {
     bool alreadyScrolled = false;
     for (final Widget slidables in documentLineTiles) {
       if (!alreadyScrolled && slidables is Slidable) {
-        if (slidables.child is DocumentLineTile) {
-          final DocumentLineTile tile = slidables.child as DocumentLineTile;
+        if (slidables.child is SingleDocumentLineTile) {
+          final SingleDocumentLineTile tile =
+              slidables.child as SingleDocumentLineTile;
           if (tile.documentLine.id == documentLineToScroll!.id) {
             final int index = documentLineTiles.indexOf(slidables);
             if (index >= documentLineTiles.length - 2) {
@@ -1717,8 +1717,10 @@ class _PickingScreenState extends State<PickingScreen> {
     );
 
     if (taskOperation.success) {
+      documentLine.originLocation = null;
       documentLine.destinationLocation = null;
       documentLine.batch = null;
+      documentLine.container = null;
 
       await getDocumentLinesList();
     }

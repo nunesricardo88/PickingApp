@@ -492,12 +492,13 @@ class _PickingScreenState extends State<PickingScreen> {
     final Map<String, List<DocumentLine>> groupedDocumentLines = {};
 
     for (final DocumentLine documentLine in documentLineList) {
-      final containerBarcode = documentLine.container?.barcode ?? '';
+      final containerBarcode = documentLine.container?.barcode.trim() ?? '';
+      final unit = documentLine.product.unit;
 
-      if (!groupedDocumentLines.containsKey(containerBarcode)) {
-        groupedDocumentLines[containerBarcode] = [];
+      if (!groupedDocumentLines.containsKey(containerBarcode + unit)) {
+        groupedDocumentLines[containerBarcode + unit] = [];
       }
-      groupedDocumentLines[containerBarcode]!.add(documentLine);
+      groupedDocumentLines[containerBarcode + unit]!.add(documentLine);
     }
 
     return groupedDocumentLines;

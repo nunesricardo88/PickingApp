@@ -138,6 +138,41 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
     super.dispose();
   }
 
+  Future<void> submitForm() async {
+    canSave = true;
+    for (int i = 0; i < widget.miscDataList.length; i++) {
+      final MiscData miscData = widget.miscDataList[i];
+      final String valueString = _textEditingControllerList[i].text;
+      miscData.value = valueString;
+      switch (miscData.type) {
+        case 'String':
+          if (miscData.isMandatory != null &&
+              miscData.isMandatory! &&
+              valueString.isEmpty) {
+            canSave = false;
+          } else {
+            miscData.valueString = valueString;
+          }
+        case 'Int':
+          miscData.valueInt = int.tryParse(valueString);
+        case 'Double':
+          miscData.valueDouble = double.tryParse(valueString);
+        case 'Date':
+          miscData.valueDate = DateTime.tryParse(valueString);
+        case 'Time':
+          miscData.valueTime = DateTime.tryParse(valueString);
+        case 'Datetime':
+          miscData.valueDatetime = DateTime.tryParse(valueString);
+        default:
+          miscData.valueString = valueString;
+          break;
+      }
+    }
+    if (canSave) {
+      Navigator.pop(context, widget.miscDataList);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,40 +256,7 @@ class _MiscDataScreenState extends State<MiscDataScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          canSave = true;
-          for (int i = 0; i < widget.miscDataList.length; i++) {
-            final MiscData miscData = widget.miscDataList[i];
-            final String valueString = _textEditingControllerList[i].text;
-            miscData.value = valueString;
-            switch (miscData.type) {
-              case 'String':
-                if (miscData.isMandatory != null &&
-                    miscData.isMandatory! &&
-                    valueString.isEmpty) {
-                  canSave = false;
-                } else {
-                  miscData.valueString = valueString;
-                }
-              case 'Int':
-                miscData.valueInt = int.tryParse(valueString);
-              case 'Double':
-                miscData.valueDouble = double.tryParse(valueString);
-              case 'Date':
-                miscData.valueDate = DateTime.tryParse(valueString);
-              case 'Time':
-                miscData.valueTime = DateTime.tryParse(valueString);
-              case 'Datetime':
-                miscData.valueDatetime = DateTime.tryParse(valueString);
-              default:
-                miscData.valueString = valueString;
-                break;
-            }
-          }
-          if (canSave) {
-            Navigator.pop(context, widget.miscDataList);
-          }
-        },
+        onPressed: submitForm,
         backgroundColor: kPrimaryColor,
         child: const Icon(
           Icons.check,

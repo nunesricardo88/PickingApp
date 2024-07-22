@@ -508,64 +508,23 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Material(
-                    color: kWhiteBackground,
-                    elevation: 2.0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10.0,
-                        vertical: 6.0,
-                      ),
-                      child: Column(
-                        children: [
-                          DocumentLinePropertyTile(
-                            title: 'Referência',
-                            value: widget.documentLine.product.reference,
-                          ),
-                          DocumentLinePropertyTile(
-                            title: 'Designação',
-                            value: widget.documentLine.designation,
-                          ),
-                          DocumentLinePropertyTile(
-                            title: 'Quantidade',
-                            value: widget.documentLine.linkedLineErpId ==
-                                        null &&
-                                    widget.documentLine.quantityToPick > 0
-                                ? Helper.removeDecimalZeroFormat(
-                                    widget.documentLine.quantity,
-                                  )
-                                : '${Helper.removeDecimalZeroFormat(widget.documentLine.quantityPicked)} ${widget.documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(widget.documentLine.totalQuantity)}' : ''}',
-                          ),
-                          if (widget.documentLine.product.isBatchTracked)
-                            GestureDetector(
-                              onTap: () async {
-                                await showDialog(
-                                  barrierDismissible: false,
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return DocumentLineDialog(
-                                      documentLine: widget.documentLine,
-                                    );
-                                  },
-                                ).then(
-                                  (value) => setState(() {
-                                    setup();
-                                  }),
-                                );
-                              },
-                              child: DocumentLinePropertyTile(
-                                title: 'Lote',
-                                value: widget.documentLine.batch != null
-                                    ? widget.documentLine.batch!.batchNumber
-                                    : '(sem lote)',
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                  DocumentLineInfo(
+                    documentLine: widget.documentLine,
+                    onTapLote: () async {
+                      await showDialog(
+                        barrierDismissible: false,
+                        context: context,
+                        builder: (BuildContext context) {
+                          return DocumentLineDialog(
+                            documentLine: widget.documentLine,
+                          );
+                        },
+                      ).then(
+                        (value) => setState(() {
+                          setup();
+                        }),
+                      );
+                    },
                   ),
                   const SizedBox(
                     height: 10.0,
@@ -639,6 +598,65 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class DocumentLineInfo extends StatelessWidget {
+  const DocumentLineInfo({
+    super.key,
+    required this.documentLine,
+    required this.onTapLote,
+  });
+
+  final DocumentLine documentLine;
+  final Function() onTapLote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: kWhiteBackground,
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10.0,
+          vertical: 6.0,
+        ),
+        child: Column(
+          children: [
+            DocumentLinePropertyTile(
+              title: 'Referência',
+              value: documentLine.product.reference,
+            ),
+            DocumentLinePropertyTile(
+              title: 'Designação',
+              value: documentLine.designation,
+            ),
+            DocumentLinePropertyTile(
+              title: 'Quantidade',
+              value: documentLine.linkedLineErpId == null &&
+                      documentLine.quantityToPick > 0
+                  ? Helper.removeDecimalZeroFormat(
+                      documentLine.quantity,
+                    )
+                  : '${Helper.removeDecimalZeroFormat(documentLine.quantityPicked)} ${documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(documentLine.totalQuantity)}' : ''}',
+            ),
+            if (documentLine.product.isBatchTracked)
+              GestureDetector(
+                onTap: onTapLote,
+                child: DocumentLinePropertyTile(
+                  title: 'Lote',
+                  value: documentLine.batch != null
+                      ? documentLine.batch!.batchNumber
+                      : '(sem lote)',
+                ),
+              ),
+          ],
         ),
       ),
     );

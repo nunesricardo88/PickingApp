@@ -18,19 +18,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final FocusNode _pinPutFocusNode = FocusNode();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _pinController = TextEditingController();
-
   List<User> _usersList = [];
-  late User _selectedUser;
   bool _canLogin = false;
   bool _isOnline = false;
   bool _isUpToDate = false;
   bool _firstSetup = true;
 
-  bool isPinFull = false;
-  bool isPinEmpty = true;
   bool showSpinner = false;
   String spinnerMessage = 'Por favor, aguarde';
 
@@ -38,13 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     checkIfCanLogin();
-  }
-
-  @override
-  void dispose() {
-    _pinController.dispose();
-    _usernameController.dispose();
-    super.dispose();
   }
 
   void showLoadingDisplay(String message) {
@@ -109,36 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
     ).whenComplete(() => checkIfCanLogin());
-  }
-
-  Future<bool> login() async {
-    bool success = false;
-    if (_canLogin) {
-      showLoadingDisplay('A iniciar sessão');
-
-      final ApiResponse response =
-          await System.instance.login(_selectedUser, _pinController.text);
-
-      hideLoadingDisplay();
-
-      success = response.success;
-
-      if (success) {
-        _usernameController.clear();
-        _pinController.clear();
-
-        Navigator.pushNamed(context, MainMenuScreen.id);
-      } else {
-        _pinController.clear();
-        final Map<String, dynamic> errorMap =
-            jsonDecode(response.result as String) as Map<String, dynamic>;
-        final String errorMessage = errorMap['errorCode'] as String;
-
-        // ignore: use_build_context_synchronously
-        await Helper.showMsg("Login falhou!", errorMessage, context);
-      }
-    }
-    return success;
   }
 
   @override
@@ -245,152 +201,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         )
                       else
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 50,
-                            vertical: 15.0,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 15.0),
-                                padding: const EdgeInsets.symmetric(
-                                  //horizontal: 20.0,
-                                  vertical: 5.0,
-                                ),
-                                decoration: pinPutDecoration.copyWith(
-                                  borderRadius: BorderRadius.circular(16.0),
-                                  color: kWhiteBackground,
-                                ),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    await _showListUsersDialog().then((value) {
-                                      if (value != null) {
-                                        final User user = value as User;
-                                        final String username = user.name;
-                                        setState(() {
-                                          _usernameController.text = username;
-                                          _selectedUser = user;
-                                        });
-                                      }
-                                    });
-                                  },
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: TextField(
-                                          enabled: false,
-                                          controller: _usernameController,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge,
-                                          decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            hintText: 'Insira o Utilizador',
-                                            hintStyle: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                  color: kPrimaryColorDark
-                                                      .withOpacity(0.5),
-                                                ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              vertical: 15.0,
-                                            ),
-                                            prefixIcon: const Padding(
-                                              padding: EdgeInsets.symmetric(
-                                                horizontal: 20.0,
-                                              ),
-                                              child: Icon(
-                                                FontAwesomeIcons.user,
-                                                color: kPrimaryColor,
-                                                size: 25,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.all(10.0),
-                                        child: Icon(Icons.arrow_drop_down),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 15.0),
-                                decoration: pinPutDecoration.copyWith(
-                                  borderRadius: BorderRadius.circular(16.0),
-                                  color: kWhiteBackground,
-                                ),
-                                child: TextField(
-                                  focusNode: _pinPutFocusNode,
-                                  enableInteractiveSelection: false,
-                                  controller: _pinController,
-                                  keyboardType: TextInputType.number,
-                                  obscureText: true,
-                                  obscuringCharacter: '●',
-                                  maxLength: 4,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (value) async {
-                                    await _login();
-                                  },
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    counter: const Offstage(),
-                                    hintText: 'Insira o Pin',
-                                    hintStyle: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          color: kPrimaryColorDark
-                                              .withOpacity(0.5),
-                                        ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 15.0,
-                                    ),
-                                    prefixIcon: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 20.0,
-                                      ),
-                                      child: Icon(
-                                        FontAwesomeIcons.key,
-                                        color: kPrimaryColor,
-                                        size: 25,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 40.0),
-                                width: double.infinity,
-                                decoration: pinPutDecoration.copyWith(
-                                  borderRadius: BorderRadius.circular(16.0),
-                                  color: kPrimaryColor,
-                                ),
-                                child: TextButton(
-                                  onPressed: () async {
-                                    await _login();
-                                  },
-                                  child: const Text(
-                                    'Entrar',
-                                    style: TextStyle(
-                                      color: kIconColor,
-                                      fontSize: 20.0,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        LoginFormWidget(
+                          canLogin: _canLogin,
+                          isOnline: _isOnline,
+                          usersList: _usersList,
+                          showLoadingDisplay: showLoadingDisplay,
+                          hideLoadingDisplay: hideLoadingDisplay,
                         ),
                     ],
                   ),
@@ -415,6 +231,70 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+}
+
+class LoginFormWidget extends StatefulWidget {
+  const LoginFormWidget({
+    super.key,
+    required this.canLogin,
+    required this.isOnline,
+    required this.usersList,
+    required this.showLoadingDisplay,
+    required this.hideLoadingDisplay,
+  });
+
+  final bool canLogin;
+  final bool isOnline;
+  final List<User> usersList;
+  final Function(String) showLoadingDisplay;
+  final Function() hideLoadingDisplay;
+
+  @override
+  State<LoginFormWidget> createState() => _LoginFormWidgetState();
+}
+
+class _LoginFormWidgetState extends State<LoginFormWidget> {
+  final FocusNode _pinPutFocusNode = FocusNode();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _pinController = TextEditingController();
+  late User _selectedUser;
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    _usernameController.dispose();
+    super.dispose();
+  }
+
+  Future<bool> login() async {
+    bool success = false;
+    if (widget.canLogin) {
+      widget.showLoadingDisplay('A iniciar sessão');
+
+      final ApiResponse response =
+          await System.instance.login(_selectedUser, _pinController.text);
+
+      widget.hideLoadingDisplay();
+
+      success = response.success;
+
+      if (success) {
+        _usernameController.clear();
+        _pinController.clear();
+
+        Navigator.pushNamed(context, MainMenuScreen.id);
+      } else {
+        _pinController.clear();
+        final Map<String, dynamic> errorMap =
+            jsonDecode(response.result as String) as Map<String, dynamic>;
+        final String errorMessage = errorMap['errorCode'] as String;
+
+        // ignore: use_build_context_synchronously
+        await Helper.showMsg("Login falhou!", errorMessage, context);
+      }
+    }
+    return success;
   }
 
   Future<void> _login() async {
@@ -454,15 +334,15 @@ class _LoginScreenState extends State<LoginScreen> {
           return AlertDialog(
             surfaceTintColor: kWhiteBackground,
             contentPadding: const EdgeInsets.only(left: 5.0, right: 5.0),
-            title: Text(_isOnline ? 'Utilizadores' : 'Falha na ligação'),
-            content: !_isOnline
+            title: Text(widget.isOnline ? 'Utilizadores' : 'Falha na ligação'),
+            content: !widget.isOnline
                 ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     child: Text(
                       'Não foi possível encontrar utilizadores. Por favor, verifique a ligação à internet ou ao servidor.',
                     ),
                   )
-                : _usersList.isEmpty
+                : widget.usersList.isEmpty
                     ? const Padding(
                         padding:
                             EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -476,7 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 10.0),
-                            for (final User user in _usersList)
+                            for (final User user in widget.usersList)
                               Column(
                                 children: [
                                   const Divider(
@@ -501,7 +381,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
             actions: [
-              if (!_isOnline || _usersList.isEmpty)
+              if (!widget.isOnline || widget.usersList.isEmpty)
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Ok'),
@@ -510,4 +390,142 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
       );
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 50,
+        vertical: 15.0,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 15.0),
+            padding: const EdgeInsets.symmetric(
+              //horizontal: 20.0,
+              vertical: 5.0,
+            ),
+            decoration: pinPutDecoration.copyWith(
+              borderRadius: BorderRadius.circular(16.0),
+              color: kWhiteBackground,
+            ),
+            child: GestureDetector(
+              onTap: () async {
+                await _showListUsersDialog().then((value) {
+                  if (value != null) {
+                    final User user = value as User;
+                    final String username = user.name;
+                    setState(() {
+                      _usernameController.text = username;
+                      _selectedUser = user;
+                    });
+                  }
+                });
+              },
+              child: Row(
+                children: [
+                  Flexible(
+                    child: TextField(
+                      enabled: false,
+                      controller: _usernameController,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'Insira o Utilizador',
+                        hintStyle:
+                            Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                  color: kPrimaryColorDark.withOpacity(0.5),
+                                ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 15.0,
+                        ),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                          ),
+                          child: Icon(
+                            FontAwesomeIcons.user,
+                            color: kPrimaryColor,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Icon(Icons.arrow_drop_down),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 15.0),
+            decoration: pinPutDecoration.copyWith(
+              borderRadius: BorderRadius.circular(16.0),
+              color: kWhiteBackground,
+            ),
+            child: TextField(
+              focusNode: _pinPutFocusNode,
+              enableInteractiveSelection: false,
+              controller: _pinController,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              obscuringCharacter: '●',
+              maxLength: 4,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (value) async {
+                await _login();
+              },
+              style: Theme.of(context).textTheme.bodyLarge,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                counter: const Offstage(),
+                hintText: 'Insira o Pin',
+                hintStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      color: kPrimaryColorDark.withOpacity(0.5),
+                    ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 15.0,
+                ),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                  ),
+                  child: Icon(
+                    FontAwesomeIcons.key,
+                    color: kPrimaryColor,
+                    size: 25,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 40.0),
+            width: double.infinity,
+            decoration: pinPutDecoration.copyWith(
+              borderRadius: BorderRadius.circular(16.0),
+              color: kPrimaryColor,
+            ),
+            child: TextButton(
+              onPressed: () async {
+                await _login();
+              },
+              child: const Text(
+                'Entrar',
+                style: TextStyle(
+                  color: kIconColor,
+                  fontSize: 20.0,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

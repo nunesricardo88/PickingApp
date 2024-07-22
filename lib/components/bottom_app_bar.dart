@@ -12,7 +12,7 @@ import 'package:n6picking_flutterapp/screens/camera_screen.dart';
 import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/utilities/constants.dart';
 
-class AppBottomBar extends StatefulWidget {
+class AppBottomBar extends StatelessWidget {
   const AppBottomBar({
     this.fabLocation = FloatingActionButtonLocation.centerDocked,
     this.shape = const CircularNotchedRectangle(),
@@ -42,11 +42,55 @@ class AppBottomBar extends StatefulWidget {
   final Future<void> Function() onGroupByProductRefAndBatch;
   final Future<void> Function() onGroupByContainerBarcode;
   final List<MiscData> miscDataList;
+
   @override
-  _AppBottomBarState createState() => _AppBottomBarState();
+  Widget build(BuildContext context) {
+    return BottomAppBar(
+      height: 60.0,
+      shape: shape,
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      color: kPrimaryColor,
+      surfaceTintColor: Colors.transparent,
+      child: IconTheme(
+        data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            LeftBottomButton(
+              lineGroupType: lineGroupType,
+              onGroupByNone: onGroupByNone,
+              onGroupByProductRef: onGroupByProductRef,
+              onGroupByProductRefAndBatch: onGroupByProductRefAndBatch,
+              onGroupByContainerBarcode: onGroupByContainerBarcode,
+              miscDataList: miscDataList,
+              onMiscDataChanged: onMiscDataChanged,
+            ),
+            RightBottomButton(
+              onBarcodeScan: onBarcodeScan,
+              onProductSelected: onProductSelected,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _AppBottomBarState extends State<AppBottomBar> {
+class RightBottomButton extends StatefulWidget {
+  const RightBottomButton({
+    super.key,
+    required this.onBarcodeScan,
+    required this.onProductSelected,
+  });
+
+  final Future<void> Function(String) onBarcodeScan;
+  final Future<void> Function(Product) onProductSelected;
+
+  @override
+  State<RightBottomButton> createState() => _RightBottomButtonState();
+}
+
+class _RightBottomButtonState extends State<RightBottomButton> {
   TextEditingController searchProductController = TextEditingController();
   List<Product> productList = [];
   bool showAllProducts = true;
@@ -86,217 +130,8 @@ class _AppBottomBarState extends State<AppBottomBar> {
     return filteredList;
   }
 
-  Widget getGroupByButton() {
-    final VisualDensity density = Theme.of(context).visualDensity;
-    final double horizontalPadding = math.max(
-      4,
-      12 + density.horizontal * 2,
-    );
-
-    return MenuAnchor(
-      style: MenuStyle(
-        backgroundColor: WidgetStateColor.resolveWith(
-          (states) => kPrimaryColor,
-        ),
-      ),
-      builder: (
-        BuildContext context,
-        MenuController controller,
-        Widget? child,
-      ) {
-        return TextButton(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  FaIcon(
-                    FontAwesomeIcons.filter,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    size: 20.0,
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(
-                      start: horizontalPadding,
-                    ),
-                    child: Text(
-                      'Agrupar',
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          onPressed: () {
-            if (controller.isOpen) {
-              controller.close();
-            } else {
-              controller.open();
-            }
-          },
-        );
-      },
-      menuChildren: [
-        MenuItemButton(
-          style: MenuItemButton.styleFrom(
-            backgroundColor: widget.lineGroupType == LineGroupType.product
-                ? kPrimaryColorDark
-                : kPrimaryColor,
-          ),
-          leadingIcon: FaIcon(
-            FontAwesomeIcons.filter,
-            color: Theme.of(context).colorScheme.onPrimary,
-            size: 20.0,
-          ),
-          child: Text(
-            'Agrupar por referência',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-          ),
-          onPressed: () async {
-            widget.onGroupByProductRef();
-          },
-        ),
-        MenuItemButton(
-          style: MenuItemButton.styleFrom(
-            backgroundColor: widget.lineGroupType == LineGroupType.productBatch
-                ? kPrimaryColorDark
-                : kPrimaryColor,
-          ),
-          leadingIcon: FaIcon(
-            FontAwesomeIcons.filter,
-            color: Theme.of(context).colorScheme.onPrimary,
-            size: 20.0,
-          ),
-          child: Text(
-            'Agrupar por referência e lote',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-          ),
-          onPressed: () async {
-            widget.onGroupByProductRefAndBatch();
-          },
-        ),
-        MenuItemButton(
-          style: MenuItemButton.styleFrom(
-            backgroundColor: widget.lineGroupType == LineGroupType.container
-                ? kPrimaryColorDark
-                : kPrimaryColor,
-          ),
-          leadingIcon: FaIcon(
-            FontAwesomeIcons.filter,
-            color: Theme.of(context).colorScheme.onPrimary,
-            size: 20.0,
-          ),
-          child: Text(
-            'Agrupar por container',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-          ),
-          onPressed: () async {
-            widget.onGroupByContainerBarcode();
-          },
-        ),
-        MenuItemButton(
-          style: MenuItemButton.styleFrom(
-            backgroundColor: widget.lineGroupType == LineGroupType.none
-                ? kPrimaryColorDark
-                : kPrimaryColor,
-          ),
-          leadingIcon: FaIcon(
-            FontAwesomeIcons.filterCircleXmark,
-            color: Theme.of(context).colorScheme.onPrimary,
-            size: 20.0,
-          ),
-          child: Text(
-            'Desagrupar',
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-          ),
-          onPressed: () async {
-            widget.onGroupByNone();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget getLeftButton() {
-    return Material(
-      color: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      child: MenuAnchor(
-        style: MenuStyle(
-          backgroundColor: WidgetStateColor.resolveWith(
-            (states) => kPrimaryColor,
-          ),
-        ),
-        builder: (
-          BuildContext context,
-          MenuController controller,
-          Widget? child,
-        ) {
-          return IconButton(
-            icon: FaIcon(
-              FontAwesomeIcons.bars,
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 30.0,
-            ),
-            onPressed: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
-          );
-        },
-        menuChildren: [
-          if (widget.miscDataList.isNotEmpty)
-            MenuItemButton(
-              leadingIcon: FaIcon(
-                FontAwesomeIcons.penToSquare,
-                color: Theme.of(context).colorScheme.onPrimary,
-                size: 20.0,
-              ),
-              child: Text(
-                'Outros dados',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-              ),
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MiscDataScreen(
-                      miscDataList: widget.miscDataList,
-                    ),
-                  ),
-                ).then(
-                  (value) {
-                    if (value is List<MiscData>) {
-                      widget.onMiscDataChanged(value);
-                    }
-                  },
-                );
-              },
-            ),
-          getGroupByButton(),
-        ],
-      ),
-    );
-  }
-
-  Widget getRightButton() {
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -404,131 +239,15 @@ class _AppBottomBarState extends State<AppBottomBar> {
                               filterProductList(
                             searchProductController.text,
                           );
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextField(
-                                controller: searchProductController,
-                                keyboardType: TextInputType.name,
-                                onEditingComplete: () {
-                                  FocusManager.instance.primaryFocus?.unfocus();
-                                },
-                                decoration: const InputDecoration(
-                                  labelText: 'Procurar artigo',
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 10.0,
-                              ),
-                              Expanded(
-                                child: filteredProductList.isEmpty
-                                    ? Center(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              searchProductController
-                                                      .text.isNotEmpty
-                                                  ? 'Sem resultados'
-                                                  : 'Pesquise por um artigo',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium!
-                                                  .copyWith(
-                                                    color: kPrimaryColor,
-                                                  ),
-                                            ),
-                                            const SizedBox(
-                                              height: 10.0,
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  showAllProducts = true;
-                                                });
-                                              },
-                                              child: Text(
-                                                'Ver todos',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium!
-                                                    .copyWith(
-                                                      color: kPrimaryColor,
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                    ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : ListView.builder(
-                                        itemCount: filteredProductList.length,
-                                        itemBuilder: (context, index) {
-                                          final Product product =
-                                              filteredProductList[index];
-                                          return Column(
-                                            children: [
-                                              if (index == 0)
-                                                const SizedBox(
-                                                  height: 10.0,
-                                                ),
-                                              if (index > 0)
-                                                const Divider(
-                                                  thickness: 1.0,
-                                                ),
-                                              GestureDetector(
-                                                onTap: () {
-                                                  Navigator.pop(
-                                                    context,
-                                                  );
-                                                  widget.onProductSelected(
-                                                    product,
-                                                  );
-                                                },
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(
-                                                    8.0,
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .stretch,
-                                                          children: [
-                                                            Text(
-                                                              product
-                                                                  .designation,
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 5.0,
-                                                            ),
-                                                            Opacity(
-                                                              opacity: 0.6,
-                                                              child: Text(
-                                                                product
-                                                                    .reference,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      ),
-                              ),
-                            ],
+                          return ProductLine(
+                            filteredProductList: filteredProductList,
+                            searchProductController: searchProductController,
+                            onProductSelected: widget.onProductSelected,
+                            onSeeAll: () {
+                              setState(() {
+                                showAllProducts = true;
+                              });
+                            },
                           );
                         },
                       ),
@@ -542,25 +261,387 @@ class _AppBottomBarState extends State<AppBottomBar> {
       ),
     );
   }
+}
+
+class ProductLine extends StatelessWidget {
+  const ProductLine({
+    super.key,
+    required this.filteredProductList,
+    required this.searchProductController,
+    required this.onProductSelected,
+    required this.onSeeAll,
+  });
+
+  final List<Product> filteredProductList;
+  final TextEditingController searchProductController;
+  final Future<void> Function(Product) onProductSelected;
+  final Function() onSeeAll;
 
   @override
   Widget build(BuildContext context) {
-    return BottomAppBar(
-      height: 60.0,
-      shape: widget.shape,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      color: kPrimaryColor,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: searchProductController,
+          keyboardType: TextInputType.name,
+          onEditingComplete: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          decoration: const InputDecoration(
+            labelText: 'Procurar artigo',
+          ),
+        ),
+        const SizedBox(
+          height: 10.0,
+        ),
+        Expanded(
+          child: filteredProductList.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        searchProductController.text.isNotEmpty
+                            ? 'Sem resultados'
+                            : 'Pesquise por um artigo',
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: kPrimaryColor,
+                            ),
+                      ),
+                      const SizedBox(
+                        height: 10.0,
+                      ),
+                      GestureDetector(
+                        onTap: onSeeAll,
+                        child: Text(
+                          'Ver todos',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium!.copyWith(
+                                    color: kPrimaryColor,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: filteredProductList.length,
+                  itemBuilder: (context, index) {
+                    final Product product = filteredProductList[index];
+                    return Column(
+                      children: [
+                        if (index == 0)
+                          const SizedBox(
+                            height: 10.0,
+                          ),
+                        if (index > 0)
+                          const Divider(
+                            thickness: 1.0,
+                          ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(
+                              context,
+                            );
+                            onProductSelected(
+                              product,
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(
+                              8.0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        product.designation,
+                                      ),
+                                      const SizedBox(
+                                        height: 5.0,
+                                      ),
+                                      Opacity(
+                                        opacity: 0.6,
+                                        child: Text(
+                                          product.reference,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class LeftBottomButton extends StatelessWidget {
+  const LeftBottomButton({
+    super.key,
+    required this.lineGroupType,
+    required this.onGroupByNone,
+    required this.onGroupByProductRef,
+    required this.onGroupByProductRefAndBatch,
+    required this.onGroupByContainerBarcode,
+    required this.miscDataList,
+    required this.onMiscDataChanged,
+  });
+
+  final LineGroupType lineGroupType;
+  final Future<void> Function(List<MiscData>) onMiscDataChanged;
+  final Future<void> Function() onGroupByNone;
+  final Future<void> Function() onGroupByProductRef;
+  final Future<void> Function() onGroupByProductRefAndBatch;
+  final Future<void> Function() onGroupByContainerBarcode;
+  final List<MiscData> miscDataList;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      child: IconTheme(
-        data: IconThemeData(color: Theme.of(context).colorScheme.onPrimary),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            getLeftButton(),
-            getRightButton(),
-          ],
+      child: MenuAnchor(
+        style: MenuStyle(
+          backgroundColor: WidgetStateColor.resolveWith(
+            (states) => kPrimaryColor,
+          ),
+        ),
+        builder: (
+          BuildContext context,
+          MenuController controller,
+          Widget? child,
+        ) {
+          return IconButton(
+            icon: FaIcon(
+              FontAwesomeIcons.bars,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 30.0,
+            ),
+            onPressed: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+          );
+        },
+        menuChildren: [
+          if (miscDataList.isNotEmpty)
+            MenuItemButton(
+              leadingIcon: FaIcon(
+                FontAwesomeIcons.penToSquare,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 20.0,
+              ),
+              child: Text(
+                'Outros dados',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MiscDataScreen(
+                      miscDataList: miscDataList,
+                    ),
+                  ),
+                ).then(
+                  (value) {
+                    if (value is List<MiscData>) {
+                      onMiscDataChanged(value);
+                    }
+                  },
+                );
+              },
+            ),
+          GroupByButton(
+            lineGroupType: lineGroupType,
+            onGroupByNone: onGroupByNone,
+            onGroupByProductRef: onGroupByProductRef,
+            onGroupByProductRefAndBatch: onGroupByProductRefAndBatch,
+            onGroupByContainerBarcode: onGroupByContainerBarcode,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GroupByButton extends StatelessWidget {
+  const GroupByButton({
+    super.key,
+    required this.lineGroupType,
+    required this.onGroupByNone,
+    required this.onGroupByProductRef,
+    required this.onGroupByProductRefAndBatch,
+    required this.onGroupByContainerBarcode,
+  });
+
+  final LineGroupType lineGroupType;
+  final Future<void> Function() onGroupByNone;
+  final Future<void> Function() onGroupByProductRef;
+  final Future<void> Function() onGroupByProductRefAndBatch;
+  final Future<void> Function() onGroupByContainerBarcode;
+
+  @override
+  Widget build(BuildContext context) {
+    final VisualDensity density = Theme.of(context).visualDensity;
+    final double horizontalPadding = math.max(
+      4,
+      12 + density.horizontal * 2,
+    );
+
+    return MenuAnchor(
+      style: MenuStyle(
+        backgroundColor: WidgetStateColor.resolveWith(
+          (states) => kPrimaryColor,
         ),
       ),
+      builder: (
+        BuildContext context,
+        MenuController controller,
+        Widget? child,
+      ) {
+        return TextButton(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  FaIcon(
+                    FontAwesomeIcons.filter,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    size: 20.0,
+                  ),
+                  Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: horizontalPadding,
+                    ),
+                    child: Text(
+                      'Agrupar',
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+        );
+      },
+      menuChildren: [
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: lineGroupType == LineGroupType.product
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por referência',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            onGroupByProductRef();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: lineGroupType == LineGroupType.productBatch
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por referência e lote',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            onGroupByProductRefAndBatch();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: lineGroupType == LineGroupType.container
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filter,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Agrupar por container',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            onGroupByContainerBarcode();
+          },
+        ),
+        MenuItemButton(
+          style: MenuItemButton.styleFrom(
+            backgroundColor: lineGroupType == LineGroupType.none
+                ? kPrimaryColorDark
+                : kPrimaryColor,
+          ),
+          leadingIcon: FaIcon(
+            FontAwesomeIcons.filterCircleXmark,
+            color: Theme.of(context).colorScheme.onPrimary,
+            size: 20.0,
+          ),
+          child: Text(
+            'Desagrupar',
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          onPressed: () async {
+            onGroupByNone();
+          },
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
@@ -8,9 +9,9 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
-import 'package:n6picking_flutterapp/components/single_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/group_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/loading_display.dart';
+import 'package:n6picking_flutterapp/components/single_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/stock_tile.dart';
 import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/container_model.dart'
@@ -135,6 +136,7 @@ class _PickingScreenState extends State<PickingScreen> {
                 element.preOperationInput != null && element.preOperationInput!,
           )
           .toList();
+
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -613,6 +615,7 @@ class _PickingScreenState extends State<PickingScreen> {
         }
       }
     });
+
     await getDocumentLinesList();
     setState(() {
       canPick = true;
@@ -1283,140 +1286,6 @@ class _PickingScreenState extends State<PickingScreen> {
     }
   }
 
-  Widget locationMenu() {
-    final PickingTask pickingTask = Provider.of<PickingTask>(
-      context,
-      listen: false,
-    );
-    Location? location;
-    switch (pickingTask.stockMovement) {
-      case StockMovement.none:
-        location = null;
-      case StockMovement.inbound:
-        location = _destinationLocation;
-      case StockMovement.outbound:
-        location = _originLocation;
-      case StockMovement.inventory:
-        location = _destinationLocation;
-      case StockMovement.transfer:
-        location = _originLocation;
-    }
-
-    final Widget row = Row(
-      children: [
-        FaIcon(
-          FontAwesomeIcons.warehouse,
-          size: 13.0,
-          color: needsLocation()
-              ? kErrorColor.withOpacity(0.3)
-              : kSecondaryTextColor,
-        ),
-        const SizedBox(
-          width: 10.0,
-        ),
-        Text(
-          getCurrentLocationName(),
-          style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: needsLocation()
-                    ? kErrorColor.withOpacity(0.5)
-                    : kSecondaryTextColor,
-              ),
-        ),
-      ],
-    );
-
-    if (location == null) {
-      return row;
-    }
-
-    final bool canSeeStock =
-        pickingTask.stockMovement == StockMovement.outbound ||
-            pickingTask.stockMovement == StockMovement.transfer;
-
-    return Material(
-      color: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      child: MenuAnchor(
-        style: MenuStyle(
-          backgroundColor: WidgetStateColor.resolveWith(
-            (states) => kPrimaryColor,
-          ),
-        ),
-        builder:
-            (BuildContext context, MenuController controller, Widget? child) {
-          return GestureDetector(
-            onTap: () {
-              if (controller.isOpen) {
-                controller.close();
-              } else {
-                controller.open();
-              }
-            },
-            child: row,
-          );
-        },
-        menuChildren: [
-          if (canSeeStock)
-            MenuItemButton(
-              leadingIcon: FaIcon(
-                FontAwesomeIcons.boxOpen,
-                color: Theme.of(context).colorScheme.onPrimary,
-                size: 20.0,
-              ),
-              child: Text(
-                'Ver stock',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-              ),
-              onPressed: () async {
-                await showStockList();
-              },
-            ),
-          MenuItemButton(
-            leadingIcon: FaIcon(
-              FontAwesomeIcons.eraser,
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 20.0,
-            ),
-            child: Text(
-              'Limpar localização',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
-            ),
-            onPressed: () {
-              if (location != null) {
-                if (pickingTask.stockMovement == StockMovement.inbound ||
-                    pickingTask.stockMovement == StockMovement.inventory) {
-                  if (_canChangeDestinationLocation) {
-                    setDestinationLocation(null);
-                  } else {
-                    Helper.showMsg(
-                      'Atenção',
-                      'A localização de origem não pode ser alterada',
-                      context,
-                    );
-                  }
-                } else {
-                  if (_canChangeOriginLocation) {
-                    setOriginLocation(null);
-                  } else {
-                    Helper.showMsg(
-                      'Atenção',
-                      'A localização de origem não pode ser alterada',
-                      context,
-                    );
-                  }
-                }
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> showStockList() async {
     setState(() {
       canPick = false;
@@ -2002,6 +1871,14 @@ class _PickingScreenState extends State<PickingScreen> {
     final PickingTask pickingTask = context.watch<PickingTask>();
     final bool needsLocation = this.needsLocation();
     final bool canSave = documentHasData();
+    final Location? location = switch (pickingTask.stockMovement) {
+      StockMovement.none => null,
+      StockMovement.inbound => _destinationLocation,
+      StockMovement.outbound => _originLocation,
+      StockMovement.inventory => _destinationLocation,
+      StockMovement.transfer => _originLocation
+    };
+
     return LoadingDisplay(
       isLoading: showSpinner,
       loadingText: spinnerMessage,
@@ -2038,57 +1915,17 @@ class _PickingScreenState extends State<PickingScreen> {
             onBarcodeScanned: _onBarcodeScanned,
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: _entityController,
-                        style: Theme.of(context).textTheme.labelSmall,
-                        decoration: kPickTextFieldsInputDecoration.copyWith(
-                          hintText:
-                              'Escolha um ${pickingTask.destinationDocumentType.entityType.name}',
-                          prefixIcon: const Icon(
-                            FontAwesomeIcons.userTie,
-                            size: 15.0,
-                            color: kPrimaryColorDark,
-                          ),
-                        ),
-                        readOnly: true,
-                        onTap: () async {
-                          if (_canChangeEntity) {
-                            await _onChangeEntity();
-                          }
-                        },
-                      ),
-                      if (pickingTask.originDocumentType != null)
-                        Column(
-                          children: [
-                            const SizedBox(
-                              height: 15.0,
-                            ),
-                            TextField(
-                              style: Theme.of(context).textTheme.labelSmall,
-                              decoration:
-                                  kPickTextFieldsInputDecoration.copyWith(
-                                hintText: 'Escolha os documentos de origem',
-                                prefixIcon: const Icon(
-                                  FontAwesomeIcons.book,
-                                  size: 15.0,
-                                  color: kPrimaryColorDark,
-                                ),
-                              ),
-                              controller: _sourceDocumentsController,
-                              readOnly: true,
-                              onTap: () async {
-                                await _onChangeSourceDocuments();
-                              },
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
+                SelectMenuWidget(
+                  entityController: _entityController,
+                  sourceDocumentsController: _sourceDocumentsController,
+                  onClientTap: () async {
+                    if (_canChangeEntity) {
+                      await _onChangeEntity();
+                    }
+                  },
+                  onSourceDocumentTap: () async {
+                    await _onChangeSourceDocuments();
+                  },
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -2108,7 +1945,44 @@ class _PickingScreenState extends State<PickingScreen> {
                       const SizedBox(
                         width: 10.0,
                       ),
-                      locationMenu(),
+                      LocationMenuWidget(
+                        needsLocation: needsLocation,
+                        currentLocationName: getCurrentLocationName(),
+                        destinationLocation: _destinationLocation,
+                        originLocation: _originLocation,
+                        location: location,
+                        onCleanLocation: () {
+                          if (location != null) {
+                            if (pickingTask.stockMovement ==
+                                    StockMovement.inbound ||
+                                pickingTask.stockMovement ==
+                                    StockMovement.inventory) {
+                              if (_canChangeDestinationLocation) {
+                                setDestinationLocation(null);
+                              } else {
+                                Helper.showMsg(
+                                  'Atenção',
+                                  'A localização de origem não pode ser alterada',
+                                  context,
+                                );
+                              }
+                            } else {
+                              if (_canChangeOriginLocation) {
+                                setOriginLocation(null);
+                              } else {
+                                Helper.showMsg(
+                                  'Atenção',
+                                  'A localização de origem não pode ser alterada',
+                                  context,
+                                );
+                              }
+                            }
+                          }
+                        },
+                        onSeeStock: () async {
+                          await showStockList();
+                        },
+                      ),
                       const SizedBox(
                         width: 10.0,
                       ),
@@ -2126,94 +2000,11 @@ class _PickingScreenState extends State<PickingScreen> {
                 const SizedBox(
                   height: 10.0,
                 ),
-                Expanded(
-                  child: FutureBuilder(
-                    future: listBuild,
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      List<Widget> noSnapshotWidgets;
-                      if (snapshot.hasData) {
-                        return documentTilesList.children.isEmpty
-                            ? Column(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 75.0,
-                                          ),
-                                          child: Center(
-                                            child: Icon(
-                                              FontAwesomeIcons.barsStaggered,
-                                              color: kPrimaryColor
-                                                  .withOpacity(0.15),
-                                              size: 150,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Column(
-                                children: [
-                                  Expanded(
-                                    child: ScrollablePositionedList.builder(
-                                      itemScrollController:
-                                          _listScrollController,
-                                      itemCount: documentLineTiles.length,
-                                      itemBuilder:
-                                          (BuildContext context, int index) {
-                                        return documentLineTiles[index];
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                      } else if (snapshot.hasError &&
-                          snapshot.connectionState != ConnectionState.waiting) {
-                        noSnapshotWidgets = [
-                          Icon(
-                            Icons.error_outline,
-                            color: kPrimaryColor.withOpacity(0.6),
-                            size: 50,
-                          ),
-                          const SizedBox(
-                            height: 20.0,
-                          ),
-                          Text(
-                            snapshot.error.toString(),
-                            textAlign: TextAlign.center,
-                          ),
-                        ];
-                      } else {
-                        noSnapshotWidgets = [
-                          const Center(
-                            child: CircularProgressIndicator(
-                              color: kPrimaryColor,
-                            ),
-                          ),
-                        ];
-                      }
-
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: noSnapshotWidgets,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                TilesListWidget(
+                  listBuild: listBuild,
+                  documentTilesList: documentTilesList,
+                  listScrollController: _listScrollController,
+                  documentLineTiles: documentLineTiles,
                 ),
               ],
             ),
@@ -2250,6 +2041,313 @@ class _PickingScreenState extends State<PickingScreen> {
             miscDataList: documentExtraFieldsList,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class LocationMenuWidget extends StatelessWidget {
+  const LocationMenuWidget({
+    super.key,
+    required this.needsLocation,
+    required this.currentLocationName,
+    this.destinationLocation,
+    this.originLocation,
+    this.location,
+    required this.onCleanLocation,
+    required this.onSeeStock,
+  });
+
+  final bool needsLocation;
+  final String currentLocationName;
+  final Location? destinationLocation;
+  final Location? originLocation;
+  final Location? location;
+  final Function() onCleanLocation;
+  final Function() onSeeStock;
+
+  @override
+  Widget build(BuildContext context) {
+    if (location == null) {
+      return LocationRow(
+        needsLocation: needsLocation,
+        currentLocationName: currentLocationName,
+      );
+    }
+
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+    final bool canSeeStock =
+        pickingTask.stockMovement == StockMovement.outbound ||
+            pickingTask.stockMovement == StockMovement.transfer;
+
+    return Material(
+      color: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      child: MenuAnchor(
+        style: MenuStyle(
+          backgroundColor: WidgetStateColor.resolveWith(
+            (states) => kPrimaryColor,
+          ),
+        ),
+        builder:
+            (BuildContext context, MenuController controller, Widget? child) {
+          return GestureDetector(
+            onTap: () {
+              if (controller.isOpen) {
+                controller.close();
+              } else {
+                controller.open();
+              }
+            },
+            child: LocationRow(
+              needsLocation: needsLocation,
+              currentLocationName: currentLocationName,
+            ),
+          );
+        },
+        menuChildren: [
+          if (canSeeStock)
+            MenuItemButton(
+              leadingIcon: FaIcon(
+                FontAwesomeIcons.boxOpen,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 20.0,
+              ),
+              onPressed: onSeeStock,
+              child: Text(
+                'Ver stock',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+              ),
+            ),
+          MenuItemButton(
+            leadingIcon: FaIcon(
+              FontAwesomeIcons.eraser,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 20.0,
+            ),
+            onPressed: onCleanLocation,
+            child: Text(
+              'Limpar localização',
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LocationRow extends StatelessWidget {
+  const LocationRow({
+    super.key,
+    required this.needsLocation,
+    required this.currentLocationName,
+  });
+
+  final bool needsLocation;
+  final String currentLocationName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        FaIcon(
+          FontAwesomeIcons.warehouse,
+          size: 13.0,
+          color: needsLocation
+              ? kErrorColor.withOpacity(0.3)
+              : kSecondaryTextColor,
+        ),
+        const SizedBox(
+          width: 10.0,
+        ),
+        Text(
+          currentLocationName,
+          style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                color: needsLocation
+                    ? kErrorColor.withOpacity(0.5)
+                    : kSecondaryTextColor,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class SelectMenuWidget extends StatelessWidget {
+  const SelectMenuWidget({
+    super.key,
+    required this.entityController,
+    required this.sourceDocumentsController,
+    required this.onClientTap,
+    required this.onSourceDocumentTap,
+  });
+
+  final TextEditingController entityController;
+  final TextEditingController sourceDocumentsController;
+  final Function() onClientTap;
+  final Function() onSourceDocumentTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final PickingTask pickingTask = Provider.of<PickingTask>(
+      context,
+      listen: false,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: entityController,
+            style: Theme.of(context).textTheme.labelSmall,
+            decoration: kPickTextFieldsInputDecoration.copyWith(
+              hintText:
+                  'Escolha um ${pickingTask.destinationDocumentType.entityType.name}',
+              prefixIcon: const Icon(
+                FontAwesomeIcons.userTie,
+                size: 15.0,
+                color: kPrimaryColorDark,
+              ),
+            ),
+            readOnly: true,
+            onTap: onClientTap,
+          ),
+          if (pickingTask.originDocumentType != null)
+            Column(
+              children: [
+                const SizedBox(
+                  height: 15.0,
+                ),
+                TextField(
+                  style: Theme.of(context).textTheme.labelSmall,
+                  decoration: kPickTextFieldsInputDecoration.copyWith(
+                    hintText: 'Escolha os documentos de origem',
+                    prefixIcon: const Icon(
+                      FontAwesomeIcons.book,
+                      size: 15.0,
+                      color: kPrimaryColorDark,
+                    ),
+                  ),
+                  controller: sourceDocumentsController,
+                  readOnly: true,
+                  onTap: onSourceDocumentTap,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class TilesListWidget extends StatelessWidget {
+  const TilesListWidget({
+    super.key,
+    required this.listBuild,
+    required this.documentTilesList,
+    required this.listScrollController,
+    required this.documentLineTiles,
+  });
+
+  final Future<bool> listBuild;
+  final Column documentTilesList;
+  final ItemScrollController listScrollController;
+  final List<Widget> documentLineTiles;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: FutureBuilder(
+        future: listBuild,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          List<Widget> noSnapshotWidgets;
+          if (snapshot.hasData) {
+            return documentTilesList.children.isEmpty
+                ? Column(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: 75.0,
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  FontAwesomeIcons.barsStaggered,
+                                  color: kPrimaryColor.withOpacity(0.15),
+                                  size: 150,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ScrollablePositionedList.builder(
+                          itemScrollController: listScrollController,
+                          itemCount: documentLineTiles.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return documentLineTiles[index];
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+          } else if (snapshot.hasError &&
+              snapshot.connectionState != ConnectionState.waiting) {
+            noSnapshotWidgets = [
+              Icon(
+                Icons.error_outline,
+                color: kPrimaryColor.withOpacity(0.6),
+                size: 50,
+              ),
+              const SizedBox(
+                height: 20.0,
+              ),
+              Text(
+                snapshot.error.toString(),
+                textAlign: TextAlign.center,
+              ),
+            ];
+          } else {
+            noSnapshotWidgets = [
+              const Center(
+                child: CircularProgressIndicator(
+                  color: kPrimaryColor,
+                ),
+              ),
+            ];
+          }
+
+          return Column(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: noSnapshotWidgets,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

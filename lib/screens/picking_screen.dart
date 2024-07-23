@@ -9,6 +9,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
+import 'package:n6picking_flutterapp/components/drawer_left_menu.dart';
+import 'package:n6picking_flutterapp/components/drawer_right_menu.dart';
 import 'package:n6picking_flutterapp/components/group_document_line_tile.dart';
 import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/single_document_line_tile.dart';
@@ -1890,6 +1892,10 @@ class _PickingScreenState extends State<PickingScreen> {
           backgroundColor: kGreyBackground,
           appBar: AppBar(
             backgroundColor: kPrimaryColor,
+            actions: <Widget>[
+              // Remove right hamburguer button from appbar
+              Container(),
+            ],
             leading: GestureDetector(
               onTap: () {
                 exitPickingScreen();
@@ -1911,6 +1917,19 @@ class _PickingScreenState extends State<PickingScreen> {
             ),
             titleSpacing: 0.0,
             elevation: 10.0,
+          ),
+          drawer: DrawerLeftMenu(
+            lineGroupType: groupDocumentLinesBy,
+            onGroupByNone: _onGroupByNone,
+            onGroupByProductRef: _onGroupByProductRef,
+            onGroupByProductRefAndBatch: _onGroupByProductRefAndBatch,
+            onGroupByContainerBarcode: _onGroupByContainerBarcode,
+            onMiscDataChanged: _onMiscDataChanged,
+            miscDataList: documentExtraFieldsList,
+          ),
+          endDrawer: DrawerRightMenu(
+            onBarcodeScanned: _onBarcodeScanned,
+            onProductSelected: _onProductSelectedBottomBar,
           ),
           body: BarcodeKeyboardListener(
             onBarcodeScanned: _onBarcodeScanned,
@@ -2028,19 +2047,7 @@ class _PickingScreenState extends State<PickingScreen> {
                   : kPrimaryColorLight.withOpacity(0.5),
             ),
           ),
-          bottomNavigationBar: AppBottomBar(
-            lineGroupType: groupDocumentLinesBy,
-            onBarcodeScan: _onBarcodeScanned,
-            onProductSelected: _onProductSelectedBottomBar,
-            onStockListCallBack: _onStockListCallBack,
-            onMiscDataChanged: _onMiscDataChanged,
-            onGetCurrentOriginLocation: _onGetCurrentOriginLocation,
-            onGroupByNone: _onGroupByNone,
-            onGroupByProductRef: _onGroupByProductRef,
-            onGroupByProductRefAndBatch: _onGroupByProductRefAndBatch,
-            onGroupByContainerBarcode: _onGroupByContainerBarcode,
-            miscDataList: documentExtraFieldsList,
-          ),
+          bottomNavigationBar: const AppBottomBar(),
         ),
       ),
     );

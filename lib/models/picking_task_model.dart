@@ -5,6 +5,8 @@ import 'package:flutter_guid/flutter_guid.dart';
 import 'package:http/http.dart' as http;
 import 'package:n6picking_flutterapp/models/address_model.dart';
 import 'package:n6picking_flutterapp/models/batch_model.dart';
+import 'package:n6picking_flutterapp/models/container_model.dart'
+    as container_model;
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/document_model.dart';
 import 'package:n6picking_flutterapp/models/document_type_model.dart';
@@ -61,6 +63,7 @@ class PickingTask extends ChangeNotifier {
   DocumentType destinationDocumentType;
   String customOptions;
   List<Document> sourceDocuments;
+  List<container_model.Container> containers;
 
   PickingTask({
     required this.id,
@@ -76,6 +79,7 @@ class PickingTask extends ChangeNotifier {
     required this.destinationDocumentType,
     required this.customOptions,
     this.sourceDocuments = const [],
+    this.containers = const [],
   });
 
   factory PickingTask.fromJson(Map<String, dynamic> json) => PickingTask(
@@ -105,6 +109,7 @@ class PickingTask extends ChangeNotifier {
         ),
         customOptions: json[PickingTaskFields.customOptions] as String,
         sourceDocuments: [],
+        containers: [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -134,6 +139,7 @@ class PickingTask extends ChangeNotifier {
     DocumentType? destinationDocumentType,
     String? customOptions,
     List<Document>? sourceDocuments,
+    List<container_model.Container>? containers,
   }) =>
       PickingTask(
         id: id ?? this.id,
@@ -150,6 +156,7 @@ class PickingTask extends ChangeNotifier {
             destinationDocumentType ?? this.destinationDocumentType,
         customOptions: customOptions ?? this.customOptions,
         sourceDocuments: sourceDocuments ?? this.sourceDocuments,
+        containers: containers ?? this.containers,
       );
 
   //PickingTask
@@ -167,6 +174,7 @@ class PickingTask extends ChangeNotifier {
     destinationDocumentType = pickingTask.destinationDocumentType;
     customOptions = pickingTask.customOptions;
     sourceDocuments = pickingTask.sourceDocuments;
+    containers = pickingTask.containers;
 
     if (document == null) {
       setNewDocument();
@@ -637,6 +645,14 @@ class PickingTask extends ChangeNotifier {
     document = null;
     sourceDocuments.clear();
     notifyListeners();
+  }
+
+  void addContainer(container_model.Container container) {
+    containers.add(container);
+  }
+
+  void removeContainer(container_model.Container container) {
+    containers.remove(container);
   }
 }
 

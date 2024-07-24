@@ -699,6 +699,7 @@ class _PickingScreenState extends State<PickingScreen> {
         quantity: productCount,
         container: container,
       );
+      pickingTask.addContainer(container);
       pickingTask.document!.lines.add(newDocumentLine);
     }
 
@@ -1625,6 +1626,10 @@ class _PickingScreenState extends State<PickingScreen> {
       documentLine.originLocation = null;
       documentLine.destinationLocation = null;
       documentLine.batch = null;
+
+      if (documentLine.container != null) {
+        pickingTask.removeContainer(documentLine.container!);
+      }
       documentLine.container = null;
 
       await getDocumentLinesList();

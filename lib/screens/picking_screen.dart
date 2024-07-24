@@ -90,6 +90,9 @@ class _PickingScreenState extends State<PickingScreen> {
   //Group by document lines
   late LineGroupType groupDocumentLinesBy = LineGroupType.none;
 
+  // Temporary container barcode
+  int _barcodeNum = 0;
+
   @override
   void initState() {
     super.initState();
@@ -663,6 +666,11 @@ class _PickingScreenState extends State<PickingScreen> {
     setState(() {});
   }
 
+  String _generateTemporaryBarcode() {
+    _barcodeNum++;
+    return 'NEW_${_barcodeNum.toString().padLeft(3, '0')}';
+  }
+
   Future<void> _onSplitContainer(
     DocumentLine documentLine,
     List<double> containerData,
@@ -676,12 +684,14 @@ class _PickingScreenState extends State<PickingScreen> {
     final PickingTask pickingTask =
         Provider.of<PickingTask>(context, listen: false);
 
+    final String tempBarcode = _generateTemporaryBarcode();
+
     //Create a DocumentLine for each container
     for (int i = 0; i < containersCount; i++) {
       final container_model.Container container = container_model.Container(
         id: Guid.newGuid,
         erpId: '',
-        barcode: 'NEW',
+        barcode: tempBarcode,
         location: _originLocation ?? _destinationLocation!,
       );
       final DocumentLine newDocumentLine = documentLine.copyWith(

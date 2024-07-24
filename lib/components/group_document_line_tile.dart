@@ -125,8 +125,6 @@ class _GroupDocumentLineTileState
         return widget.documentLines.first.product.designation;
       case LineGroupType.productBatch:
         return widget.documentLines.first.product.designation;
-      case LineGroupType.container:
-        return widget.documentLines.first.container?.barcode ?? 'Sem container';
       default:
         return "";
     }

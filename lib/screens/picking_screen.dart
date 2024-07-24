@@ -8,6 +8,7 @@ import 'package:flutter_guid/flutter_guid.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:n6picking_flutterapp/components/bottom_app_bar.dart';
+import 'package:n6picking_flutterapp/components/container_lines_tile.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/drawer_left_menu.dart';
 import 'package:n6picking_flutterapp/components/drawer_right_menu.dart';
@@ -495,12 +496,11 @@ class _PickingScreenState extends State<PickingScreen> {
 
     for (final DocumentLine documentLine in documentLineList) {
       final containerBarcode = documentLine.container?.barcode.trim() ?? '';
-      final unit = documentLine.product.unit;
 
-      if (!groupedDocumentLines.containsKey(containerBarcode + unit)) {
-        groupedDocumentLines[containerBarcode + unit] = [];
+      if (!groupedDocumentLines.containsKey(containerBarcode)) {
+        groupedDocumentLines[containerBarcode] = [];
       }
-      groupedDocumentLines[containerBarcode + unit]!.add(documentLine);
+      groupedDocumentLines[containerBarcode]!.add(documentLine);
     }
 
     return groupedDocumentLines;
@@ -524,16 +524,39 @@ class _PickingScreenState extends State<PickingScreen> {
       } else if (groupDocumentLinesBy == LineGroupType.container) {
         groupedDocumentLines = groupByContainerBarcode(documentLineList);
       }
-
-      groupedDocumentLines.forEach((key, lines) {
-        documentLineTiles.add(
-          GroupDocumentLineTile(
-            groupName: key,
-            documentLines: lines,
-            lineGroupType: groupDocumentLinesBy,
-          ),
-        );
-      });
+      if (groupDocumentLinesBy == LineGroupType.container) {
+        groupedDocumentLines.forEach((key, lines) {
+          if (key == '') {
+            for (final DocumentLine line in lines) {
+              documentLineTiles.add(
+                SingleDocumentLineTile(
+                  documentLine: line,
+                  location: _defaultDestinationLocation,
+                  callDocumentLineScreen: _onCallDocumentLineScreen,
+                ),
+              );
+            }
+          } else {
+            documentLineTiles.add(
+              ContainerLines(
+                documentLines: lines,
+                location: _defaultDestinationLocation,
+                callDocumentLineScreen: _onCallDocumentLineScreen,
+              ),
+            );
+          }
+        });
+      } else {
+        groupedDocumentLines.forEach((key, lines) {
+          documentLineTiles.add(
+            GroupDocumentLineTile(
+              groupName: key,
+              documentLines: lines,
+              lineGroupType: groupDocumentLinesBy,
+            ),
+          );
+        });
+      }
     } else {
       for (final DocumentLine documentLine in documentLineList) {
         documentLineTiles.add(

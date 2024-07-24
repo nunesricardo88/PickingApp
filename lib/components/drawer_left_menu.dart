@@ -126,6 +126,17 @@ class DrawerLeftMenu extends StatelessWidget {
               ),
             ],
           ),
+          ListTile(
+            leading: const FaIcon(
+              FontAwesomeIcons.boxesPacking,
+            ),
+            title: const Text(
+              'Novo container',
+            ),
+            onTap: () async {
+              // TODO call method to create a new container
+            },
+          ),
         ],
       ),
     );

@@ -1003,44 +1003,52 @@ class _PickingScreenState extends State<PickingScreen> {
           taskOperation = await addProduct(product: product);
         }
       case BarCodeType.batch:
-        final Map<String, dynamic> json =
-            jsonDecode(barcode) as Map<String, dynamic>;
-        final String productRef = json['ref'] as String;
-        final String batchNumber = json['lote'] as String;
-        final String? barcodeQR = json['barcode'] as String?;
+        try {
+          final Map<String, dynamic> json =
+              jsonDecode(barcode) as Map<String, dynamic>;
+          final String productRef = json['ref'] as String;
+          final String batchNumber = json['lote'] as String;
+          final String? barcodeQR = json['barcode'] as String?;
 
-        product = ProductHelper.getProduct(
-          reference: productRef,
-          barcode: barcodeQR ?? '',
-        );
-        if (product == null) {
-          taskOperation = TaskOperation(
-            success: false,
-            errorCode: ErrorCode.productNotFound,
-            message: 'Artigo não encontrado',
+          product = ProductHelper.getProduct(
+            reference: productRef,
+            barcode: barcodeQR ?? '',
           );
-        } else {
-          batch = await BatchApi.getByReferenceAndBatchNumber(
-            productRef,
-            batchNumber,
-          );
-          if (batch == null && useOnlyCreatedBatches) {
+          if (product == null) {
             taskOperation = TaskOperation(
               success: false,
-              errorCode: ErrorCode.batchNotFound,
-              message: 'Lote não encontrado',
+              errorCode: ErrorCode.productNotFound,
+              message: 'Artigo não encontrado',
             );
           } else {
-            batch ??= Batch(
-              id: Guid.newGuid,
-              erpId: '',
-              batchNumber: batchNumber,
-              expirationDate: DateTime(1900),
-              usaMolho: product.usaMolho,
+            batch = await BatchApi.getByReferenceAndBatchNumber(
+              productRef,
+              batchNumber,
             );
+            if (batch == null && useOnlyCreatedBatches) {
+              taskOperation = TaskOperation(
+                success: false,
+                errorCode: ErrorCode.batchNotFound,
+                message: 'Lote não encontrado',
+              );
+            } else {
+              batch ??= Batch(
+                id: Guid.newGuid,
+                erpId: '',
+                batchNumber: batchNumber,
+                expirationDate: DateTime(1900),
+                usaMolho: product.usaMolho,
+              );
 
-            taskOperation = await addProduct(product: product, batch: batch);
+              taskOperation = await addProduct(product: product, batch: batch);
+            }
           }
+        } catch (error) {
+          taskOperation = TaskOperation(
+            success: false,
+            message: 'Código de barras do lote inválido!',
+            errorCode: ErrorCode.invalidBarcode,
+          );
         }
 
       case BarCodeType.container:

@@ -27,6 +27,7 @@ import 'package:n6picking_flutterapp/models/misc_data_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
 import 'package:n6picking_flutterapp/models/product_model.dart';
 import 'package:n6picking_flutterapp/models/stock_model.dart';
+import 'package:n6picking_flutterapp/screens/container_screen.dart';
 import 'package:n6picking_flutterapp/screens/document_line_screen.dart';
 import 'package:n6picking_flutterapp/screens/misc_data_screen.dart';
 import 'package:n6picking_flutterapp/screens/source_documents_screen.dart';
@@ -1087,8 +1088,18 @@ class _PickingScreenState extends State<PickingScreen> {
             taskOperation = await addProduct(
               product: product,
               quantity: quantity,
+              container: container,
             );
           }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ContainerScreen(container: container),
+            ),
+          );
+
+          pickingTask.addContainer(container);
         }
 
       case BarCodeType.location:

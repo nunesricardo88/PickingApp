@@ -108,15 +108,15 @@ class DocumentLineTileCard extends StatelessWidget {
     super.key,
     required this.designation,
     required this.reference,
-    required this.originLocation,
+    this.originLocation,
     required this.quantity,
     required this.unit,
-    required this.haveLinkedLineErpId,
-    required this.quantityPicked,
-    required this.totalQuantity,
+    this.haveLinkedLineErpId,
+    this.quantityPicked,
+    this.totalQuantity,
     required this.product,
-    required this.batch,
-    required this.backgroundColor,
+    this.batch,
+    this.backgroundColor,
     this.onPressed,
   });
 
@@ -126,14 +126,14 @@ class DocumentLineTileCard extends StatelessWidget {
 
   final double quantity;
   final String unit;
-  final bool haveLinkedLineErpId;
-  final double quantityPicked;
-  final double totalQuantity;
+  final bool? haveLinkedLineErpId;
+  final double? quantityPicked;
+  final double? totalQuantity;
 
   final Product? product;
   final Batch? batch;
 
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final Function()? onPressed;
 
   @override
@@ -375,9 +375,9 @@ class QuantityInfoWidget extends StatelessWidget {
 
   final double quantity;
   final String unit;
-  final bool haveLinkedLineErpId;
-  final double quantityPicked;
-  final double totalQuantity;
+  final bool? haveLinkedLineErpId;
+  final double? quantityPicked;
+  final double? totalQuantity;
 
   @override
   Widget build(BuildContext context) {
@@ -397,17 +397,19 @@ class QuantityInfoWidget extends StatelessWidget {
                       ),
                 ),
                 if (pickingTask.stockMovement != StockMovement.inventory &&
-                    haveLinkedLineErpId)
+                    haveLinkedLineErpId == true &&
+                    quantityPicked != null &&
+                    totalQuantity != null)
                   Row(
                     children: [
                       Text(
                         Helper.removeDecimalZeroFormat(
-                          quantityPicked,
+                          quantityPicked!,
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       Text(
-                        ' / ${Helper.removeDecimalZeroFormat(totalQuantity)}',
+                        ' / ${Helper.removeDecimalZeroFormat(totalQuantity!)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

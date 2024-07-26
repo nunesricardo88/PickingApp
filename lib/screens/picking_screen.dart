@@ -84,7 +84,6 @@ class _PickingScreenState extends State<PickingScreen> {
 
   //FutureBuilder DocumentLines
   List<Widget> documentLineTiles = [];
-  Column documentTilesList = const Column();
   late Future<bool> listBuild;
   List<DocumentLine> documentLineList = [];
 
@@ -601,10 +600,6 @@ class _PickingScreenState extends State<PickingScreen> {
         ),
       );
     }
-
-    documentTilesList = Column(
-      children: documentLineTiles,
-    );
 
     return true;
   }
@@ -2079,7 +2074,6 @@ class _PickingScreenState extends State<PickingScreen> {
                 ),
                 TilesListWidget(
                   listBuild: listBuild,
-                  documentTilesList: documentTilesList,
                   listScrollController: _listScrollController,
                   documentLineTiles: documentLineTiles,
                 ),
@@ -2319,13 +2313,11 @@ class TilesListWidget extends StatelessWidget {
   const TilesListWidget({
     super.key,
     required this.listBuild,
-    required this.documentTilesList,
     required this.listScrollController,
     required this.documentLineTiles,
   });
 
   final Future<bool> listBuild;
-  final Column documentTilesList;
   final ItemScrollController listScrollController;
   final List<Widget> documentLineTiles;
 
@@ -2337,7 +2329,7 @@ class TilesListWidget extends StatelessWidget {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           List<Widget> noSnapshotWidgets;
           if (snapshot.hasData) {
-            return documentTilesList.children.isEmpty
+            return documentLineTiles.isEmpty
                 ? Column(
                     children: [
                       Expanded(

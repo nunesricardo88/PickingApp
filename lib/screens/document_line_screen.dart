@@ -1,12 +1,13 @@
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_guid/flutter_guid.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:n6picking_flutterapp/components/calculator.dart';
 import 'package:n6picking_flutterapp/components/document_line_dialog.dart';
 import 'package:n6picking_flutterapp/components/document_line_property_tile.dart';
 import 'package:n6picking_flutterapp/components/loading_display.dart';
 import 'package:n6picking_flutterapp/components/split_batches_dialog.dart';
 import 'package:n6picking_flutterapp/components/split_container_dialog.dart';
+import 'package:n6picking_flutterapp/models/batch_model.dart';
 import 'package:n6picking_flutterapp/models/document_line_model.dart';
 import 'package:n6picking_flutterapp/models/location_model.dart';
 import 'package:n6picking_flutterapp/models/picking_task_model.dart';
@@ -14,6 +15,7 @@ import 'package:n6picking_flutterapp/utilities/constants.dart';
 import 'package:n6picking_flutterapp/utilities/helper.dart';
 import 'package:n6picking_flutterapp/utilities/system.dart';
 import 'package:n6picking_flutterapp/utilities/task_operation.dart';
+import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
 class DocumentLineScreen extends StatefulWidget {
@@ -34,11 +36,19 @@ class DocumentLineScreen extends StatefulWidget {
 class _DocumentLineScreenState extends State<DocumentLineScreen> {
   TextEditingController labelQuantityController = TextEditingController();
   TextEditingController newBarcodeController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _batchController = TextEditingController();
+
   bool showSpinner = false;
   String spinnerMessage = 'Por favor, aguarde';
 
-  double calculatedValue = 0.0;
+  double quantityValue = 0.0;
   bool isExiting = false;
+  late bool _isValid;
+  late bool _isQuantityValid;
+  late bool _isBatchValid;
+  Batch? _batch;
+  bool alreadyValidated = false;
 
   @override
   void initState() {
@@ -47,8 +57,69 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
   }
 
   void setup() {
+    _quantityController.setText(
+      Helper.removeDecimalZeroFormat(widget.documentLine.quantity),
+    );
+    if (widget.documentLine.batch != null) {
+      _batchController.setText(widget.documentLine.batch!.batchNumber);
+    }
+  }
+
+  Future<void> isDataValid() async {
     setState(() {
-      calculatedValue = widget.documentLine.quantity;
+      showSpinner = true;
+    });
+    final PickingTask pickingTask =
+        Provider.of<PickingTask>(context, listen: false);
+
+    Batch? batch;
+    bool isBatchValid = true;
+    bool isQuantityValid = true;
+    bool isValid = true;
+
+    //Check if the batch is not empty
+    if (widget.documentLine.product.isBatchTracked) {
+      if (_batchController.text.trim().isEmpty) {
+        isBatchValid = false;
+      }
+    }
+
+    //Check if the quantity is not empty
+    if (_quantityController.text.trim().isEmpty) {
+      isQuantityValid = false;
+    }
+
+    //Validade the existence of the batch if the task is outbound or transfer
+    if (isBatchValid) {
+      if (widget.documentLine.product.isBatchTracked &&
+          (pickingTask.stockMovement == StockMovement.outbound ||
+              pickingTask.stockMovement == StockMovement.transfer)) {
+        batch = await BatchApi.getByReferenceAndBatchNumber(
+          widget.documentLine.product.reference,
+          _batchController.text.trim(),
+        );
+
+        if (batch == null) {
+          isBatchValid = false;
+        }
+      }
+    }
+
+    isValid = isBatchValid && isQuantityValid;
+
+    setState(() {
+      showSpinner = false;
+    });
+
+    if (isExiting) {
+      return;
+    }
+    setState(() {
+      _isBatchValid = isBatchValid;
+      _isValid = isValid;
+      _batch = batch;
+      _isQuantityValid = isQuantityValid;
+      alreadyValidated = true;
     });
   }
 
@@ -70,13 +141,14 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
     widget.documentLine.originLocation ??= originLocation;
     widget.documentLine.destinationLocation ??= destinationLocation;
 
+    quantityValue = double.parse(_quantityController.text.trim());
     final TaskOperation taskOperation = pickingTask.addToDocumentLineQuantity(
       widget.documentLine,
-      calculatedValue - widget.documentLine.quantity,
+      quantityValue - widget.documentLine.quantity,
     );
 
     if (widget.documentLine.product.isBatchTracked &&
-        calculatedValue > 0.0 &&
+        quantityValue > 0.0 &&
         widget.documentLine.batch == null) {
       await showDialog(
         barrierDismissible: false,
@@ -87,6 +159,19 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
           );
         },
       );
+    }
+
+    if (widget.documentLine.product.isBatchTracked) {
+      if (_batch != null) {
+        widget.documentLine.batch = _batch;
+      } else {
+        final Batch newBatch = Batch(
+          id: Guid.newGuid,
+          batchNumber: _batchController.text.trim(),
+          expirationDate: DateTime(1900),
+        );
+        widget.documentLine.batch = newBatch;
+      }
     }
 
     setState(() {});
@@ -202,7 +287,7 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
         isLoading: showSpinner,
         loadingText: spinnerMessage,
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
+          // resizeToAvoidBottomInset: false,
           backgroundColor: kGreyBackground,
           appBar: AppBar(
             backgroundColor: kPrimaryColor,
@@ -540,52 +625,144 @@ class _DocumentLineScreenState extends State<DocumentLineScreen> {
                         padding: const EdgeInsets.all(10.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Calculator(
-                              key: ValueKey<double>(calculatedValue),
-                              calculatedValue: calculatedValue,
-                              callBackValue: (double value) {
-                                setState(() {
-                                  calculatedValue = value;
-                                });
+                          children: <Widget>[
+                            const Text('Quantidade'),
+                            TextField(
+                              controller: _quantityController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                              ),
+                              textAlign: TextAlign.end,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              onTap: () {
+                                _quantityController.selection = TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset: _quantityController.text.length,
+                                );
                               },
                             ),
+                            if (alreadyValidated && !_isQuantityValid)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  _quantityController.text.isEmpty ||
+                                          double.parse(
+                                                _quantityController.text,
+                                              ) ==
+                                              0
+                                      ? 'Preencha a quantidade'
+                                      : 'Quantidade inválida',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall!
+                                      .copyWith(
+                                        color: kErrorColor,
+                                        fontSize: 12.0,
+                                      ),
+                                ),
+                              ),
+                            const Text('Lote'),
+                            TextField(
+                              controller: _batchController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                              ),
+                              textAlign: TextAlign.end,
+                              keyboardType: TextInputType.text,
+                              onTap: () {
+                                _batchController.selection = TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset: _batchController.text.length,
+                                );
+                              },
+                            ),
+                            if (alreadyValidated && !_isBatchValid)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  _batchController.text.isEmpty
+                                      ? 'Preencha o lote'
+                                      : 'Lote inválido',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall!
+                                      .copyWith(
+                                        color: kErrorColor,
+                                        fontSize: 12.0,
+                                      ),
+                                ),
+                              ),
                             const SizedBox(
                               height: 10.0,
                             ),
                             SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrimaryColor,
-                                  surfaceTintColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  final TaskOperation taskOperation =
-                                      await changeQuantity();
-
-                                  if (taskOperation.success) {
-                                    exit(null);
-                                  } else {
-                                    await Helper.showMsg(
-                                      'Atenção',
-                                      taskOperation.message,
-                                      context,
-                                    );
-                                  }
-                                },
-                                child: Text(
-                                  'Submeter',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge!
-                                      .copyWith(
-                                        color: kWhiteBackground,
-                                        fontWeight: FontWeight.w400,
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    MaterialButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        'Cancelar',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium!
+                                            .copyWith(
+                                              color: kPrimaryColor
+                                                  .withOpacity(0.8),
+                                            ),
                                       ),
+                                    ),
+                                    const SizedBox(
+                                      width: 40,
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: kPrimaryColor,
+                                        surfaceTintColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        await isDataValid();
+                                        if (!_isValid) {
+                                          return;
+                                        }
+
+                                        final TaskOperation taskOperation =
+                                            await changeQuantity();
+
+                                        if (taskOperation.success) {
+                                          exit(null);
+                                        } else {
+                                          await Helper.showMsg(
+                                            'Atenção',
+                                            taskOperation.message,
+                                            context,
+                                          );
+                                        }
+                                      },
+                                      child: Text(
+                                        'Submeter',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium!
+                                            .copyWith(
+                                              color: kWhiteBackground,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -644,7 +821,7 @@ class DocumentLineInfo extends StatelessWidget {
                   ? Helper.removeDecimalZeroFormat(
                       documentLine.quantity,
                     )
-                  : '${Helper.removeDecimalZeroFormat(documentLine.quantityPicked)} ${documentLine.quantityToPick > 0 ? ' / ${Helper.removeDecimalZeroFormat(documentLine.totalQuantity)}' : ''}',
+                  : '${Helper.removeDecimalZeroFormat(documentLine.quantityPicked)} ${documentLine.quantityToPick > 0 ? '/ ${Helper.removeDecimalZeroFormat(documentLine.totalQuantity)}' : ''}',
             ),
             if (documentLine.product.isBatchTracked)
               GestureDetector(

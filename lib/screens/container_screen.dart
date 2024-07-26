@@ -122,7 +122,6 @@ class _ContainerScreenState extends State<ContainerScreen> {
         isLoading: showSpinner,
         loadingText: spinnerMessage,
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
           backgroundColor: kGreyBackground,
           appBar: AppBar(
             backgroundColor: kPrimaryColor,

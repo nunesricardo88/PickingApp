@@ -997,6 +997,17 @@ class _PickingScreenState extends State<PickingScreen> {
           );
         } else {
           taskOperation = await addProduct(product: product);
+          if (taskOperation.success &&
+              taskOperation.errorCode == ErrorCode.none) {
+            final DocumentLine documentLine = documentLineList.firstWhere(
+              (line) => line.id.toString() == taskOperation.message,
+            );
+
+            _onCallDocumentLineScreen(
+              documentLine,
+              _defaultDestinationLocation,
+            );
+          }
         }
       case BarCodeType.batch:
         try {
